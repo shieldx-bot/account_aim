@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "AIPro.dev Self-hosted Backend with PostgreSQL",
   "main": "src/index.ts",
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

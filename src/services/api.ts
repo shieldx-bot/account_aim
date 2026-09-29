@@ -453,4 +453,169 @@ export const adminApi = {
     if (!res.ok) throw new Error(body.message || 'Không thể nạp tiền.');
     return body;
   },
+
+  /**
+   * Ban / unban user (admin)
+   */
+  async updateUserStatus(token: string, userId: string, status: 'active' | 'banned'): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể cập nhật trạng thái người dùng.');
+    return body;
+  },
+
+  /**
+   * Revenue per day (admin dashboard chart)
+   */
+  async getRevenueDaily(token: string, days = 14): Promise<any[]> {
+    const res = await fetch(`${API_BASE_URL}/admin/revenue-daily?days=${days}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể tải dữ liệu doanh thu.');
+    return body.data || [];
+  },
+
+  /**
+   * Top selling products (admin dashboard)
+   */
+  async getTopProducts(token: string, limit = 5): Promise<any[]> {
+    const res = await fetch(`${API_BASE_URL}/admin/top-products?limit=${limit}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể tải top sản phẩm.');
+    return body.data || [];
+  },
+
+  /**
+   * Inventory accounts + stock summary (admin)
+   */
+  async getInventory(token: string, params?: { status?: string; productSlug?: string }): Promise<{ accounts: any[]; stockSummary: any[] }> {
+    const query = new URLSearchParams();
+    if (params?.status) query.append('status', params.status);
+    if (params?.productSlug) query.append('productSlug', params.productSlug);
+
+    const res = await fetch(`${API_BASE_URL}/admin/inventory?${query}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể tải kho tài khoản.');
+    return { accounts: body.data || [], stockSummary: body.stockSummary || [] };
+  },
+
+  /**
+   * Import accounts into inventory (admin)
+   */
+  async addInventoryAccounts(
+    token: string,
+    payload: { productSlug: string; accounts: Array<{ email: string; password: string; accessToken?: string; twoFactorBackup?: string }> }
+  ): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/admin/inventory`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể nhập kho tài khoản.');
+    return body;
+  },
+
+  /**
+   * Delete an unassigned inventory account (admin)
+   */
+  async deleteInventoryAccount(token: string, accountId: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/admin/inventory/${accountId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể xoá tài khoản kho.');
+    return body;
+  },
+
+  /**
+   * Warranty tickets (admin)
+   */
+  async getWarrantyTickets(token: string, status?: string): Promise<any[]> {
+    const query = new URLSearchParams();
+    if (status) query.append('status', status);
+    const res = await fetch(`${API_BASE_URL}/admin/warranty-tickets?${query}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể tải ticket bảo hành.');
+    return body.data || [];
+  },
+
+  /**
+   * Update warranty ticket status (admin)
+   */
+  async updateWarrantyTicket(token: string, ticketId: string, status: string, notes?: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/admin/warranty-tickets/${ticketId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status, notes }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể cập nhật ticket.');
+    return body;
+  },
+};
+
+export const lookupApi = {
+  /**
+   * Request a real OTP code for guest order lookup
+   */
+  async requestOtp(orderId: string, email: string): Promise<{ message: string; devCode?: string }> {
+    const res = await fetch(`${API_BASE_URL}/orders/lookup/request-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, email }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể gửi mã xác minh.');
+    return { message: body.message, devCode: body.data?.devCode };
+  },
+
+  /**
+   * Verify OTP → returns order + delivery credentials
+   */
+  async verifyOtp(orderId: string, email: string, code: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/orders/lookup/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, email, code }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Mã xác minh không hợp lệ.');
+    return body.data;
+  },
+
+  /**
+   * Exchange delivered account via warranty (max 3/order)
+   */
+  async warrantyExchange(orderId: string, email: string, reason: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/orders/lookup/warranty-exchange`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId, email, reason }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể đổi tài khoản bảo hành.');
+    return body.data;
+  },
 };

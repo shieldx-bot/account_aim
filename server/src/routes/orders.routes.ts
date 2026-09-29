@@ -8,8 +8,11 @@ import {
   updateOrderStatus,
   getAllUsersAdmin,
   updateUserRole,
+  updateUserStatus,
   addUserBalance,
   getAdminStats,
+  getRevenueDaily,
+  getTopProducts,
 } from '../controllers/orders.controller.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.middleware.js';
 
@@ -82,3 +85,21 @@ adminRouter.patch('/users/:userId/role', authenticateToken, requireAdmin, update
  * Add balance to user wallet (admin only)
  */
 adminRouter.post('/users/:userId/balance', authenticateToken, requireAdmin, addUserBalance);
+
+/**
+ * PATCH /api/admin/users/:userId/status
+ * Ban / unban user (admin only)
+ */
+adminRouter.patch('/users/:userId/status', authenticateToken, requireAdmin, updateUserStatus);
+
+/**
+ * GET /api/admin/revenue-daily
+ * Revenue per day for dashboard chart (admin only)
+ */
+adminRouter.get('/revenue-daily', authenticateToken, requireAdmin, getRevenueDaily);
+
+/**
+ * GET /api/admin/top-products
+ * Best sellers by revenue (admin only)
+ */
+adminRouter.get('/top-products', authenticateToken, requireAdmin, getTopProducts);
