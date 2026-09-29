@@ -134,6 +134,25 @@ export const LegalPage: React.FC = () => {
               <li>Toàn bộ thông tin truyền tải trên website được mã hóa bằng tiêu chuẩn SSL 256-bit cao cấp nhất.</li>
               <li>Không bán, không chia sẻ và không theo dõi cookies của khách hàng cho mục đích quảng cáo bên thứ ba.</li>
             </ul>
+            <div className="mt-4 p-4 rounded-xl bg-canvas border border-border-subtle flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-status-success shrink-0 mt-0.5" />
+              <p className="text-xs text-text-secondary leading-relaxed">
+                <strong className="text-text-primary">Chịu trách nhiệm bởi cá nhân đã xác minh:</strong>{' '}
+                Website được sở hữu và vận hành bởi <strong className="text-text-primary">Jeff Su</strong> — Founder &amp; Operator,
+                danh tính công khai và kiểm chứng qua kênh YouTube chính chủ{' '}
+                <a
+                  href="https://www.youtube.com/@JeffSu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-cyan hover:underline font-mono"
+                >
+                  youtube.com/@JeffSu
+                </a>
+                . Mọi khiếu nại về giao dịch được xử lý trực tiếp bởi người sáng lập tại{' '}
+                <span className="font-mono text-text-primary">legal@aipro.dev</span>. Xem thêm:{' '}
+                <Link to="/about" className="text-accent-cyan hover:underline">Hồ sơ người sáng lập</Link>.
+              </p>
+            </div>
           </div>
         )}
       </div>

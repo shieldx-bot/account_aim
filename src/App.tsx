@@ -17,6 +17,7 @@ import { CheckoutPage } from '@/pages/CheckoutPage';
 import { DeliveryPage } from '@/pages/DeliveryPage';
 import { LookupPage } from '@/pages/LookupPage';
 import { LegalPage } from '@/pages/LegalPage';
+import { AboutPage } from '@/pages/AboutPage';
 import { StatusPage } from '@/pages/StatusPage';
 import { DocsPage } from '@/pages/DocsPage';
 import { CartPage } from '@/pages/CartPage';
@@ -105,6 +106,7 @@ export const App: React.FC = () => {
                   <Route path="/cart" element={<CartPage />} />
                   <Route path="/lookup" element={<LookupPage />} />
                   <Route path="/terms" element={<LegalPage />} />
+                  <Route path="/about" element={<AboutPage />} />
                   <Route path="/status" element={<StatusPage />} />
                   <Route path="/docs" element={<DocsPage />} />
                 </Route>

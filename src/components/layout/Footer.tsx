@@ -64,6 +64,7 @@ export const Footer: React.FC = () => {
           <div>
             <h5 className="font-semibold text-text-primary text-sm mb-3">Chính Sách &amp; Pháp Lý</h5>
             <ul className="space-y-2">
+              <li><Link to="/about" className="hover:text-text-primary transition-colors">Về người sáng lập (Jeff Su)</Link></li>
               <li><Link to="/terms?tab=terms" className="hover:text-text-primary transition-colors">Điều khoản dịch vụ</Link></li>
               <li><Link to="/terms?tab=sla" className="hover:text-text-primary transition-colors">Cam kết chất lượng SLA 99.9%</Link></li>
               <li><Link to="/terms?tab=refund" className="hover:text-text-primary transition-colors">Chính sách bảo hành &amp; hoàn tiền</Link></li>
@@ -88,9 +89,23 @@ export const Footer: React.FC = () => {
 
         {/* Bottom copyright */}
         <div className="pt-8 border-t border-border-subtle/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-text-muted">
-          <div className="flex items-center gap-2">
-            <span className="font-mono font-semibold text-text-secondary">AIPro.dev</span>
-            <span>&copy; 2026. Chuẩn thiết kế One-Way Corridor UX cho Lập trình viên.</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-semibold text-text-secondary">AIPro.dev</span>
+              <span>&copy; 2026. Chuẩn thiết kế One-Way Corridor UX cho Lập trình viên.</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-status-success" />
+              <span>
+                Giao dịch được đảm bảo bởi{' '}
+                <Link to="/about" className="text-text-primary font-semibold hover:underline">Jeff Su</Link>
+                {' '}— Founder &amp; Operator (
+                <a href="https://www.youtube.com/@JeffSu" target="_blank" rel="noopener noreferrer" className="hover:text-text-primary transition-colors">
+                  youtube.com/@JeffSu
+                </a>
+                )
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/status" className="hover:text-text-primary transition-colors">Uptime 99.98%</Link>
