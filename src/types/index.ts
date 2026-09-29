@@ -1,6 +1,50 @@
 export type Currency = 'VND' | 'USD';
 
-export type ProductCategory = 'all' | 'coding' | 'llm' | 'search' | 'design' | 'creative' | 'enterprise';
+export type ProductCategory =
+  | 'all'
+  | 'coding'
+  | 'llm'
+  | 'search'
+  | 'design'
+  | 'creative'
+  | 'enterprise'
+  | 'api-credit';
+
+/** Nhà cung cấp model AI lớn (OpenAI, Anthropic, Google, DeepSeek, ...) */
+export type AiProviderId =
+  | 'openai'
+  | 'anthropic'
+  | 'google'
+  | 'deepseek'
+  | 'xai'
+  | 'mistral'
+  | 'cohere'
+  | 'perplexity';
+
+/** Gói tài khoản API kèm số dư credit $ sử dụng model của các nhà cung cấp lớn */
+export interface ApiCreditAccount {
+  id: string;
+  slug: string;
+  provider: AiProviderId;
+  providerName: string;
+  brandLogo: string;
+  /** Mã giảm giá áp dụng cho hóa đơn API chính thức của nhà cung cấp */
+  discountPercent: number;
+  /** Số dư credit $ có sẵn trong tài khoản */
+  creditAmountUSD: number;
+  /** Giá bán ra (VNĐ) */
+  priceVND: number;
+  /** Số lượng tài khoản còn hàng */
+  stockCount: number;
+  instantDelivery: boolean;
+  badge?: string;
+  description: string;
+  /** Các model có thể truy cập qua API key của tài khoản */
+  includedModels: string[];
+  /** Hạn sử dụng credit (tháng) */
+  validityMonths: number;
+  features: string[];
+}
 
 export interface ProductPlan {
   id: string;

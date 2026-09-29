@@ -12,6 +12,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 // Public Pages
 import { HomePage } from '@/pages/HomePage';
 import { ProductsPage } from '@/pages/ProductsPage';
+import { ApiCreditPage } from '@/pages/ApiCreditPage';
 import { ProductPage } from '@/pages/ProductPage';
 import { CheckoutPage } from '@/pages/CheckoutPage';
 import { DeliveryPage } from '@/pages/DeliveryPage';
@@ -20,6 +21,7 @@ import { LegalPage } from '@/pages/LegalPage';
 import { StatusPage } from '@/pages/StatusPage';
 import { DocsPage } from '@/pages/DocsPage';
 import { CartPage } from '@/pages/CartPage';
+import { AboutPage } from '@/pages/AboutPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { CartProvider } from '@/context/CartContext';
 
@@ -100,6 +102,7 @@ export const App: React.FC = () => {
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/api-credit" element={<ApiCreditPage />} />
                   <Route path="/product/:slug" element={<ProductPage />} />
                   <Route path="/products/:slug" element={<ProductPage />} />
                   <Route path="/cart" element={<CartPage />} />
@@ -107,6 +110,7 @@ export const App: React.FC = () => {
                   <Route path="/terms" element={<LegalPage />} />
                   <Route path="/status" element={<StatusPage />} />
                   <Route path="/docs" element={<DocsPage />} />
+                  <Route path="/about" element={<AboutPage />} />
                 </Route>
 
               {/* Authentication Routes */}

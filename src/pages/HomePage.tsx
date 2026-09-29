@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ProductCategory } from '@/types';
 import { useApp } from '@/context/AppContext';
 import { TerminalSimulator } from '@/components/home/TerminalSimulator';
@@ -15,7 +16,8 @@ import { FaqAccordion } from '@/components/home/FaqAccordion';
 import { FinalCtaSection } from '@/components/home/FinalCtaSection';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { trackEvent } from '@/utils/telemetry';
-import { Zap, Shield, Star, Sparkles, ArrowDown, ChevronRight, Activity, Loader2 } from 'lucide-react';
+import { creatorProfile } from '@/data/creatorProfile';
+import { Zap, Shield, Star, Sparkles, ArrowDown, ChevronRight, Activity, Loader2, Youtube, BadgeCheck } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
   const { products, isLoadingProducts } = useApp();
@@ -245,6 +247,45 @@ export const HomePage: React.FC = () => {
 
       {/* 8. DEVELOPER TESTIMONIALS SECTION */}
       <TestimonialsSection />
+
+      {/* 8b. FOUNDER NOTE — Jeff Su (YouTube @JeffSu) */}
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-8">
+        <ErrorBoundary contextName="Founder_Note">
+          <div className="rounded-2xl bg-surface border border-border-subtle p-6 sm:p-8 flex flex-col md:flex-row items-center gap-6">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-blue to-accent-cyan flex items-center justify-center text-white text-2xl font-extrabold shrink-0 shadow-lg shadow-primary-blue/30 relative">
+              {creatorProfile.avatarInitials}
+              <span className="absolute -bottom-1.5 -right-1.5 p-1 rounded-full bg-status-success text-white border-[3px] border-surface">
+                <BadgeCheck className="w-3.5 h-3.5" />
+              </span>
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <p className="text-xs font-mono text-accent-cyan mb-1">// Người sáng lập AIPro.dev</p>
+              <h3 className="text-lg font-bold text-text-primary">{creatorProfile.name}</h3>
+              <p className="mt-1.5 text-sm text-text-secondary leading-relaxed max-w-2xl">
+                {creatorProfile.tagline}
+              </p>
+            </div>
+            <div className="flex flex-col items-stretch gap-2.5 shrink-0">
+              <a
+                href={creatorProfile.youtubeUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#FF0000] hover:bg-[#cc0000] text-white text-xs font-bold transition-all hover:scale-[1.02]"
+              >
+                <Youtube className="w-4 h-4 fill-white" />
+                Theo dõi @JeffSu
+              </a>
+              <Link
+                to="/about"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-elevated border border-border-subtle hover:border-accent-cyan/50 text-text-secondary hover:text-text-primary text-xs font-semibold transition-all"
+              >
+                Đọc câu chuyện đầy đủ
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </ErrorBoundary>
+      </section>
 
       {/* 9. FAQ ACCORDION SECTION */}
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6">

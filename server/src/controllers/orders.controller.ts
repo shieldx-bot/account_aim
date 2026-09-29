@@ -328,19 +328,80 @@ export const updateOrderStatus = catchAsync(async (req: Request, res: Response) 
     throw new BadRequestError(`Trạng thái không hợp lệ. Chỉ chấp nhận: ${validStatuses.join(', ')}`);
   }
 
+  const orderRes = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+  if (orderRes.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy đơn hàng.');
+  }
+  const order = orderRes.rows[0];
+
+  // ── Auto-provisioning: paid → dispatched assigns a real account from inventory pool ──
+  let provisionedAccount: any = null;
+  if (status === 'dispatched' && order.status !== 'dispatched') {
+    const existingSub = await pool.query(
+      `SELECT inv.email FROM subscriptions s
+       JOIN inventory_accounts inv ON inv.assigned_order_id = s.order_id AND inv.status = 'assigned'
+       WHERE s.order_id = $1`,
+      [orderId]
+    );
+    if (existingSub.rows.length === 0) {
+      const acctRes = await pool.query(
+        `UPDATE inventory_accounts
+         SET status = 'assigned', assigned_order_id = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = (
+           SELECT id FROM inventory_accounts
+           WHERE product_slug = $2 AND status = 'available'
+           ORDER BY created_at ASC LIMIT 1
+           FOR UPDATE SKIP LOCKED
+         )
+         RETURNING *`,
+        [orderId, order.product_slug]
+      );
+      if (acctRes.rows.length > 0) {
+        const acct = acctRes.rows[0];
+        provisionedAccount = acct;
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + Number(order.plan_duration_months || 1));
+        const prodRes = await pool.query('SELECT brand FROM products WHERE id = $1', [order.product_id]);
+        await pool.query(
+          `INSERT INTO subscriptions (order_id, user_id, product_id, product_name, product_slug, brand,
+            provisioning_type, account_email, account_password_encrypted, access_token,
+            start_date, expires_at, status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_DATE, $11, 'active')
+           ON CONFLICT DO NOTHING`,
+          [
+            orderId,
+            order.user_id,
+            order.product_id,
+            order.product_name,
+            order.product_slug,
+            prodRes.rows[0]?.brand || order.product_name,
+            order.provisioning_type,
+            acct.email,
+            acct.password,
+            acct.access_token,
+            expiresAt.toISOString().split('T')[0],
+          ]
+        );
+      } else {
+        throw new BadRequestError(
+          `Kho tài khoản cho "${order.product_slug}" đang trống. Hãy nhập tài khoản vào Inventory trước khi giao hàng.`
+        );
+      }
+    }
+  }
+
   const result = await pool.query(
     `UPDATE orders SET status = $1, notes = COALESCE($2, notes), updated_at = CURRENT_TIMESTAMP
      WHERE id = $3 RETURNING *`,
     [status, notes || null, orderId]
   );
 
-  if (result.rows.length === 0) {
-    throw new NotFoundError('Không tìm thấy đơn hàng.');
-  }
-
   res.status(200).json({
     success: true,
-    message: `Đã cập nhật trạng thái đơn hàng ${orderId} thành "${status}".`,
+    message:
+      status === 'dispatched' && provisionedAccount
+        ? `Đã giao hàng ${orderId} — gán tài khoản ${provisionedAccount.email}.`
+        : `Đã cập nhật trạng thái đơn hàng ${orderId} thành "${status}".`,
     data: formatOrderRow(result.rows[0]),
   });
 });
@@ -395,8 +456,36 @@ export const getAllUsersAdmin = catchAsync(async (req: Request, res: Response) =
       createdAt: row.created_at,
       ordersCount: Number(row.orders_count),
       totalSpentVND: Number(row.total_spent_vnd),
-      status: 'active', // TODO: add status column to users table
+      status: row.status || 'active',
     })),
+  });
+});
+
+/**
+ * PATCH /api/admin/users/:userId/status
+ * Admin: Ban / unban user
+ */
+export const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const { status } = req.body;
+
+  if (!['active', 'banned'].includes(status)) {
+    throw new BadRequestError('Trạng thái không hợp lệ. Chỉ chấp nhận: active, banned.');
+  }
+
+  const result = await pool.query(
+    `UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, email, status`,
+    [status, userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy người dùng.');
+  }
+
+  res.status(200).json({
+    success: true,
+    message: `Đã ${status === 'banned' ? 'cấm' : 'mở khoá'} tài khoản ${result.rows[0].email}.`,
+    data: { id: result.rows[0].id, status: result.rows[0].status },
   });
 });
 
@@ -493,5 +582,64 @@ export const getAdminStats = catchAsync(async (req: Request, res: Response) => {
       usersTotal: Number(usersTotal.rows[0].count),
       activeSubscriptions: Number(activeSubscriptions.rows[0].count),
     },
+  });
+});
+
+/**
+ * GET /api/admin/revenue-daily?days=14
+ * Admin: Revenue & order counts per day for dashboard chart (real DB data)
+ */
+export const getRevenueDaily = catchAsync(async (req: Request, res: Response) => {
+  const days = Math.min(Number(req.query.days) || 14, 90);
+
+  const result = await pool.query(
+    `SELECT d.day::date AS day,
+            COALESCE(SUM(o.total_vnd) FILTER (WHERE o.status IN ('paid','dispatched')), 0) AS revenue_vnd,
+            COUNT(o.id) AS orders
+     FROM generate_series(CURRENT_DATE - ($1 - 1)::int, CURRENT_DATE, '1 day'::interval) AS d(day)
+     LEFT JOIN orders o ON DATE(o.created_at) = d.day::date
+     GROUP BY d.day::date
+     ORDER BY d.day::date`,
+    [days]
+  );
+
+  res.status(200).json({
+    success: true,
+    data: result.rows.map((r) => ({
+      date: r.day,
+      revenueVND: Number(r.revenue_vnd),
+      orders: Number(r.orders),
+    })),
+  });
+});
+
+/**
+ * GET /api/admin/top-products?limit=5
+ * Admin: Best-selling products by revenue (real DB data)
+ */
+export const getTopProducts = catchAsync(async (req: Request, res: Response) => {
+  const limit = Math.min(Number(req.query.limit) || 5, 20);
+
+  const result = await pool.query(
+    `SELECT product_id, product_name, product_slug,
+            COUNT(*) AS sold,
+            COALESCE(SUM(total_vnd), 0) AS revenue_vnd
+     FROM orders
+     WHERE status IN ('paid', 'dispatched')
+     GROUP BY product_id, product_name, product_slug
+     ORDER BY revenue_vnd DESC
+     LIMIT $1`,
+    [limit]
+  );
+
+  res.status(200).json({
+    success: true,
+    data: result.rows.map((r) => ({
+      productId: r.product_id,
+      productName: r.product_name,
+      slug: r.product_slug,
+      sold: Number(r.sold),
+      revenueVND: Number(r.revenue_vnd),
+    })),
   });
 });

@@ -22,7 +22,7 @@ export const errorMiddleware = (
     statusCode = 400;
     status = 'fail';
     message = 'Validation Error';
-    errors = err.errors.map((e) => ({
+    errors = err.issues.map((e) => ({
       path: e.path,
       message: e.message,
     }));
