@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200" fill="none">
+  <rect x="10" y="10" width="260" height="180" rx="12" fill="#101318" stroke="#EF4444" stroke-dasharray="4 4" stroke-width="1.5"/>
+  <circle cx="140" cy="80" r="32" fill="#EF4444" fill-opacity="0.1"/>
+  <path d="M125 95L155 65M125 65l30 30" stroke="#EF4444" stroke-width="3" stroke-linecap="round"/>
+  <text x="140" y="140" font-family="Inter, sans-serif" font-weight="600" font-size="14" fill="#F3F4F6" text-anchor="middle">Mất Kết Nối Mạng</text>
+  <text x="140" y="160" font-family="Inter, sans-serif" font-size="12" fill="#9CA3AF" text-anchor="middle">Đang thử kết nối lại tự động...</text>
+</svg>

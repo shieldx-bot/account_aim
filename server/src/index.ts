@@ -1,0 +1,102 @@
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.js';
+import { env } from './config/env.js';
+import { authRouter } from './routes/auth.routes.js';
+import { ensureSeedUsers } from './controllers/auth.controller.js';
+import { productRouter } from './routes/product.routes.js';
+import { statusRouter } from './routes/status.routes.js';
+import { ordersRouter, subscriptionsRouter, adminRouter } from './routes/orders.routes.js';
+import { errorMiddleware } from './middleware/error.middleware.js';
+import { ensureSeedProducts } from './controllers/product.controller.js';
+import { pool } from './config/db.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const app = express();
+const PORT = env.PORT;
+
+// Security Middleware
+app.use(helmet());
+app.use(
+  cors({
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  })
+);
+app.use(express.json({ limit: '10kb' }));
+
+// Rate Limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { status: 429, message: 'Too many requests, please try again later.' },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { status: 429, message: 'Too many authentication attempts, please try again later.' },
+});
+
+// Swagger Documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Health Check endpoint
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'healthy',
+    service: 'AIPro Backend API',
+    timestamp: new Date().toISOString(),
+    postgres: 'connected',
+  });
+});
+
+// Routes
+app.use('/api', apiLimiter);
+app.use('/api/auth', authLimiter, authRouter);
+app.use('/api/products', productRouter);
+app.use('/api/status', statusRouter);
+app.use('/api/orders', ordersRouter);
+app.use('/api/subscriptions', subscriptionsRouter);
+app.use('/api/admin', adminRouter);
+
+// Error handling middleware (must be last)
+app.use(errorMiddleware);
+
+/**
+ * Run DB migrations to ensure all tables exist
+ */
+const runMigrations = async () => {
+  try {
+    const sqlPath = path.join(__dirname, 'db', 'init.sql');
+    const sql = fs.readFileSync(sqlPath, 'utf-8');
+    await pool.query(sql);
+    console.log('[DB] Schema migrations applied successfully.');
+  } catch (err) {
+    console.error('[DB] Migration warning (tables may already exist):', (err as any).message);
+  }
+};
+
+// Start server
+app.listen(PORT, async () => {
+  console.log(`🚀 [AIPro Backend] Server running on http://localhost:${PORT}`);
+  console.log(`📖 [AIPro Backend] Swagger docs at http://localhost:${PORT}/api/docs`);
+  // Run DB schema migrations (creates orders, subscriptions tables if not exist)
+  await runMigrations();
+  // Seed demo accounts
+  await ensureSeedUsers();
+  // Seed initial AI products catalog
+  await ensureSeedProducts();
+});

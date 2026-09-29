@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: aipro_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aipro_db
+      POSTGRES_USER: aipro_user
+      POSTGRES_PASSWORD: aipro_secure_pass_2025
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/src/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aipro_user -d aipro_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: aipro_postgres_data
