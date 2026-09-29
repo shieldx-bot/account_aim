@@ -14,7 +14,7 @@ export const MainLayout: React.FC = () => {
       {!isOnline && (
         <div className="w-full bg-status-error/90 text-white px-4 py-2 text-xs font-semibold flex items-center justify-center gap-2 sticky top-0 z-50 animate-pulse">
           <WifiOff className="w-4 h-4" />
-          <span>Bạn đang mất kết nối Internet. Dữ liệu kho có thể chưa được cập nhật thời gian thực.</span>
+          <span>You are losing Internet connection. Data may not be updated in real time.</span>
         </div>
       )}
 

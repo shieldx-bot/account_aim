@@ -44,34 +44,34 @@ export const MemberLayout: React.FC = () => {
   const navItems = [
     {
       to: '/member/dashboard',
-      label: 'Tổng quan Portal',
+      label: 'Overview',
       icon: LayoutDashboard,
     },
     {
       to: '/member/subscriptions',
-      label: 'Tài khoản AI của tôi',
+      label: 'My AI Account',
       icon: KeyRound,
       badge: '3',
     },
     {
       to: '/cart',
-      label: 'Giỏ hàng mua sắm',
+      label: 'Shopping Cart',
       icon: ShoppingBag,
       badge: totalCount > 0 ? String(totalCount) : undefined,
     },
     {
       to: '/member/orders',
-      label: 'Lịch sử mua hàng',
+      label: 'Purchase History',
       icon: ShoppingBag,
     },
     {
       to: '/member/warranty',
-      label: 'Đổi trả & Bảo hành',
+      label: 'Returns & Warranty',
       icon: ShieldAlert,
     },
     {
       to: '/member/profile',
-      label: 'Cài đặt & Ví tiền',
+      label: 'Settings & Wallet',
       icon: UserCheck,
     },
   ];
@@ -95,7 +95,7 @@ export const MemberLayout: React.FC = () => {
               </button>
             </div>
             <p className="text-xs text-text-secondary mb-4">
-              Chọn gói nạp để thanh toán bằng VietQR tức thì. Số dư sẽ được cộng ngay lập tức vào tài khoản.
+              Select a top-up package to pay via VietQR instantly. Balance will be added to the account immediately.
             </p>
             <div className="grid grid-cols-3 gap-2.5 mb-5">
               {[100000, 200000, 500000].map((amt) => (
@@ -128,14 +128,14 @@ export const MemberLayout: React.FC = () => {
                 onClick={() => setShowTopUpModal(false)}
                 className="flex-1 py-2.5 rounded-xl border border-border-subtle text-xs font-semibold hover:bg-surface-subtle"
               >
-                Hủy bỏ
+                Cancel
               </button>
               <button
                 type="button"
                 onClick={handleConfirmTopUp}
                 className="flex-1 py-2.5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold transition-all shadow-lg shadow-primary-blue/20"
               >
-                ⚡ Xác nhận nạp ngay
+                ⚡ Confirm Top Up
               </button>
             </div>
           </div>
@@ -179,7 +179,7 @@ export const MemberLayout: React.FC = () => {
           {/* Wallet Balance box */}
           <div className="p-2.5 rounded-lg bg-surface border border-border-subtle flex items-center justify-between">
             <div>
-              <span className="text-[10px] text-text-muted block uppercase">Số dư ví</span>
+              <span className="text-[10px] text-text-muted block uppercase">Wallet Balance</span>
               <span className="font-mono text-xs font-bold text-status-success">
                 {formatPrice(user?.balanceVND || 0, user?.balanceUSD || 0)}
               </span>
@@ -231,7 +231,7 @@ export const MemberLayout: React.FC = () => {
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition-colors"
           >
             <Store className="w-4 h-4 text-accent-cyan" />
-            <span>Xem Cửa hàng chính</span>
+            <span>View Main Store</span>
           </Link>
           <button
             onClick={handleLogout}

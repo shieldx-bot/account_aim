@@ -42,7 +42,7 @@ export const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setErrorMessage('Vui lòng nhập đầy đủ Email và Mật khẩu.');
+      setErrorMessage('Please enter Email and Password.');
       return;
     }
 
@@ -54,10 +54,10 @@ export const LoginPage: React.FC = () => {
       if (res.success) {
         // Redirection will be handled by useEffect
       } else {
-        setErrorMessage(res.message || 'Email hoặc mật khẩu không chính xác.');
+        setErrorMessage(res.message || 'Email or password is incorrect.');
       }
     } catch {
-      setErrorMessage('Đã xảy ra lỗi kết nối. Vui lòng thử lại.');
+      setErrorMessage('Connection error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -89,10 +89,10 @@ export const LoginPage: React.FC = () => {
           </span>
         </Link>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-          Đăng nhập hệ thống
+          Sign into system
         </h2>
         <p className="mt-2 text-sm text-text-secondary">
-          Quản lý tài khoản AI Pro, gia hạn tự động và giám sát bảo hành SLA 24/7.
+          Manage AI Pro accounts, auto renewal and 24/7 SLA monitoring.
         </p>
       </div>
 
@@ -102,7 +102,7 @@ export const LoginPage: React.FC = () => {
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-4 h-4 text-accent-cyan" />
             <span className="text-xs font-bold uppercase tracking-wider text-accent-cyan">
-              Truy cập nhanh chế độ Test / Demo
+              <span>Quick Test / Demo Access</span>
             </span>
           </div>
           <div className="grid grid-cols-2 gap-3">
