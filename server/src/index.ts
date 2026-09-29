@@ -10,6 +10,7 @@ import { ensureSeedUsers } from './controllers/auth.controller.js';
 import { productRouter } from './routes/product.routes.js';
 import { statusRouter } from './routes/status.routes.js';
 import { ordersRouter, subscriptionsRouter, adminRouter } from './routes/orders.routes.js';
+import { lookupRouter, adminOperationsRouter } from './routes/operations.routes.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { ensureSeedProducts } from './controllers/product.controller.js';
 import { pool } from './config/db.js';
@@ -69,8 +70,10 @@ app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/products', productRouter);
 app.use('/api/status', statusRouter);
 app.use('/api/orders', ordersRouter);
+app.use('/api/orders/lookup', lookupRouter);
 app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/admin', adminOperationsRouter);
 
 // Error handling middleware (must be last)
 app.use(errorMiddleware);

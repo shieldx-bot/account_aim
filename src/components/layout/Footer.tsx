@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Zap, Activity, MessageSquare, Terminal } from 'lucide-react';
+import { ShieldCheck, Zap, Activity, MessageSquare, Youtube } from 'lucide-react';
+import { creatorProfile } from '@/data/creatorProfile';
+import { SocialLinks } from '@/components/common/SocialLinks';
 
 export const Footer: React.FC = () => {
   return (
@@ -40,7 +42,7 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Links Navigation Matrix */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-10">
           <div>
             <h5 className="font-semibold text-text-primary text-sm mb-3">Dịch Vụ AI</h5>
             <ul className="space-y-2">
@@ -72,6 +74,34 @@ export const Footer: React.FC = () => {
           </div>
 
           <div>
+            <h5 className="font-semibold text-text-primary text-sm mb-3">Người sáng lập</h5>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-blue to-accent-cyan flex items-center justify-center text-white text-xs font-extrabold shrink-0">
+                {creatorProfile.avatarInitials}
+              </div>
+              <div>
+                <p className="text-text-primary font-semibold text-[13px] flex items-center gap-1">
+                  {creatorProfile.name}
+                  <Youtube className="w-3.5 h-3.5 text-[#FF4E4E] fill-[#FF4E4E]" />
+                </p>
+                <a
+                  href={creatorProfile.youtubeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-mono text-[11px] text-accent-cyan hover:underline"
+                >
+                  youtube.com/@JeffSu
+                </a>
+              </div>
+            </div>
+            <ul className="space-y-2 mb-4">
+              <li><Link to="/about" className="hover:text-text-primary transition-colors">Câu chuyện &amp; sứ mệnh</Link></li>
+              <li><Link to="/docs" className="hover:text-text-primary transition-colors">Series video hướng dẫn kèm sản phẩm</Link></li>
+            </ul>
+            <SocialLinks socials={creatorProfile.socials} variant="inline" />
+          </div>
+
+          <div>
             <h5 className="font-semibold text-text-primary text-sm mb-3">Hỗ Trợ Kỹ Thuật</h5>
             <p className="text-text-muted mb-3 leading-relaxed">Đội ngũ kỹ thuật viên trực tuyến 24/7 qua Telegram chuyên sâu cho dev.</p>
             <a
@@ -88,9 +118,15 @@ export const Footer: React.FC = () => {
 
         {/* Bottom copyright */}
         <div className="pt-8 border-t border-border-subtle/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-text-muted">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-mono font-semibold text-text-secondary">AIPro.dev</span>
-            <span>&copy; 2026. Chuẩn thiết kế One-Way Corridor UX cho Lập trình viên.</span>
+            <span>&copy; 2026</span>
+            <span className="text-text-muted hidden sm:inline">·</span>
+            <Link to="/about" className="text-text-muted hover:text-accent-cyan transition-colors">
+              Sáng lập bởi <span className="font-medium text-text-secondary">{creatorProfile.name}</span> (YouTube @JeffSu)
+            </Link>
+            <span>&bull;</span>
+            <span className="hidden md:inline">Chuẩn thiết kế One-Way Corridor UX cho Lập trình viên.</span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/status" className="hover:text-text-primary transition-colors">Uptime 99.98%</Link>

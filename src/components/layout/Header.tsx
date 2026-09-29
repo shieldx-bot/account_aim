@@ -62,11 +62,31 @@ export const Header: React.FC = () => {
               <Link to="/products" className="hover:text-text-primary transition-colors">
                 Tài Khoản AI
               </Link>
+              <Link
+                to="/api-credit"
+                className={`transition-colors ${
+                  location.pathname.startsWith('/api-credit')
+                    ? 'text-accent-cyan font-semibold'
+                    : 'hover:text-text-primary'
+                }`}
+              >
+                API Credit $
+              </Link>
               <Link to="/docs" className="hover:text-text-primary transition-colors">
                 Tài Liệu Cấu Hình
               </Link>
               <Link to="/status" className="hover:text-text-primary transition-colors">
                 Trạng Thái Hạ Tầng
+              </Link>
+              <Link
+                to="/about"
+                className={`transition-colors ${
+                  location.pathname.startsWith('/about')
+                    ? 'text-accent-cyan font-semibold'
+                    : 'hover:text-text-primary'
+                }`}
+              >
+                Về Jeff Su
               </Link>
               <Link to="/terms" className="hover:text-text-primary transition-colors">
                 Bảo Hành SLA

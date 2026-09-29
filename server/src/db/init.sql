@@ -13,9 +13,13 @@ CREATE TABLE IF NOT EXISTS users (
     balance_usd NUMERIC(10, 2) NOT NULL DEFAULT 2.00,
     tier VARCHAR(50) NOT NULL DEFAULT 'Standard' CHECK (tier IN ('Standard', 'VIP Dev', 'Enterprise')),
     phone VARCHAR(20),
+    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'banned')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Idempotent column additions for pre-existing databases
+ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'active';
 
 -- Index for fast lookup by email
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -138,4 +142,56 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_order_id ON subscriptions(order_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+
+-- Inventory Accounts Pool (pre-created credentials stocked by admin, assigned to orders on dispatch)
+CREATE TABLE IF NOT EXISTS inventory_accounts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_slug VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    access_token TEXT,
+    two_factor_backup TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'assigned', 'replaced', 'void')),
+    assigned_order_id VARCHAR(50) REFERENCES orders(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_inventory_product_slug ON inventory_accounts(product_slug);
+CREATE INDEX IF NOT EXISTS idx_inventory_status ON inventory_accounts(status);
+CREATE INDEX IF NOT EXISTS idx_inventory_assigned_order ON inventory_accounts(assigned_order_id);
+
+-- Warranty / Support Tickets (Lookup page claims + account exchanges)
+CREATE TABLE IF NOT EXISTS warranty_tickets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id VARCHAR(50) NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    requester_email VARCHAR(255) NOT NULL,
+    reason VARCHAR(50) NOT NULL DEFAULT 'account_locked',
+    status VARCHAR(20) NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'resolved', 'rejected')),
+    old_account_email VARCHAR(255),
+    new_account_email VARCHAR(255),
+    new_account_password VARCHAR(255),
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_warranty_order_id ON warranty_tickets(order_id);
+CREATE INDEX IF NOT EXISTS idx_warranty_status ON warranty_tickets(status);
+
+-- OTP codes for guest order lookup (email-verification simulation store)
+CREATE TABLE IF NOT EXISTS lookup_otps (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id VARCHAR(50) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    code VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '5 minutes'),
+    used BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_lookup_otps_order ON lookup_otps(order_id, email);
+
+-- Idempotent: mark which accounts a user has already exchanged via warranty (max 3 per order)
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS warranty_exchanges INT NOT NULL DEFAULT 0;
 
