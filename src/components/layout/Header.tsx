@@ -71,6 +71,15 @@ export const Header: React.FC = () => {
               <Link to="/terms" className="hover:text-text-primary transition-colors">
                 Bảo Hành SLA
               </Link>
+              <Link
+                to="/about"
+                className={`inline-flex items-center gap-1.5 transition-colors ${
+                  location.pathname === '/about' ? 'text-accent-cyan font-semibold' : ''
+                } hover:text-text-primary`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-status-success" />
+                Về Tôi (Jeff Su)
+              </Link>
             </nav>
 
             {/* Right Action Controls */}
