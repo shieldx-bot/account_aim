@@ -32,7 +32,7 @@ export const ProductsPage: React.FC = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
-    document.title = 'Kho Tài Khoản AI Pro Bản Quyền Chính Hãng | AIPro.dev';
+    document.title = 'Official AI Pro License Accounts | AIPro.dev';
   }, []);
 
   // Sync category param with URL if needed
@@ -100,20 +100,20 @@ export const ProductsPage: React.FC = () => {
 
   const FAQS = [
     {
-      q: 'Sau khi thanh toán bao lâu tôi sẽ nhận được tài khoản AI?',
-      a: 'Hệ thống AIPro.dev kích hoạt hoàn toàn tự động 24/7. Ngay sau khi cổng thanh toán PayPal xác nhận giao dịch thành công (thường < 30 giây), hệ thống sẽ gửi thông tin cấp quyền hoặc lời mời gia nhập Workspace qua Email mà bạn đã cung cấp.',
+      q: 'How long will I receive my AI account after payment?',
+      a: 'AIPro.dev system activates completely automatically 24/7. Immediately after the PayPal payment gateway confirms the transaction (typically < 30 seconds), the system will send account access or Workspace invitation details to the email you provided.',
     },
     {
-      q: 'Tài khoản được cấp phát theo phương thức nào?',
-      a: 'Tùy thuộc vào gói dịch vụ, chúng tôi hỗ trợ 2 phương thức: (1) Lời mời kích hoạt trực tiếp vào email cá nhân chính chủ của bạn (Invite Email/Workspace), hoặc (2) Tài khoản chuyên dụng tạo sẵn (Dedicated Account) đã được nạp gói bản quyền chính hãng.',
+      q: 'What provisioning methods are available for accounts?',
+      a: 'Depending on the service package, we support 2 methods: (1) Direct activation invite sent to your personal email (Invite Email/Workspace), or (2) Pre-created Dedicated Account with official license already loaded.',
     },
     {
-      q: 'Chính sách bảo hành và cam kết dịch vụ (SLA) ra sao?',
-      a: 'Mọi gói bản quyền tại AIPro.dev được bảo hành 1-đổi-1 tự động trong suốt thời hạn sử dụng. Nếu phát sinh lỗi gói hoặc hạn ngạch do nhà cung cấp, hệ thống Bot của chúng tôi sẽ cấp lại tài khoản mới hoặc gia hạn bù ngày trong vòng dưới 2 phút.',
+      q: 'What is the warranty and SLA commitment policy?',
+      a: 'All AIPro.dev license packages include automatic 1-exchange warranty throughout the service period. If any package or quota issues arise from the provider, our Bot system will automatically issue a new account or extend service days within 2 minutes.',
     },
     {
-      q: 'Tôi có thể thanh toán bằng những phương thức nào?',
-      a: 'Chúng tôi hỗ trợ thanh toán quốc tế qua cổng PayPal bảo mật, bao gồm số dư PayPal, thẻ tín dụng/ghi nợ quốc tế Visa, Mastercard, American Express và Discover mà không yêu cầu tài khoản PayPal bắt buộc.',
+      q: 'What payment methods are available?',
+      a: 'We support secure international payments via PayPal gateway, including PayPal balance, international credit/debit cards (Visa, Mastercard, American Express, Discover) without requiring a PayPal account.',
     },
   ];
 
@@ -126,37 +126,37 @@ export const ProductsPage: React.FC = () => {
         {/* Breadcrumb Navigation */}
         <nav className="flex items-center gap-2 text-xs font-mono text-text-muted mb-6">
           <Link to="/" className="hover:text-text-primary transition-colors">
-            Trang chủ
+            Home
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-border-subtle" />
-          <span className="text-accent-cyan font-semibold">Danh mục sản phẩm AI Pro</span>
+          <span className="text-accent-cyan font-semibold">AI Pro Product Catalog</span>
         </nav>
 
         {/* Page Header */}
         <div className="text-center max-w-3xl mx-auto mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface border border-accent-cyan/30 text-xs font-mono text-accent-cyan mb-4 shadow-[0_0_15px_rgba(0,240,255,0.15)]">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>16 GÓI BẢN QUYỀN CHÍNH HÃNG SẴN SÀNG BÀN GIAO</span>
+            <span>16 OFFICIAL LICENSES READY FOR DELIVERY</span>
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-text-primary tracking-tight leading-tight">
-            Kho Tài Khoản AI Pro Chuẩn Cho{' '}
+            Premium AI Pro Account Vault for{' '}
             <span className="bg-gradient-to-r from-accent-cyan via-primary-blue to-[#60A5FA] bg-clip-text text-transparent">
-              Lập Trình Viên &amp; Đội Ngũ
+              Developers &amp; Teams
             </span>
           </h1>
           <p className="mt-4 text-xs sm:text-sm text-text-secondary leading-relaxed">
-            Kích hoạt trực tiếp vào email chính chủ, tiết kiệm tới 65% chi phí so với mua lẻ. Đảm bảo 100% tài khoản sạch bản quyền, bảo hành tự động 1-đổi-1 24/7.
+            Direct activation on official email, save up to 65% vs retail. 100% clean license, auto 1-exchange warranty 24/7.
           </p>
 
           {/* Value Props Row */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-text-secondary">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface/60 border border-border-subtle">
               <Zap className="w-3.5 h-3.5 text-accent-cyan" />
-              <span>Giao tức thì &lt; 30s</span>
+              <span>Instant Delivery &lt; 30s</span>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface/60 border border-border-subtle">
               <ShieldCheck className="w-3.5 h-3.5 text-status-success" />
-              <span>Bảo hành 1-đổi-1 tự động</span>
+              <span>Auto 1-Exchange Warranty</span>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface/60 border border-border-subtle">
               <CreditCard className="w-3.5 h-3.5 text-[#FFC439]" />
@@ -164,7 +164,7 @@ export const ProductsPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface/60 border border-border-subtle">
               <Headphones className="w-3.5 h-3.5 text-primary-blue" />
-              <span>Hỗ trợ kỹ thuật 24/7</span>
+              <span>Technical Support 24/7</span>
             </div>
           </div>
         </div>
@@ -194,8 +194,8 @@ export const ProductsPage: React.FC = () => {
         <div className="flex items-center justify-between text-xs text-text-muted mb-6 pb-3 border-b border-border-subtle/60">
           <div className="flex items-center gap-2">
             <span>
-              Hiển thị <span className="font-bold text-text-primary font-mono">{filteredProducts.length}</span> trên tổng số{' '}
-              <span className="font-bold text-text-primary font-mono">{products.length}</span> sản phẩm
+              Showing <span className="font-bold text-text-primary font-mono">{filteredProducts.length}</span> of{' '}
+              <span className="font-bold text-text-primary font-mono">{products.length}</span> products
             </span>
             {activeCategory !== 'all' && (
               <span className="px-2 py-0.5 rounded-md bg-primary-blue/15 text-accent-cyan border border-primary-blue/30 font-mono text-[11px]">
@@ -215,7 +215,7 @@ export const ProductsPage: React.FC = () => {
               className="flex items-center gap-1 text-accent-cyan hover:text-white transition-colors cursor-pointer text-xs"
             >
               <RotateCcw className="w-3 h-3" />
-              <span>Đặt lại bộ lọc</span>
+              <span>Reset Filters</span>
             </button>
           )}
         </div>
@@ -261,10 +261,10 @@ export const ProductsPage: React.FC = () => {
         <section className="mt-20 pt-12 border-t border-border-subtle/80">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <h2 className="text-2xl font-bold text-text-primary tracking-tight">
-              Tại Sao Hơn 10,000+ Kỹ Sư &amp; Đội Ngũ Chọn AIPro.dev?
+              Why 10,000+ Developers &amp; Teams Choose AIPro.dev?
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-text-secondary">
-              Giải pháp tối ưu hóa chi phí bản quyền công nghệ cho lập trình viên và doanh nghiệp Việt Nam.
+              Cost-optimized technology license solutions for developers and businesses.
             </p>
           </div>
 
@@ -273,9 +273,9 @@ export const ProductsPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-primary-blue/15 border border-primary-blue/30 flex items-center justify-center text-accent-cyan mb-4">
                 <Zap className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-bold text-text-primary mb-1.5">Giao Hàng Tự Động &lt; 30s</h3>
+              <h3 className="text-sm font-bold text-text-primary mb-1.5">Auto Delivery &lt; 30s</h3>
               <p className="text-xs text-text-secondary leading-relaxed">
-                Hệ thống API kết nối trực tiếp nhận đơn và gửi lời mời kích hoạt ngay lập tức sau khi thanh toán thành công.
+                API system directly receives orders and sends activation invite immediately after payment confirmation.
               </p>
             </div>
 
@@ -283,9 +283,9 @@ export const ProductsPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-status-success/15 border border-status-success/30 flex items-center justify-center text-status-success mb-4">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-bold text-text-primary mb-1.5">Bảo Hành 1-Đổi-1 Tự Động</h3>
+              <h3 className="text-sm font-bold text-text-primary mb-1.5">Auto 1-Exchange Warranty</h3>
               <p className="text-xs text-text-secondary leading-relaxed">
-                Cam kết duy trì tính liên tục của công việc. Đổi mới ngay lập tức qua bot tự động nếu tài khoản bị gián đoạn.
+                Guarantee to maintain work continuity. Auto-bot replacement if account is interrupted.
               </p>
             </div>
 
@@ -293,9 +293,9 @@ export const ProductsPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-[#FFC439]/15 border border-[#FFC439]/30 flex items-center justify-center text-[#FFC439] mb-4">
                 <CreditCard className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-bold text-text-primary mb-1.5">Thanh Toán PayPal &amp; Quốc Tế</h3>
+              <h3 className="text-sm font-bold text-text-primary mb-1.5">PayPal &amp; International Payments</h3>
               <p className="text-xs text-text-secondary leading-relaxed">
-                Thanh toán toàn cầu an toàn qua PayPal, thẻ Visa/Mastercard với tỷ giá quy đổi ưu đãi và minh bạch.
+                Secure global payment via PayPal, Visa/Mastercard with preferred transparent exchange rate.
               </p>
             </div>
 
@@ -303,9 +303,9 @@ export const ProductsPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-primary-blue/15 border border-primary-blue/30 flex items-center justify-center text-primary-blue mb-4">
                 <Layers className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-bold text-text-primary mb-1.5">Tiết Kiệm Lên Đến 65%</h3>
+              <h3 className="text-sm font-bold text-text-primary mb-1.5">Save Up to 65%</h3>
               <p className="text-xs text-text-secondary leading-relaxed">
-                Hợp tác phân phối sỉ và chương trình tài trợ nhà phát triển giúp bạn tiếp cận công cụ AI với mức giá rẻ nhất.
+                Wholesale distribution partnerships and developer sponsorship programs provide the most affordable AI tool access.
               </p>
             </div>
           </div>
@@ -316,11 +316,11 @@ export const ProductsPage: React.FC = () => {
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-mono text-accent-cyan mb-2">
               <HelpCircle className="w-3.5 h-3.5" />
-              <span>HỎI ĐÁP THƯỜNG GẶP</span>
+              <span>FAQ</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-text-primary">
-              Câu Hỏi Về Dịch Vụ &amp; Bản Quyền
-            </h2>
+<h2 className="text-xl sm:text-2xl font-bold text-text-primary">
+          Questions About Service & Licensing
+        </h2>
           </div>
 
           <div className="space-y-3">
@@ -356,9 +356,9 @@ export const ProductsPage: React.FC = () => {
 
           <div className="mt-8 text-center">
             <p className="text-xs text-text-muted">
-              Cần hỗ trợ thêm về các gói tài khoản hoặc đặt mua cho doanh nghiệp?{' '}
+              Need additional support for account packages or enterprise purchases?{' '}
               <Link to="/docs" className="text-accent-cyan hover:underline inline-flex items-center gap-1">
-                <span>Xem tài liệu cấu hình</span>
+                <span>View Setup Guides</span>
                 <ArrowRight className="w-3 h-3" />
               </Link>
             </p>

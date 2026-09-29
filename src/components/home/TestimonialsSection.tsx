@@ -43,10 +43,10 @@ export const TestimonialsSection: React.FC = () => {
       <div className="text-center max-w-3xl mx-auto mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-status-warning/10 border border-status-warning/30 text-status-warning text-xs font-mono font-semibold mb-3">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Đánh Giá Thực Tế Từ Cộng Đồng Lập Trình</span>
+          <span>Real Feedback from Developer Community</span>
         </div>
-        <h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
-          Hơn 12.400+ Kỹ Sư &amp; Đội Ngũ Công Nghệ Tin Dùng
+<h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
+          12,400+ Engineers & Tech Teams Trust
         </h2>
         <p className="mt-3 text-sm sm:text-base text-text-secondary">
           Điểm đánh giá trung bình 4.9/5 trên toàn bộ hệ thống đơn hàng đã hoàn tất.
@@ -88,9 +88,7 @@ export const TestimonialsSection: React.FC = () => {
                   )}
                 </div>
                 <span className="text-[11px] text-text-muted block truncate">{t.role}</span>
-                <span className="text-[10px] text-accent-cyan font-mono block mt-0.5 font-semibold">
-                  Đã mua: {t.product}
-                </span>
+                <span>Đã mua: {t.product}</span>
               </div>
             </div>
           </div>

@@ -53,23 +53,23 @@ export const Header: React.FC = () => {
         {isCheckout ? (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-status-success/30 text-status-success text-xs font-semibold">
             <Shield className="w-3.5 h-3.5" />
-            <span>Thanh toán an toàn SSL 256-bit</span>
+            <span>SSL 256-bit Secure Checkout</span>
           </div>
         ) : (
           <>
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-text-secondary">
               <Link to="/products" className="hover:text-text-primary transition-colors">
-                Tài Khoản AI
+                AI Accounts
               </Link>
               <Link to="/docs" className="hover:text-text-primary transition-colors">
-                Tài Liệu Cấu Hình
+                Setup Guides
               </Link>
               <Link to="/status" className="hover:text-text-primary transition-colors">
-                Trạng Thái Hạ Tầng
+                System Status
               </Link>
               <Link to="/terms" className="hover:text-text-primary transition-colors">
-                Bảo Hành SLA
+                SLA Warranty
               </Link>
             </nav>
 
@@ -107,7 +107,7 @@ export const Header: React.FC = () => {
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-primary bg-surface hover:bg-elevated border border-border-subtle hover:border-border-focus rounded-lg transition-all"
               >
                 <Search className="w-3.5 h-3.5 text-accent-cyan" />
-                <span>Tra cứu</span>
+                <span>Order Lookup</span>
               </Link>
 
               {/* Shopping Cart Button with Dynamic Badge */}
@@ -115,7 +115,7 @@ export const Header: React.FC = () => {
                 type="button"
                 onClick={openCart}
                 className="relative p-2 rounded-xl bg-surface hover:bg-surface-subtle border border-border-subtle hover:border-primary-blue text-text-secondary hover:text-text-primary transition-all group"
-                title="Xem giỏ hàng"
+                title="View cart"
               >
                 <ShoppingBag className="w-4 h-4 text-accent-cyan group-hover:scale-110 transition-transform" />
                 {totalCount > 0 && (
@@ -182,7 +182,7 @@ export const Header: React.FC = () => {
                             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition-colors"
                           >
                             <ShieldCheck className="w-4 h-4" />
-                            <span>Đối soát giao dịch</span>
+                            <span>Transaction Reconciliation</span>
                           </Link>
                         </>
                       ) : (
@@ -193,7 +193,7 @@ export const Header: React.FC = () => {
                             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-accent-cyan hover:bg-primary-blue/10 transition-colors"
                           >
                             <LayoutDashboard className="w-4 h-4" />
-                            <span>Portal Thành viên</span>
+                            <span>Member Portal</span>
                           </Link>
                           <Link
                             to="/member/subscriptions"
@@ -201,7 +201,7 @@ export const Header: React.FC = () => {
                             className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition-colors"
                           >
                             <KeyRound className="w-4 h-4" />
-                            <span>Tài khoản của tôi</span>
+                            <span>My Accounts</span>
                           </Link>
                         </>
                       )}
@@ -214,7 +214,7 @@ export const Header: React.FC = () => {
                         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-status-error/80 hover:text-status-error hover:bg-status-error/10 transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
-                        <span>Đăng xuất</span>
+                        <span>Sign Out</span>
                       </button>
                     </div>
                   )}
@@ -225,13 +225,13 @@ export const Header: React.FC = () => {
                     to="/login"
                     className="px-3 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors"
                   >
-                    Đăng nhập
+                    Sign in
                   </Link>
                   <Link
                     to="/register"
                     className="px-3.5 py-1.5 text-xs font-bold text-white bg-primary-blue hover:bg-primary-hover rounded-xl shadow-md shadow-primary-blue/25 transition-all"
                   >
-                    Đăng ký
+                    Sign up
                   </Link>
                 </div>
               )}

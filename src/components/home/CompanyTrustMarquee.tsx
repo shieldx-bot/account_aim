@@ -15,8 +15,8 @@ export const CompanyTrustMarquee: React.FC = () => {
   return (
     <div className="w-full py-10 border-y border-border-subtle/60 bg-surface/30 backdrop-blur-sm overflow-hidden my-8">
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 mb-6 text-center">
-        <p className="text-xs uppercase tracking-widest text-text-muted font-mono">
-          Được các kỹ sư phần mềm &amp; Tech Lead tại các công ty hàng đầu tin dùng
+<p className="text-xs uppercase tracking-widest text-text-muted font-mono">
+          Trusted by software engineers & Tech Leads at leading companies
         </p>
       </div>
 

@@ -18,13 +18,13 @@ export const LiveStockBanner: React.FC = () => {
         </span>
         <div className="text-xs">
           <span className="font-semibold text-text-primary">
-            Kho Bản Quyền Tự Động:{' '}
+            Auto License Warehouse:{' '}
           </span>
           <span className="text-status-success font-mono font-bold">
-            {isLoadingProducts ? '...' : `${totalStock} tài khoản`}
+            {isLoadingProducts ? '...' : `${totalStock} accounts`}
           </span>{' '}
           <span className="text-text-muted">
-            thuộc {activeProductsCount} danh mục AI cao cấp sẵn sàng bàn giao &lt; 30 giây.
+            across {activeProductsCount} premium AI categories ready for delivery &lt; 30 seconds.
           </span>
         </div>
       </div>
@@ -37,7 +37,7 @@ export const LiveStockBanner: React.FC = () => {
         </div>
         <div className="flex items-center gap-1.5 bg-canvas/60 px-2.5 py-1 rounded-lg border border-border-subtle">
           <Shield className="w-3.5 h-3.5 text-status-success" />
-          <span className="font-mono text-[11px]">Bảo hành 1-đổi-1</span>
+          <span className="font-mono text-[11px]">1-for-1 Warranty</span>
         </div>
         <div className="flex items-center gap-1.5 bg-canvas/60 px-2.5 py-1 rounded-lg border border-border-subtle">
           <RefreshCw className="w-3.5 h-3.5 text-primary-blue" />

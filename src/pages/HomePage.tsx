@@ -81,28 +81,28 @@ export const HomePage: React.FC = () => {
 
       {/* 1. HERO SECTION (Above the Fold) */}
       <section className="relative pt-10 pb-12 sm:pt-16 sm:pb-16 text-center max-w-[1240px] mx-auto px-4 sm:px-6">
-        {/* Announcement Pill with Live Badge */}
+{/* Announcement Pill with Live Badge */}
         <div className="inline-flex items-center gap-2 p-1 pr-4 rounded-full bg-surface border border-accent-cyan/30 text-xs text-text-secondary hover:border-accent-cyan transition-all shadow-[0_0_20px_rgba(0,240,255,0.15)] mb-6 group cursor-default">
           <span className="px-2.5 py-0.5 rounded-full bg-primary-blue text-white font-mono font-bold text-[10px] tracking-wide uppercase">
-            Mới cập nhật
+            NEW
           </span>
           <span className="flex items-center gap-1 font-medium text-text-primary">
-            <span>Claude 3.7 Sonnet Hybrid Reasoning &amp; Cursor 0.45 đã có sẵn</span>
+            <span>Claude 3.7 Sonnet Hybrid Reasoning & Cursor 0.45 now available</span>
             <ChevronRight className="w-3.5 h-3.5 text-accent-cyan group-hover:translate-x-0.5 transition-transform" />
           </span>
         </div>
 
         {/* Hero Title */}
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-text-primary tracking-tight max-w-4xl mx-auto leading-[1.12]">
-          Siêu Năng Lực Lập Trình Cho Kỹ Sư Công Nghệ.{' '}
+          Super Programming Power for Tech Engineers.{' '}
           <span className="bg-gradient-to-r from-accent-cyan via-primary-blue to-[#60A5FA] bg-clip-text text-transparent">
-            Kích Hoạt &lt; 30 Giây.
+            Activate &lt; 30 Seconds.
           </span>
         </h1>
 
         {/* Subtitle */}
         <p className="mt-5 text-sm sm:text-base text-text-secondary max-w-2xl mx-auto leading-relaxed">
-          Nền tảng phân phối tài khoản AI Pro chính hãng (Cursor Pro, Claude 3.7 Sonnet, ChatGPT Plus, GitHub Copilot). Tiết kiệm đến <span className="text-status-success font-semibold">65% chi phí</span>, gán email chính chủ an toàn 100%, bảo hành 1-đổi-1 tự động qua Bot 24/7.
+          Official AI Pro account distribution platform (Cursor Pro, Claude 3.7 Sonnet, ChatGPT Plus, GitHub Copilot). Save up to <span className="text-status-success font-semibold">65% cost</span>, assign 100% secure official email, auto 1-exchange warranty via 24/7 Bot.
         </p>
 
         {/* Hero Action CTA Buttons */}
@@ -112,7 +112,7 @@ export const HomePage: React.FC = () => {
             className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan text-white text-xs sm:text-sm font-bold shadow-lg shadow-primary-blue/30 hover:shadow-primary-blue/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             <Zap className="w-4 h-4 fill-white" />
-            <span>Khám Phá Các Gói Pro</span>
+            <span>Explore Pro Plans</span>
             <ArrowDown className="w-3.5 h-3.5" />
           </a>
 
@@ -121,7 +121,7 @@ export const HomePage: React.FC = () => {
             className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-surface hover:bg-surface-subtle border border-border-subtle hover:border-primary-blue/50 text-text-secondary hover:text-text-primary text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2"
           >
             <Activity className="w-4 h-4 text-accent-cyan" />
-            <span>Tính Lợi Nhuận ROI</span>
+            <span>Calculate ROI</span>
           </a>
         </div>
 
@@ -134,7 +134,7 @@ export const HomePage: React.FC = () => {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-text-muted">
           <div className="flex items-center gap-2">
             <span className="font-mono font-bold text-accent-cyan text-sm">12,450+</span>
-            <span className="text-text-secondary">kỹ sư tin dùng</span>
+            <span className="text-text-secondary">engineers using</span>
           </div>
           <span className="hidden sm:inline-block text-border-subtle">&bull;</span>
           <div className="flex items-center gap-1.5 text-status-warning font-semibold">
@@ -143,12 +143,12 @@ export const HomePage: React.FC = () => {
                 <Star key={i} className="w-3.5 h-3.5 fill-status-warning" />
               ))}
             </div>
-            <span className="text-text-secondary font-mono">4.9/5 Đánh giá</span>
+            <span className="text-text-secondary font-mono">4.9/5 Rating</span>
           </div>
           <span className="hidden sm:inline-block text-border-subtle">&bull;</span>
           <div className="flex items-center gap-1 text-status-success font-medium">
             <Shield className="w-3.5 h-3.5" />
-            <span>Cam kết SLA 99.9% Uptime</span>
+            <span>SLA 99.9% Uptime Commitment</span>
           </div>
         </div>
       </section>
@@ -175,14 +175,12 @@ export const HomePage: React.FC = () => {
         <div className="text-center max-w-3xl mx-auto mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-blue/10 border border-primary-blue/30 text-accent-cyan text-xs font-mono font-semibold mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Danh Mục Bản Quyền AI Pro Sẵn Có</span>
+            <span>AI Pro License Catalog</span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
-            Chọn công cụ AI tốt nhất cho quy trình làm việc của bạn
-          </h2>
-          <p className="mt-2 text-xs sm:text-sm text-text-secondary">
-            Cấp phát tự động tức thì. Hỗ trợ đầy đủ các gói thời hạn 1 tháng, 3 tháng, 6 tháng và 1 năm.
-          </p>
+          <span>Choose the best AI tool for your workflow</span>
+<p className="mt-2 text-xs sm:text-sm text-text-secondary">
+              Instant automatic allocation. Full support for 1-month, 3-month, 6-month and 1-year plans.
+            </p>
         </div>
 
         <FilterPillsBar
@@ -206,14 +204,14 @@ export const HomePage: React.FC = () => {
           {isLoadingProducts && products.length === 0 ? (
             <div className="text-center py-20 p-8 rounded-2xl bg-surface border border-border-subtle space-y-3">
               <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-blue" />
-              <p className="text-xs text-text-muted font-mono">Đang đồng bộ kho bản quyền AI từ PostgreSQL...</p>
+              <p className="text-xs text-text-muted font-mono">Syncing AI license inventory from PostgreSQL...</p>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-20 p-8 rounded-2xl bg-surface border border-border-subtle">
               <div className="font-mono text-status-error text-sm mb-2">$ Error: 0 matching AI tools found</div>
-              <h3 className="text-lg font-bold text-text-primary mb-2">Không tìm thấy gói AI phù hợp</h3>
+              <h3 className="text-lg font-bold text-text-primary mb-2">No matching AI packages found</h3>
               <p className="text-xs text-text-secondary max-w-md mx-auto mb-6">
-                Vui lòng thử tìm kiếm với từ khóa khác hoặc bấm khôi phục lại danh mục mặc định.
+                Please try searching with different keywords or click reset to restore default category.
               </p>
               <button
                 type="button"
@@ -224,7 +222,7 @@ export const HomePage: React.FC = () => {
                 }}
                 className="px-4 py-2 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-semibold cursor-pointer"
               >
-                Khôi phục bộ lọc
+                Reset Filters
               </button>
             </div>
           ) : viewMode === 'compact' ? (

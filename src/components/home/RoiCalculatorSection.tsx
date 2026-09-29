@@ -32,17 +32,17 @@ export const RoiCalculatorSection: React.FC = () => {
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-              Tính toán giá trị tài khoản AI Pro mang lại cho bạn
+              Calculate the Value AI Pro Accounts Bring You
             </h2>
             <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
-              Dựa trên khảo sát thực tế từ hơn 10.000 lập trình viên sử dụng Cursor Pro và Claude 3.7 Sonnet để tự động hóa viết unit test, debug và tạo boilerplate code.
+              Based on a real-world survey of over 10,000 developers using Cursor Pro and Claude 3.7 Sonnet to automate unit testing, debugging, and boilerplate code generation.
             </p>
 
             {/* Slider 1: Daily coding hours */}
             <div className="space-y-2 bg-canvas/60 p-4 rounded-2xl border border-border-subtle">
               <div className="flex justify-between items-center text-xs">
-                <span className="font-semibold text-text-secondary">Thời gian bạn code mỗi ngày:</span>
-                <span className="font-mono text-sm font-bold text-accent-cyan">{dailyHours} giờ/ngày</span>
+                <span className="font-semibold text-text-secondary">Your daily coding hours:</span>
+                <span className="font-mono text-sm font-bold text-accent-cyan">{dailyHours} hrs/day</span>
               </div>
               <input
                 type="range"
@@ -54,18 +54,18 @@ export const RoiCalculatorSection: React.FC = () => {
                 className="w-full accent-primary-blue h-2 bg-surface rounded-lg cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-text-muted font-mono">
-                <span>2 giờ</span>
-                <span>6 giờ (Tiêu chuẩn)</span>
-                <span>12 giờ</span>
+<span>2 hrs</span>
+                  <span>6 hrs (Default)</span>
+                  <span>12 hrs</span>
               </div>
             </div>
 
             {/* Slider 2: Hourly Rate */}
             <div className="space-y-2 bg-canvas/60 p-4 rounded-2xl border border-border-subtle">
               <div className="flex justify-between items-center text-xs">
-                <span className="font-semibold text-text-secondary">Thu nhập / Giá trị giờ làm việc:</span>
+                <span className="font-semibold text-text-secondary">Income / Hourly value:</span>
                 <span className="font-mono text-sm font-bold text-status-success">
-                  {hourlyRateVND.toLocaleString('vi-VN')} ₫/giờ (~${(hourlyRateVND / 25000).toFixed(0)}/h)
+                  {hourlyRateVND.toLocaleString('vi-VN')} ₫/hr (~${(hourlyRateVND / 25000).toFixed(0)}/hr)
                 </span>
               </div>
               <input
@@ -78,9 +78,9 @@ export const RoiCalculatorSection: React.FC = () => {
                 className="w-full accent-status-success h-2 bg-surface rounded-lg cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-text-muted font-mono">
-                <span>100.000 ₫ (~$4)</span>
-                <span>300.000 ₫ (~$12)</span>
-                <span>800.000 ₫ (~$32)</span>
+                <span>100K ₫ (~$4)</span>
+                <span>300K ₫ (~$12)</span>
+                <span>800K ₫ (~$32)</span>
               </div>
             </div>
           </div>
@@ -88,29 +88,29 @@ export const RoiCalculatorSection: React.FC = () => {
           {/* Right Column: ROI Output Card */}
           <div className="lg:col-span-5 bg-canvas/90 border border-primary-blue/40 rounded-2xl p-6 sm:p-7 shadow-2xl backdrop-blur-xl relative">
             <span className="text-[11px] font-mono text-accent-cyan uppercase tracking-wider block mb-1">
-              Ước tính hiệu quả mỗi tháng
+              Estimated Monthly ROI
             </span>
             <div className="flex items-baseline gap-2 mb-6">
-              <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
-                +{hoursSavedPerMonth} Giờ
-              </span>
-              <span className="text-xs text-text-muted">tiết kiệm thời gian/tháng</span>
+<span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
+                  +{hoursSavedPerMonth} Hours
+                </span>
+                <span className="text-xs text-text-muted">hours saved/month</span>
             </div>
 
             <div className="space-y-3 font-mono text-xs border-y border-border-subtle py-4 my-4">
               <div className="flex justify-between items-center">
-                <span className="text-text-secondary">Giá trị kinh tế thu được:</span>
+                <span className="text-text-secondary">Economic value gained:</span>
                 <span className="font-bold text-status-success">
                   +{monthlyValueVND.toLocaleString('vi-VN')} ₫
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-text-secondary">Chi phí đầu tư tài khoản AI Pro:</span>
-                <span className="text-text-muted line-through">500.000 ₫</span>
-                <span className="font-bold text-text-primary">249.000 ₫/th</span>
+<span className="text-text-secondary">AI Pro account cost:</span>
+                  <span className="text-text-muted line-through">$10/mo</span>
+                  <span className="font-bold text-text-primary">$7.47/mo</span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-border-subtle">
-                <span className="text-text-primary font-bold">Lợi nhuận ròng thời gian:</span>
+                <span className="text-text-primary font-bold">Net time profit:</span>
                 <span className="font-extrabold text-accent-cyan text-sm">
                   +{netProfitVND.toLocaleString('vi-VN')} ₫
                 </span>
@@ -118,9 +118,9 @@ export const RoiCalculatorSection: React.FC = () => {
             </div>
 
             <div className="p-3 rounded-xl bg-primary-blue/15 border border-primary-blue/30 text-center mb-5">
-              <span className="text-xs text-text-secondary">Tỷ suất sinh lời đầu tư:</span>
+              <span className="text-xs text-text-secondary">ROI ratio:</span>
               <div className="text-xl font-extrabold text-accent-cyan font-mono mt-0.5">
-                {roiMultiplier}x Tỷ Lệ Hoàn Vốn (ROI)
+                {roiMultiplier}x Return on Investment (ROI)
               </div>
             </div>
 

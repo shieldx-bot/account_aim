@@ -34,7 +34,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
       product,
       duration: {
         months: 1,
-        label: '1 Tháng',
+        label: '1 Month',
         discountPercent: product.discountPercent,
         monthlyEquivalentVND: product.currentPriceVND,
         monthlyEquivalentUSD: product.currentPriceUSD,
@@ -62,7 +62,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
       targetEmail: '',
       duration: {
         months: 1,
-        label: '1 Tháng',
+        label: '1 Month',
         discountPercent: product.discountPercent,
         monthlyEquivalentVND: product.currentPriceVND,
         monthlyEquivalentUSD: product.currentPriceUSD,
@@ -132,10 +132,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
           <div className="text-left md:text-right shrink-0">
             <div className="text-base font-bold font-mono text-text-primary">
               {formatPrice(product.currentPriceVND, product.currentPriceUSD)}
-              <span className="text-[10px] text-text-muted font-normal ml-1">/tháng</span>
+              <span className="text-[10px] text-text-muted font-normal ml-1">/month</span>
             </div>
             <div className="text-[11px] text-status-success font-mono font-semibold">
-              Tiết kiệm -{product.discountPercent}%
+              Save -{product.discountPercent}%
             </div>
           </div>
 
@@ -145,7 +145,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
               type="button"
               onClick={handleOpenQuickView}
               className="p-2 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle text-text-muted hover:text-text-primary transition-colors cursor-pointer"
-              title="Xem nhanh thông số"
+              title="Quick view specs"
             >
               <Eye className="w-4 h-4" />
             </button>
@@ -153,7 +153,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
               type="button"
               onClick={handleAddToCart}
               className="p-2 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle text-text-secondary hover:text-accent-cyan transition-colors cursor-pointer"
-              title="Thêm vào giỏ hàng"
+              title="Add to cart"
             >
               <ShoppingBag className="w-4 h-4" />
             </button>
@@ -164,7 +164,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
               className="px-4 py-2 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
             >
               <Zap className="w-3.5 h-3.5 fill-accent-cyan text-accent-cyan" />
-              <span>Mua Ngay</span>
+              <span>Buy Now</span>
             </button>
           </div>
         </div>
@@ -222,7 +222,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
             <div>
               <div className="text-2xl font-bold font-mono text-text-primary tracking-tight">
                 {formatPrice(product.currentPriceVND, product.currentPriceUSD)}
-                <span className="text-xs font-normal text-text-muted ml-1">/ tháng</span>
+                <span className="text-xs font-normal text-text-muted ml-1">/month</span>
               </div>
               <div className="text-xs text-text-muted line-through font-mono mt-0.5">
                 {formatPrice(product.originalPriceVND, product.originalPriceUSD)}
@@ -268,7 +268,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
               disabled
               className="w-full h-11 rounded-xl bg-surface border border-border-subtle text-text-muted text-xs font-semibold cursor-not-allowed"
             >
-              Tạm hết hàng - Đặt trước
+              Out of stock - Pre-order
             </button>
           ) : (
             <div className="flex items-center gap-2">
@@ -278,13 +278,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
                 className="flex-1 h-11 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center justify-center gap-1.5 glow-blue-button active:scale-[0.98] transition-all cursor-pointer"
               >
                 <Zap className="w-3.5 h-3.5 text-accent-cyan fill-accent-cyan" />
-                <span>Mua Ngay (30s)</span>
+                <span>Buy Now (30s)</span>
               </button>
               <button
                 type="button"
                 onClick={handleAddToCart}
                 className="w-11 h-11 rounded-xl bg-surface hover:bg-surface-subtle border border-border-subtle hover:border-primary-blue text-text-secondary hover:text-accent-cyan flex items-center justify-center transition-all group/cart cursor-pointer"
-                title="Thêm vào giỏ hàng"
+title="Add to cart"
               >
                 <ShoppingBag className="w-4 h-4 group-hover/cart:scale-110 transition-transform" />
               </button>
@@ -292,7 +292,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
                 type="button"
                 onClick={handleOpenQuickView}
                 className="w-11 h-11 rounded-xl bg-surface hover:bg-surface-subtle border border-border-subtle hover:border-primary-blue text-text-muted hover:text-text-primary flex items-center justify-center transition-all cursor-pointer"
-                title="Xem nhanh thông số"
+title="Quick view specs"
               >
                 <Eye className="w-4 h-4" />
               </button>
@@ -302,10 +302,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
           <div className="flex items-center justify-between px-1 text-[11px] text-text-muted">
             <span className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-status-success"></span>
-              Còn {product.stockCount} slot sẵn giao
+              {product.stockCount} slots available
             </span>
             <span className="text-primary-blue hover:underline flex items-center gap-0.5 font-medium">
-              Tùy biến gói <ArrowRight className="w-3 h-3" />
+              Customize package <ArrowRight className="w-3 h-3" />
             </span>
           </div>
         </div>
@@ -365,25 +365,25 @@ const QuickViewModal: React.FC<{ product: ProductPlan; onClose: () => void }> = 
             <span className="text-2xl font-bold font-mono text-text-primary">
               {formatPrice(product.currentPriceVND, product.currentPriceUSD)}
             </span>
-            <span className="text-xs text-text-muted ml-1">/ tháng</span>
+            <span className="text-xs text-text-muted ml-1">/month</span>
           </div>
           <span className="px-2 py-0.5 rounded text-xs font-bold font-mono bg-status-success/15 text-status-success">
-            Tiết kiệm -{product.discountPercent}%
+            Save -{product.discountPercent}%
           </span>
         </div>
 
         {/* Specs Table */}
         <div className="space-y-2 text-xs">
           <span className="font-semibold text-text-muted uppercase text-[10px] tracking-wider block">
-            Thông số kỹ thuật:
+            Technical specifications:
           </span>
           <div className="grid grid-cols-2 gap-2 font-mono">
             <div className="p-2.5 rounded-lg bg-canvas border border-border-subtle">
-              <span className="text-text-muted text-[10px] block">Hạn ngạch:</span>
-              <span className="font-bold text-accent-cyan">{product.specs?.fastQuota || 'Tiêu chuẩn'}</span>
+              <span className="text-text-muted text-[10px] block">Quota:</span>
+              <span className="font-bold text-accent-cyan">{product.specs?.fastQuota || 'Standard'}</span>
             </div>
             <div className="p-2.5 rounded-lg bg-canvas border border-border-subtle">
-              <span className="text-text-muted text-[10px] block">Cửa sổ ngữ cảnh:</span>
+              <span className="text-text-muted text-[10px] block">Context window:</span>
               <span className="font-bold text-text-primary">{product.specs?.contextWindow || 'Standard'}</span>
             </div>
             <div className="p-2.5 rounded-lg bg-canvas border border-border-subtle col-span-2">

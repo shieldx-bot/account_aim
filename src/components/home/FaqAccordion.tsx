@@ -3,24 +3,24 @@ import { ChevronDown } from 'lucide-react';
 
 const FAQS = [
   {
-    q: 'Sau khi thanh toán xong, tôi nhận tài khoản bằng cách nào và trong bao lâu?',
-    a: 'Ngay sau khi hệ thống nhận thanh toán (1.5 - 3s qua PayPal hoặc Thẻ Visa), bạn sẽ được chuyển hướng tự động đến "License Vault" trên website hiển thị toàn bộ Email, Mật khẩu, Token và Mã 2FA. Đồng thời, một bản sao lưu bảo mật sẽ được gửi thẳng vào Email của bạn trong vòng dưới 30 giây.',
+    q: 'After payment, how and when do I receive my account?',
+    a: 'Immediately after the system receives payment (1.5-3s via PayPal or Visa Card), you will be automatically redirected to the "License Vault" on the website displaying all Email, Password, Token, and 2FA Code. At the same time, a secure backup copy will be sent directly to your email within under 30 seconds.',
   },
   {
-    q: 'Gói "Nâng cấp chính chủ" và "Tài khoản cấp sẵn" khác nhau như thế nào?',
-    a: '"Nâng cấp chính chủ" là kích hoạt gói Pro/Team trực tiếp trên Email cá nhân của bạn, giữ nguyên 100% lịch sử chat và dự án cũ. "Tài khoản cấp sẵn" là tài khoản tạo mới độc quyền (Private 1-user) bàn giao ngay trong 10 giây.',
+    q: 'What is the difference between the "Primary Upgrade" package and "Ready Account"?',
+    a: '"Primary Upgrade" activates the Pro/Team package directly on your personal email, preserving 100% of your old chat and project history. "Ready Account" is a newly created exclusive account (Private 1-user) delivered immediately within 10 seconds.',
   },
   {
-    q: 'Chính sách bảo hành 1-đổi-1 tự động hoạt động như thế nào?',
-    a: 'Nếu tài khoản gặp lỗi trong quá trình sử dụng, bạn chỉ cần vào mục "Tra cứu đơn hàng", chọn lý do sự cố và nhấn "⚡ Kích hoạt đổi mới tài khoản trong 60s". Hệ thống Bot sẽ tự động trích xuất tài khoản mới từ kho dự phòng và bàn giao ngay trên màn hình mà không cần chờ đợi nhân viên.',
+    q: 'How does the automatic 1-for-1 warranty policy work?',
+    a: 'If your account encounters an issue during use, simply go to "Order Lookup", select the reason for the problem, and press "⚡ Activate account renewal in 60s". The Bot system will automatically extract a new account from the reserve warehouse and deliver it immediately on screen without waiting for staff.',
   },
   {
-    q: 'Hệ thống có thu thập hoặc lưu trữ mật khẩu cá nhân của tôi không?',
-    a: 'Tuyệt đối không. AIPro.dev tuân thủ triết lý Zero Mandatory Sign-up. Bạn không cần tạo mật khẩu để mua hàng. Đối với gói nâng cấp chính chủ, chúng tôi chỉ gửi lời mời nâng cấp (Invite Link) vào hòm thư của bạn, hoàn toàn không yêu cầu cung cấp mật khẩu hòm thư.',
+    q: 'Does the system collect or store my personal passwords?',
+    a: 'Absolutely not. AIPro.dev adheres to the Zero Mandatory Sign-up philosophy. You don't need to create a password to make a purchase. For the primary upgrade package, we only send an upgrade invitation (Invite Link) to your mailbox, never requesting your email password.',
   },
   {
-    q: 'Tôi có thể thanh toán bằng phương thức nào?',
-    a: 'Chúng tôi hỗ trợ cổng thanh toán quốc tế PayPal an toàn hàng đầu thế giới: Bạn có thể thanh toán trực tiếp bằng Thẻ Visa, Mastercard, AMEX (qua cổng PayPal mà không cần tạo tài khoản PayPal), hoặc thanh toán qua Ví PayPal và trả góp PayPal Pay Later (0% Lãi suất).',
+    q: 'What payment methods do you support?',
+    a: 'We support the world\'s leading secure international PayPal payment gateway: You can pay directly with Visa, Mastercard, AMEX (via PayPal gateway without needing a PayPal account), or pay via PayPal Wallet and PayPal Pay Later installment plan (0% interest rate).',
   },
 ];
 
@@ -34,8 +34,8 @@ export const FaqAccordion: React.FC = () => {
   return (
     <div className="w-full max-w-3xl mx-auto my-16">
       <div className="text-center mb-10">
-        <h2 className="text-2xl font-bold text-text-primary">Câu Hỏi Thường Gặp Của Lập Trình Viên</h2>
-        <p className="text-xs text-text-secondary mt-1">Minh bạch 100% về cơ chế bàn giao, bản quyền và cam kết SLA.</p>
+        <h2 className="text-2xl font-bold text-text-primary">Developer FAQs</h2>
+        <p className="text-xs text-text-secondary mt-1">100% transparency on delivery mechanism, licensing, and SLA commitments.</p>
       </div>
 
       <div className="space-y-3">

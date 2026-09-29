@@ -18,13 +18,13 @@ export const BentoFeaturesSection: React.FC = () => {
       <div className="text-center max-w-3xl mx-auto mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-blue/10 border border-primary-blue/30 text-accent-cyan text-xs font-mono font-semibold mb-3">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Hạ Tầng Cung Ứng Chuẩn Enterprise</span>
+          <span>Enterprise-Grade Supply Infrastructure</span>
         </div>
         <h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
-          Vì sao các kỹ sư hàng đầu chọn AIPro thay vì acc trôi nổi?
+          Why Top Engineers Choose AIPro Over Floating Accounts?
         </h2>
         <p className="mt-3 text-sm sm:text-base text-text-secondary">
-          Kiến trúc phân phối license tự động loại bỏ 100% rủi ro bị khóa tài khoản, rò rỉ mã nguồn và gián đoạn công việc.
+          Automated license distribution architecture eliminates 100% risk of account bans, source code leaks, and workflow disruption.
         </p>
       </div>
 
@@ -39,18 +39,18 @@ export const BentoFeaturesSection: React.FC = () => {
               <ShieldCheck className="w-5 h-5 text-accent-cyan" />
             </div>
             <div>
-              <span className="text-[10px] font-mono text-accent-cyan uppercase tracking-wider">
-                0% Rủi Ro Khóa Tài Khoản
+<span className="text-[10px] font-mono text-accent-cyan uppercase tracking-wider">
+                0% Account Ban Risk
               </span>
               <h3 className="text-lg font-bold text-text-primary">
-                Độc lập Session &amp; Thanh toán Doanh nghiệp Chuẩn Chỉ
+                Independent Sessions & Enterprise-Standard Payment
               </h3>
             </div>
           </div>
 
-          <p className="text-xs sm:text-sm text-text-secondary leading-relaxed mb-6 max-w-xl">
-            Không sử dụng thẻ hack (BIN/CC chùa) hay tài khoản crack lậu. Toàn bộ license Cursor Pro, Claude và ChatGPT được đăng ký trực tiếp qua cổng thanh toán pháp nhân đối tác với IP và hóa đơn minh bạch.
-          </p>
+<p className="text-xs sm:text-sm text-text-secondary leading-relaxed mb-6 max-w-xl">
+              No hack cards (BIN/CC chùa) or cracked lulled accounts used. All Cursor Pro, Claude and ChatGPT licenses are registered directly via partner enterprise payment gateways with transparent IP and invoicing.
+            </p>
 
           {/* Interactive Visual Element: Clean Security Terminal */}
           <div className="p-3.5 rounded-2xl bg-canvas border border-border-subtle font-mono text-xs text-text-muted">
@@ -78,13 +78,13 @@ export const BentoFeaturesSection: React.FC = () => {
             <Zap className="w-5 h-5" />
           </div>
           <span className="text-[10px] font-mono text-accent-cyan uppercase tracking-wider">
-            Tự Động 100%
+            Fully Automatic
           </span>
           <h3 className="text-lg font-bold text-text-primary mb-2">
-            Giao License &lt; 30 Giây
+            License Delivery &lt; 30 Seconds
           </h3>
           <p className="text-xs text-text-secondary leading-relaxed mb-4">
-            Webhook ngân hàng MBBank quét giao dịch 1.5s/lần. Tiền vào là hệ thống tự động gán quyền và mở Vault bàn giao ngay trên màn hình.
+            MBBank webhook scans transactions every 1.5s. Once payment received, the system auto-grants access and opens the Vault delivery on screen.
           </p>
           <div className="mt-auto pt-4 border-t border-border-subtle flex items-center justify-between font-mono text-[11px] text-text-muted">
             <span>Latency trung bình:</span>
@@ -98,13 +98,13 @@ export const BentoFeaturesSection: React.FC = () => {
             <RefreshCw className="w-5 h-5" />
           </div>
           <span className="text-[10px] font-mono text-status-error uppercase tracking-wider">
-            Bảo Hành 1-Đổi-1 Tức Thì
+            Instant 1-for-1 Warranty
           </span>
           <h3 className="text-lg font-bold text-text-primary mb-2">
-            Bot Đổi Trả Tự Động 24/7
+            24/7 Auto RMA Bot
           </h3>
           <p className="text-xs text-text-secondary leading-relaxed mb-4">
-            Không cần chờ CSKH trả lời Zalo. Nếu tài khoản mất Pro hay lỗi mật khẩu, chỉ cần nhập mã đơn hàng là Bot tự chẩn đoán và cấp tài khoản mới trong 30s.
+            No waiting for CSKH on Zalo. If account loses Pro or has password issues, just enter order code and Bot auto-diagnoses and issues new account in 30s.
           </p>
           <div className="mt-auto pt-4 border-t border-border-subtle flex items-center justify-between font-mono text-[11px] text-text-muted">
             <span>Tỷ lệ tự giải quyết:</span>
@@ -120,10 +120,10 @@ export const BentoFeaturesSection: React.FC = () => {
             </div>
             <div>
               <span className="text-[10px] font-mono text-status-success uppercase tracking-wider">
-                Bảo Mật Mã Nguồn Tuyệt Đối
+                Absolute Source Code Security
               </span>
               <h3 className="text-lg font-bold text-text-primary">
-                Gán Quyền Trên Email Chính Chủ Công Ty
+                Assign Permissions on Company-Owned Email
               </h3>
             </div>
           </div>
