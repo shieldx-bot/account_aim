@@ -339,6 +339,21 @@ export const ordersApi = {
     }
     return body.data;
   },
+
+  /**
+   * Public lookup (Warranty page): find order + subscription by email or orderId
+   */
+  async lookup(params: { email?: string; orderId?: string }): Promise<{ order: any; subscription: any }> {
+    const query = new URLSearchParams();
+    if (params.email) query.append('email', params.email);
+    if (params.orderId) query.append('orderId', params.orderId);
+    const res = await fetch(`${API_BASE_URL}/orders/lookup?${query}`);
+    const body = await res.json();
+    if (!res.ok) {
+      throw new Error(body.message || 'Không tìm thấy đơn hàng khớp với thông tin tra cứu.');
+    }
+    return body.data;
+  },
 };
 
 export const subscriptionsApi = {

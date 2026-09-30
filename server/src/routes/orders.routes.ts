@@ -3,6 +3,7 @@ import {
   createOrder,
   getMyOrders,
   getOrderById,
+  lookupOrderByEmailOrId,
   getMySubscriptions,
   updateSubscriptionAutoRenew,
   getAllOrdersAdmin,
@@ -32,6 +33,12 @@ ordersRouter.post('/', authenticateToken, createOrder);
  * Get my orders (requires auth)
  */
 ordersRouter.get('/me', authenticateToken, getMyOrders);
+
+/**
+ * GET /api/orders/lookup?email=&orderId=
+ * Public lookup gate for the Warranty Self-Service page (no auth).
+ */
+ordersRouter.get('/lookup', lookupOrderByEmailOrId);
 
 /**
  * GET /api/orders/:orderId

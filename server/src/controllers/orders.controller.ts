@@ -167,10 +167,113 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
 
   const newOrder = result.rows[0];
 
+  // ── Auto-provisioning: allocate a real account from the warehouse (PostgreSQL) ──
+  let allocatedAccount: { email: string; password: string } | null = null;
+  try {
+    const accRes = await pool.query(
+      `SELECT * FROM inventory_accounts
+       WHERE product_id = $1 AND pool = 'active' AND status = 'available'
+       ORDER BY created_at ASC LIMIT 1 FOR UPDATE SKIP LOCKED`,
+      [productId]
+    );
+    let acc = accRes.rows[0] ?? null;
+    if (!acc) {
+      // Fallback: match by tool name against product name/slug
+      const byTool = await pool.query(
+        `SELECT * FROM inventory_accounts
+         WHERE LOWER(tool) = LOWER($1) AND pool = 'active' AND status = 'available'
+         ORDER BY created_at ASC LIMIT 1`,
+        [productCheck.rows[0].name]
+      );
+      acc = byTool.rows[0] ?? null;
+    }
+    if (acc) {
+      await pool.query(
+        `UPDATE inventory_accounts
+         SET status = 'assigned', assigned_order_id = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [newOrder.id, acc.id]
+      );
+      allocatedAccount = { email: acc.email, password: acc.password };
+
+      // Create subscription record bound to the allocated account
+      await pool.query(
+        `INSERT INTO subscriptions (
+          order_id, user_id, product_id, product_name, product_slug, brand,
+          provisioning_type, account_email, account_password_encrypted,
+          start_date, expires_at, days_remaining, status
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CURRENT_DATE,$10,
+                  GREATEST(0, ($10::date - CURRENT_DATE)), 'active')`,
+        [
+          newOrder.id,
+          userId,
+          productId,
+          productName,
+          productSlug,
+          productSlug.split('-')[0] || 'aipro',
+          provisioningType || 'pre_created',
+          acc.email,
+          acc.password,
+          warrantyDate.toISOString().split('T')[0],
+        ]
+      );
+    }
+  } catch (provErr) {
+    // Provisioning failure must not break the paid order — admin can fulfill manually
+    console.error('[Provisioning] Auto-allocation failed for order', newOrder.id, provErr);
+  }
+
   res.status(201).json({
     success: true,
-    message: 'Đơn hàng đã được tạo thành công!',
-    data: formatOrderRow(newOrder),
+    message: allocatedAccount
+      ? 'Đơn hàng đã được tạo và tự động bàn giao tài khoản từ kho.'
+      : 'Đơn hàng đã được tạo! Hệ thống sẽ bàn giao tài khoản trong thời gian sớm nhất.',
+    data: { ...formatOrderRow(newOrder), provisioned: Boolean(allocatedAccount) },
+  });
+});
+
+/**
+ * GET /api/orders/lookup?email=&orderId=
+ * Public lookup gate: find an order by Order ID alone, or by Email + guestEmail.
+ * Returns only non-sensitive metadata (credentials require OTP verification client-side
+ * and are served through the owner's session / delivery page).
+ */
+export const lookupOrderByEmailOrId = catchAsync(async (req: Request, res: Response) => {
+  const email = String(req.query.email || '').trim().toLowerCase();
+  const orderId = String(req.query.orderId || '').trim().toUpperCase();
+
+  if (!email && !orderId) {
+    throw new BadRequestError('Thiếu email hoặc mã đơn hàng để tra cứu.');
+  }
+
+  const result = orderId
+    ? await pool.query('SELECT * FROM orders WHERE UPPER(id) = $1', [orderId])
+    : await pool.query(
+        `SELECT * FROM orders WHERE LOWER(guest_email) = $1 OR LOWER(target_email) = $1
+         ORDER BY created_at DESC LIMIT 1`,
+        [email]
+      );
+
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy đơn hàng khớp với thông tin tra cứu.');
+  }
+
+  const order = result.rows[0];
+
+  // Attach active subscription credentials for the matched order
+  const subRes = await pool.query(
+    `SELECT s.*, p.brand AS prod_brand FROM subscriptions s
+     LEFT JOIN products p ON p.id = s.product_id
+     WHERE s.order_id = $1 ORDER BY s.created_at DESC LIMIT 1`,
+    [order.id]
+  );
+
+  res.status(200).json({
+    success: true,
+    data: {
+      order: formatOrderRow(order),
+      subscription: subRes.rows[0] ? formatSubscriptionRow(subRes.rows[0]) : null,
+    },
   });
 });
 

@@ -170,14 +170,22 @@ export const DeliveryPage: React.FC = () => {
     handleCopy(md, 'markdown');
   };
 
-  // Self-test Account Health
-  const handleVerifyStatus = () => {
+  // Self-test Account Health — real HEAD request to the backend health endpoint (PostgreSQL check)
+  const handleVerifyStatus = async () => {
     setHealthStatus('testing');
     trackEvent('self_test_initiated', { order_id: orderId });
 
-    setTimeout(() => {
-      setHealthStatus('active');
-    }, 2000);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/health`);
+      const body = await res.json();
+      if (res.ok && body.status === 'healthy' && body.postgres === 'connected') {
+        setHealthStatus('active');
+      } else {
+        setHealthStatus('error');
+      }
+    } catch {
+      setHealthStatus('error');
+    }
   };
 
   return (

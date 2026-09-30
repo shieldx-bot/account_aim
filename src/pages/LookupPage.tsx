@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { trackEvent } from '@/utils/telemetry';
 import { openTelegramSupport } from '@/utils/diagnostics';
+import { ordersApi, warrantyApi } from '@/services/api';
 import {
   Search,
   ShieldCheck,
@@ -15,11 +16,19 @@ import {
   Clock,
   ArrowRight,
   ShieldAlert,
+  Loader2,
 } from 'lucide-react';
 
 type LookupTab = 'email_otp' | 'order_id';
 type WarrantyReason = 'out_of_pro' | 'wrong_password' | 'device_limit' | 'other';
 type ReplacementPhase = 'idle' | 'checking' | 'verifying' | 'allocating' | 'completed';
+
+const REASON_LABEL: Record<WarrantyReason, string> = {
+  out_of_pro: 'Bị out gói Pro / Mất Pro',
+  wrong_password: 'Sai mật khẩu đăng nhập',
+  device_limit: 'Bị giới hạn thiết bị',
+  other: 'Sự cố khác',
+};
 
 export const LookupPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<LookupTab>('email_otp');
@@ -31,9 +40,11 @@ export const LookupPage: React.FC = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Verified Order Mock State
-  const [accountEmail, setAccountEmail] = useState('cursor.dev.pro92@gmail.com');
-  const [accountPassword, setAccountPassword] = useState('pX!9#vK2_devSec2026');
+  // ── Real order data fetched from PostgreSQL via /api/orders/lookup ──
+  const [matchedOrder, setMatchedOrder] = useState<any | null>(null);
+  const [subscription, setSubscription] = useState<any | null>(null);
+  const [accountEmail, setAccountEmail] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -59,13 +70,38 @@ export const LookupPage: React.FC = () => {
     }
   }, [otpCooldown]);
 
-  // Handle OTP send
-  const handleSendOtp = () => {
+  /**
+   * Query the real PostgreSQL database through the public lookup endpoint.
+   */
+  const fetchOrderFromDb = async (params: { email?: string; orderId?: string }): Promise<boolean> => {
+    try {
+      const data = await ordersApi.lookup(params);
+      const order = data.order ?? null;
+      const sub = data.subscription ?? null;
+      if (!order) {
+        setErrorMsg('Không tìm thấy đơn hàng khớp với thông tin tra cứu.');
+        return false;
+      }
+      setMatchedOrder(order);
+      setSubscription(sub);
+      setAccountEmail(sub?.accountEmail ?? order.targetEmail ?? order.guestEmail ?? '');
+      setAccountPassword(sub?.accountPassword ?? '');
+      return true;
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Không thể kết nối máy chủ tra cứu đơn hàng.');
+      return false;
+    }
+  };
+
+  // Handle OTP send — verifies the email actually owns an order in DB first
+  const handleSendOtp = async () => {
     if (!emailInput.includes('@')) {
       setErrorMsg('Vui lòng nhập địa chỉ email hợp lệ');
       return;
     }
     setErrorMsg('');
+    const found = await fetchOrderFromDb({ email: emailInput });
+    if (!found) return;
     setOtpSent(true);
     setOtpCooldown(60);
     trackEvent('otp_requested', { email: emailInput });
@@ -108,47 +144,68 @@ export const LookupPage: React.FC = () => {
     }
   };
 
-  // Handle lookup by Order ID
-  const handleOrderLookup = (e: React.FormEvent) => {
+  // Handle lookup by Order ID — queries PostgreSQL directly
+  const handleOrderLookup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderIdInput.trim()) {
       setErrorMsg('Vui lòng nhập mã đơn hàng');
       return;
     }
-    setIsVerified(true);
-    trackEvent('order_lookup_success', { lookup_method: 'order_id', orderId: orderIdInput });
+    setErrorMsg('');
+    const found = await fetchOrderFromDb({ orderId: orderIdInput.trim() });
+    if (found) {
+      setIsVerified(true);
+      trackEvent('order_lookup_success', { lookup_method: 'order_id', orderId: orderIdInput.trim() });
+    }
   };
 
-  // Trigger automated replacement flow
-  const handleStartReplacement = () => {
-    if (replacementCount >= 2) {
+  // Trigger automated replacement flow — creates a REAL ticket in warranty_tickets table
+  const handleStartReplacement = async () => {
+    if (replacementCount >= 2 || !matchedOrder) {
       return;
     }
 
     setShowConfirmModal(false);
     setReplacementPhase('checking');
-    trackEvent('warranty_claim_initiated', { reason: selectedReason });
+    trackEvent('warranty_claim_initiated', { reason: selectedReason, order_id: matchedOrder.orderId });
 
-    // Step 1: Checking (1s)
-    setTimeout(() => {
+    // Step 1: Checking connection status (UI stepper while server round-trips run)
+    setTimeout(async () => {
       setReplacementPhase('verifying');
-      // Step 2: Verifying (2s)
+
+      // Step 2: File the dispute ticket into PostgreSQL (public endpoint)
+      let ticketOk = false;
+      try {
+        await warrantyApi.createTicket({
+          orderId: matchedOrder.orderId,
+          customerEmail: matchedOrder.guestEmail || emailInput || '',
+          tool: matchedOrder.productName || subscription?.productName || 'AIPro',
+          reason: REASON_LABEL[selectedReason],
+          attempts: replacementCount + 1,
+        });
+        ticketOk = true;
+      } catch (err: any) {
+        console.error('[Warranty] Ticket creation failed:', err);
+      }
+
       setTimeout(() => {
+        if (!ticketOk) {
+          setReplacementPhase('idle');
+          setErrorMsg('Không thể ghi nhận khiếu nại bảo hành. Vui lòng thử lại hoặc liên hệ Telegram hỗ trợ.');
+          return;
+        }
+
         setReplacementPhase('allocating');
-        // Step 3: Allocating (3s)
+
+        // Step 3: Ticket is queued for SLA bot/admin approval (agent_pending in DB)
         setTimeout(() => {
           setReplacementPhase('completed');
-          // Update credentials with new account
-          const newEmail = `cursor.pro.fresh${Math.floor(100 + Math.random() * 900)}@gmail.com`;
-          const newPass = `kL9#mZ_${Math.random().toString(36).substring(2, 10)}`;
-          setAccountEmail(newEmail);
-          setAccountPassword(newPass);
 
           const newCount = replacementCount + 1;
           setReplacementCount(newCount);
           localStorage.setItem('aipro_replacement_count', String(newCount));
 
-          trackEvent('warranty_claim_resolved', { newAccount: newEmail });
+          trackEvent('warranty_claim_queued', { order_id: matchedOrder.orderId, ticket_status: 'agent_pending' });
         }, 2500);
       }, 2000);
     }, 1500);
@@ -159,6 +216,15 @@ export const LookupPage: React.FC = () => {
     setCopied(field);
     setTimeout(() => setCopied(null), 2000);
   };
+
+  // Derived real values for rendering
+  const displayOrderId = matchedOrder?.orderId ?? '—';
+  const warrantyDaysLeft = matchedOrder?.warrantyExpireDate
+    ? Math.max(0, Math.ceil((new Date(matchedOrder.warrantyExpireDate).getTime() - Date.now()) / 86400000))
+    : subscription?.daysRemaining ?? 0;
+  const purchaseDateStr = matchedOrder?.createdAt
+    ? new Date(matchedOrder.createdAt).toLocaleDateString('vi-VN')
+    : '—';
 
   return (
     <div className="w-full max-w-[840px] mx-auto px-4 sm:px-6 py-10 pb-24">
@@ -238,7 +304,7 @@ export const LookupPage: React.FC = () => {
               {otpSent && (
                 <div className="pt-3 border-t border-border-subtle/50 animate-fadeIn">
                   <span className="block text-xs text-text-muted mb-2 text-center">
-                    Nhập mã 6 số gửi về email của bạn (Mẹo test: nhập 6 số bất kỳ hoặc mã 123456):
+                    Nhập mã 6 số gửi về email của bạn (Demo OTP: nhập 6 số bất kỳ):
                   </span>
                   <div className="flex justify-center gap-2">
                     {otpValues.map((val, idx) => (
@@ -292,12 +358,14 @@ export const LookupPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border-subtle/60">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-text-primary">Đơn Hàng #AIPRO-94820</h2>
+                  <h2 className="text-lg font-bold text-text-primary">Đơn Hàng #{displayOrderId}</h2>
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-status-success/15 text-status-success border border-status-success/30">
-                    🟢 Đang Bảo Hành (Còn 88 ngày)
+                    🟢 Đang Bảo Hành (Còn {warrantyDaysLeft} ngày)
                   </span>
                 </div>
-                <p className="text-xs text-text-muted mt-1">Gói: Cursor Pro 3 Tháng &bull; Ngày mua: 22/03/2026</p>
+                <p className="text-xs text-text-muted mt-1">
+                  Gói: {matchedOrder?.productName ?? '—'} &bull; Ngày mua: {purchaseDateStr}
+                </p>
               </div>
 
               <button
@@ -392,7 +460,7 @@ export const LookupPage: React.FC = () => {
                   {replacementPhase === 'completed' && (
                     <div className="flex items-center gap-2 text-status-success font-bold">
                       <Check className="w-4 h-4 stroke-[3]" />
-                      <span>[08s] Hoàn tất! Tài khoản mới đã được bàn giao lên màn hình và gửi vào email của bạn.</span>
+                      <span>[08s] Hoàn tất! Khiếu nại đã được ghi nhận vào hệ thống SLA. Kỹ thuật viên sẽ duyệt cấp tài khoản thay thế từ kho dự phòng trong ít phút.</span>
                     </div>
                   )}
                 </div>
@@ -473,7 +541,7 @@ export const LookupPage: React.FC = () => {
               <span>Sự cố phức tạp hơn cần hỗ trợ riêng?</span>
               <button
                 type="button"
-                onClick={() => openTelegramSupport('AIPRO-94820', { reason: selectedReason })}
+                onClick={() => openTelegramSupport(displayOrderId, { reason: selectedReason })}
                 className="text-primary-blue hover:underline font-semibold"
               >
                 [Kết nối Kỹ thuật viên Telegram 24/7]
