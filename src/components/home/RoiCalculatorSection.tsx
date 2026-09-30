@@ -25,7 +25,7 @@ export const RoiCalculatorSection: React.FC = () => {
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column: Sliders & Controls */}
-          <div className="lg:col-span-7 space-y-6">
+          <div data-section-header className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan text-xs font-mono font-semibold">
               <Calculator className="w-3.5 h-3.5" />
               <span>Interactive ROI Calculator</span>

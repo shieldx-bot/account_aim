@@ -1,54 +1,115 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { prefersReducedMotion } from '@/hooks/useGsapContext';
+
+gsap.registerPlugin(ScrollTrigger);
 
 /**
- * useScrollReveal — tiny IntersectionObserver hook (no framer-motion).
- * Returns a ref + `visible` flag; flips to true once the element enters viewport.
+ * useScrollReveal — kept for backward compatibility with any consumer that
+ * only needs the IntersectionObserver-style "visible once" flag.
+ * Now powered by a ScrollTrigger `once` trigger so the whole landing uses
+ * one animation engine (GSAP) instead of two competing systems.
  */
 export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(threshold = 0.15) {
   const ref = useRef<T | null>(null);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = React.useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (typeof IntersectionObserver === 'undefined') {
-      setVisible(true); // SSR / old browser fallback
+    if (prefersReducedMotion()) {
+      setVisible(true);
       return;
     }
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            setVisible(true);
-            obs.disconnect();
-          }
-        }
-      },
-      { threshold },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
+    const st = ScrollTrigger.create({
+      trigger: el,
+      start: `top ${Math.round((1 - threshold) * 100)}%`,
+      once: true,
+      onEnter: () => setVisible(true),
+    });
+    return () => st.kill();
   }, [threshold]);
 
   return { ref, visible };
 }
 
-/** Wrapper: fades + slides content up when scrolled into view. */
-export const Reveal: React.FC<{
+interface RevealProps {
   children: React.ReactNode;
   delay?: number;
   className?: string;
-}> = ({ children, delay = 0, className = '' }) => {
-  const { ref, visible } = useScrollReveal<HTMLDivElement>();
+  /** Direction the content travels in from. */
+  from?: 'up' | 'down' | 'left' | 'right' | 'scale';
+  /** Travel distance in px (ignored for `scale`). */
+  distance?: number;
+  as?: keyof React.JSX.IntrinsicElements;
+}
+
+/**
+ * Reveal — GSAP + ScrollTrigger entrance wrapper (international standard:
+ * power3.out easing, ~0.8s duration, stagger-friendly, reduced-motion aware).
+ *
+ * The element is hidden via `gsap.set` (JS, not CSS class) so users with JS
+ * disabled still see content after SSR-less fallback, and there is never a
+ * flash-of-hidden-content because hiding happens in useLayoutEffect — before
+ * the browser paints.
+ */
+export const Reveal: React.FC<RevealProps> = ({
+  children,
+  delay = 0,
+  className = '',
+  from = 'up',
+  distance = 32,
+  as = 'div',
+}) => {
+  const innerRef = useRef<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+
+    if (prefersReducedMotion()) {
+      gsap.set(el, { clearProps: 'all' });
+      return;
+    }
+
+    const fromVars: gsap.TweenVars =
+      from === 'up'
+        ? { y: distance }
+        : from === 'down'
+          ? { y: -distance }
+          : from === 'left'
+            ? { x: distance }
+            : from === 'right'
+              ? { x: -distance }
+              : { scale: 0.94 };
+
+    gsap.set(el, { opacity: 0, ...fromVars });
+
+    const ctx = gsap.context(() => {
+      gsap.to(el, {
+        opacity: 1,
+        x: 0,
+        y: 0,
+        scale: 1,
+        duration: 0.85,
+        delay,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: el,
+          start: 'top 88%',
+          once: true,
+        },
+      });
+    });
+
+    return () => ctx.revert();
+  }, [delay, from, distance]);
+
+  const Tag = as as React.ElementType;
   return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out will-change-transform ${
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      } ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
+    <Tag ref={innerRef} className={`will-change-transform ${className}`}>
       {children}
-    </div>
+    </Tag>
   );
 };

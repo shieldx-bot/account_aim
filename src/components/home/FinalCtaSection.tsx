@@ -19,7 +19,7 @@ export const FinalCtaSection: React.FC = () => {
         {/* Ambient glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-primary-blue/25 rounded-full blur-[140px] pointer-events-none" />
 
-        <div className="relative z-10 max-w-3xl mx-auto space-y-6">
+        <div data-section-header className="relative z-10 max-w-3xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-accent-cyan/30 text-accent-cyan text-xs font-mono font-semibold shadow-lg">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Activate Your Account Today</span>

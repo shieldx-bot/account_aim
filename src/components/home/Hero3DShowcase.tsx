@@ -1,30 +1,72 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { prefersReducedMotion } from '@/hooks/useGsapContext';
 
 /**
- * Hero3DShowcase — CSS-3D "license card deck" floating behind the terminal.
- * Pure CSS transform-3d (no three.js) → zero extra bundle weight.
- * Cards parallax subtly with pointer movement for a natural, alive feel.
+ * Hero3DShowcase — GSAP-driven "license card deck" floating behind the terminal.
+ * Upgrade path: CSS keyframe float → GSAP 3D timeline (rotateY deal-splash +
+ * staggered yoyo float) and rAF-throttled pointer tilt via gsap.quickTo()
+ * (international practice: transform-only animation, single ticker, no setState
+ * per mousemove → zero React re-renders while animating).
  */
 export const Hero3DShowcase: React.FC = () => {
   const sceneRef = useRef<HTMLDivElement>(null);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const stageRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
 
+  // Pointer tilt — quickTo tweens interpolate toward the target each frame,
+  // giving the deck inertia instead of a hard 1:1 follow.
   useEffect(() => {
     const el = sceneRef.current;
-    if (!el) return;
+    if (!el || prefersReducedMotion()) return;
+    const qx = gsap.quickTo(stageRef.current, 'rotationY', { duration: 0.6, ease: 'power3.out' });
+    const qy = gsap.quickTo(stageRef.current, 'rotationX', { duration: 0.6, ease: 'power3.out' });
+
     const onMove = (e: MouseEvent) => {
       const rect = el.getBoundingClientRect();
       const px = (e.clientX - rect.left) / rect.width - 0.5;
       const py = (e.clientY - rect.top) / rect.height - 0.5;
-      setTilt({ x: py * -8, y: px * 10 });
+      qx(px * 14);
+      qy(py * -10);
     };
-    const onLeave = () => setTilt({ x: 0, y: 0 });
+    const onLeave = () => { qx(0); qy(0); };
     el.addEventListener('mousemove', onMove);
     el.addEventListener('mouseleave', onLeave);
     return () => {
       el.removeEventListener('mousemove', onMove);
       el.removeEventListener('mouseleave', onLeave);
     };
+  }, []);
+
+  // Entrance choreography + perpetual float (GSAP core only — no plugins needed).
+  useLayoutEffect(() => {
+    const cards = cardsRef.current?.children;
+    if (!cards || cards.length === 0 || prefersReducedMotion()) return;
+    const ctx = gsap.context(() => {
+      gsap.from(cards, {
+        opacity: 0,
+        rotationY: -70,
+        z: -260,
+        y: 60,
+        duration: 1.1,
+        ease: 'back.out(1.4)',
+        stagger: 0.14,
+        delay: 0.35,
+        clearProps: 'opacity,rotationY,z,y',
+      });
+      // Independent yoyo floats so cards never sync up (organic motion rule #1).
+      Array.from(cards).forEach((card, i) => {
+        gsap.to(card as HTMLElement, {
+          y: '-=14',
+          duration: 2.4 + i * 0.45,
+          ease: 'sine.inOut',
+          yoyo: true,
+          repeat: -1,
+          delay: 1.6 + i * 0.3,
+        });
+      });
+    }, sceneRef);
+    return () => ctx.revert();
   }, []);
 
   const cards = [
@@ -41,16 +83,16 @@ export const Hero3DShowcase: React.FC = () => {
       aria-hidden="true"
     >
       <div
-        className="relative w-full h-full transition-transform duration-300 ease-out [transform-style:preserve-3d]"
-        style={{ transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)` }}
+        ref={stageRef}
+        className="relative w-full h-full [transform-style:preserve-3d] will-change-transform"
       >
+        <div ref={cardsRef} className="contents">
         {cards.map((c) => (
           <div
             key={c.label}
-            className="absolute left-1/2 top-1/2 w-[190px] h-[118px] rounded-2xl border border-white/10 bg-gradient-to-br backdrop-blur-sm animate-heroFloat shadow-[0_18px_50px_rgba(0,0,0,0.55)]"
+            className="absolute left-1/2 top-1/2 w-[190px] h-[118px] rounded-2xl border border-white/10 bg-gradient-to-br backdrop-blur-sm shadow-[0_18px_50px_rgba(0,0,0,0.55)] will-change-transform"
             style={{
               transform: `translate(${c.tx}, ${c.ty}) translateZ(${c.z}px) rotate(${c.rot}deg)`,
-              animationDelay: c.delay,
               backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.04), transparent)`,
             }}
           >
@@ -67,6 +109,7 @@ export const Hero3DShowcase: React.FC = () => {
             </div>
           </div>
         ))}
+        </div>
       </div>
     </div>
   );

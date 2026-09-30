@@ -43,7 +43,7 @@ const COMPARISON_ROWS = [
 export const ComparisonTableSection: React.FC = () => {
   return (
     <section className="py-20 max-w-[1240px] mx-auto px-4 sm:px-6">
-<div className="text-center max-w-3xl mx-auto mb-14">
+<div data-section-header className="text-center max-w-3xl mx-auto mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-status-error/10 border border-status-error/30 text-status-error text-xs font-mono font-semibold mb-3">
           <ShieldAlert className="w-3.5 h-3.5" />
           <span>Protect Your Assets & Reputation</span>

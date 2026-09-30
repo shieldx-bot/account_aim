@@ -1,5 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
 import { ChevronLeft, ChevronRight, Flame, Gift, Rocket } from 'lucide-react';
+import { prefersReducedMotion } from '@/hooks/useGsapContext';
 import { PromoBackdrop } from './PromoBackdrop';
 
 interface PromoSlide {
@@ -45,9 +47,18 @@ const SLIDES: PromoSlide[] = [
 export const PromoCarousel: React.FC = () => {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const trackRef = useRef<HTMLDivElement | null>(null);
 
   const next = useCallback(() => setIndex((i) => (i + 1) % SLIDES.length), []);
   const prev = useCallback(() => setIndex((i) => (i - 1 + SLIDES.length) % SLIDES.length), []);
+
+  // GSAP slide transition: spring-like power3.out with a subtle content lift,
+  // replacing the plain CSS translateX tween.
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    if (!track || prefersReducedMotion()) return;
+    gsap.to(track, { xPercent: -index * 100, duration: 0.7, ease: 'power3.out', overwrite: 'auto' });
+  }, [index]);
 
   useEffect(() => {
     if (paused) return;
@@ -62,12 +73,12 @@ export const PromoCarousel: React.FC = () => {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${index * 100}%)` }}>
+        <div ref={trackRef} className="flex will-change-transform" style={{ transform: `translateX(-${index * 100}%)` }}>
           {SLIDES.map((s) => (
             <div key={s.id} className="min-w-full relative">
               <div className={`absolute inset-0 bg-gradient-to-r ${s.gradient}`} />
               <PromoBackdrop slideId={s.id} />
-              <div className="relative px-5 py-4 sm:px-8 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+              <div data-promo-content className="relative px-5 py-4 sm:px-8 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="p-2 rounded-xl bg-elevated border border-border-subtle text-accent-cyan">{s.icon}</span>
                   <div>
