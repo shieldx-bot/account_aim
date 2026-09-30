@@ -8,8 +8,6 @@ import {
   EyeOff,
   ArrowRight,
   ShieldCheck,
-  Zap,
-  Sparkles,
   CheckCircle2,
   Terminal,
 } from 'lucide-react';
@@ -17,7 +15,7 @@ import {
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginAs, isAuthenticated, user } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -63,18 +61,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleQuickLogin = async (role: 'member' | 'admin') => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    const res = await loginAs(role);
-    setIsLoading(false);
-    if (res.success) {
-      navigate(role === 'admin' ? '/admin/dashboard' : '/member/dashboard');
-    } else {
-      setErrorMessage(res.message || 'Đăng nhập nhanh thất bại.');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-canvas flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Ambient background glow */}
@@ -100,34 +86,6 @@ export const LoginPage: React.FC = () => {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10 px-4">
-        {/* Quick Demo Switcher Card */}
-        <div className="mb-6 p-4 rounded-2xl bg-surface/80 border border-primary-blue/30 backdrop-blur-md shadow-xl shadow-primary-blue/5">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-accent-cyan" />
-            <span className="text-xs font-bold uppercase tracking-wider text-accent-cyan">
-              <span>Quick Test / Demo Access</span>
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('member')}
-              className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle hover:border-primary-blue text-xs font-semibold text-text-primary transition-all hover:scale-[1.02]"
-            >
-              <Zap className="w-3.5 h-3.5 text-primary-blue" />
-              <span>Login Member</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('admin')}
-              className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-status-error/10 hover:bg-status-error/20 border border-status-error/30 text-xs font-semibold text-status-error transition-all hover:scale-[1.02]"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-status-error" />
-              <span>Login Admin</span>
-            </button>
-          </div>
-        </div>
-
         {/* Main Login Form Card */}
         <div className="bg-surface/90 border border-border-subtle backdrop-blur-xl py-8 px-6 sm:px-10 rounded-2xl shadow-2xl">
           {errorMessage && (

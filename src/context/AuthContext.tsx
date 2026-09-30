@@ -6,7 +6,6 @@ import { authApi } from '@/services/api';
 interface AuthContextType extends AuthState {
   token: string | null;
   login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
-  loginAs: (role: UserRole) => Promise<{ success: boolean; message?: string }>;
   register: (
     name: string,
     email: string,
@@ -118,26 +117,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const loginAs = async (role: UserRole): Promise<{ success: boolean; message?: string }> => {
-    // Quick-login seeds use REAL credentials stored in PostgreSQL — no fake JWT fallback.
-    const creds =
-      role === 'admin'
-        ? { email: 'admin@aipro.dev', pass: 'admin123' }
-        : { email: 'alex.dev@gmail.com', pass: '123456' };
-
-    try {
-      const res = await authApi.login(creds.email, creds.pass);
-      if (res.success && res.user && res.token) {
-        saveSession(res.user, res.token);
-        trackEvent('demo_login', { role });
-        return { success: true };
-      }
-      return { success: false, message: res.message || 'Đăng nhập thất bại.' };
-    } catch {
-      return { success: false, message: 'Không thể kết nối máy chủ. Vui lòng thử lại sau.' };
-    }
-  };
-
   const register = async (
     name: string,
     email: string,
@@ -192,7 +171,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         ...authState,
         login,
-        loginAs,
         register,
         logout,
         updateUser,
