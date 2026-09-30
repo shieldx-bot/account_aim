@@ -354,6 +354,39 @@ export const ordersApi = {
     }
     return body.data;
   },
+
+  /**
+   * Request a server-issued OTP for the warranty self-service lookup.
+   * Returns devCode only when backend runs outside NODE_ENV=production.
+   */
+  async requestLookupOtp(email: string, orderId: string): Promise<{ message: string; devCode?: string }> {
+    const res = await fetch(`${API_BASE_URL}/orders/lookup/otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, orderId }),
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      throw new Error(body.message || 'Không thể gửi mã OTP.');
+    }
+    return { message: body.message, devCode: body.devCode };
+  },
+
+  /**
+   * Verify the OTP server-side; on success returns full order + subscription.
+   */
+  async verifyLookupOtp(email: string, orderId: string, code: string): Promise<{ order: any; subscription: any }> {
+    const res = await fetch(`${API_BASE_URL}/orders/lookup/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, orderId, code }),
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      throw new Error(body.message || 'Mã OTP không hợp lệ hoặc đã hết hạn.');
+    }
+    return body.data;
+  },
 };
 
 export const subscriptionsApi = {

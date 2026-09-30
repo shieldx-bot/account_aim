@@ -134,12 +134,15 @@ export const CheckoutPage: React.FC = () => {
     });
 
     try {
-      // Stage 1: Authorizing (simulates gateway connection delay)
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      setProcessStage('capturing');
+      // Stage 1: Authorizing — real round-trip to the backend (replaces fake delay)
+      setProcessStage('authorizing');
+      const health = await fetch(`${import.meta.env.VITE_API_BASE ?? '/api'}/health`).then((r) => r.json());
+      if (health?.postgres !== 'connected') {
+        throw new Error('Gateway tạm thời không sẵn sàng. Vui lòng thử lại.');
+      }
 
       // Stage 2: Capturing — create real order in DB via API
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      setProcessStage('capturing');
 
       let createdOrderId = orderId;
 

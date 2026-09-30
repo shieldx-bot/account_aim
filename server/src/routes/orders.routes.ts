@@ -4,6 +4,8 @@ import {
   getMyOrders,
   getOrderById,
   lookupOrderByEmailOrId,
+  requestLookupOtp,
+  verifyLookupOtp,
   getMySubscriptions,
   updateSubscriptionAutoRenew,
   getAllOrdersAdmin,
@@ -39,6 +41,18 @@ ordersRouter.get('/me', authenticateToken, getMyOrders);
  * Public lookup gate for the Warranty Self-Service page (no auth).
  */
 ordersRouter.get('/lookup', lookupOrderByEmailOrId);
+
+/**
+ * POST /api/orders/lookup/otp
+ * Issue a server-side OTP (bcrypt-hashed, 5-min expiry) for the warranty page.
+ */
+ordersRouter.post('/lookup/otp', requestLookupOtp);
+
+/**
+ * POST /api/orders/lookup/verify-otp
+ * Validate OTP against PostgreSQL; unlocks full order + credentials on success.
+ */
+ordersRouter.post('/lookup/verify-otp', verifyLookupOtp);
 
 /**
  * GET /api/orders/:orderId

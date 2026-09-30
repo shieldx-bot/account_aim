@@ -61,6 +61,10 @@ export const LookupPage: React.FC = () => {
   });
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
+  // Order currently being verified (kept in a ref so OTP handlers never read stale state)
+  const lookupOrderIdRef = useRef<string>('');
+  const [devOtpHint, setDevOtpHint] = useState('');
+  const [otpVerifying, setOtpVerifying] = useState(false);
 
   // Cooldown timer for OTP
   useEffect(() => {
@@ -84,6 +88,7 @@ export const LookupPage: React.FC = () => {
       }
       setMatchedOrder(order);
       setSubscription(sub);
+      lookupOrderIdRef.current = order.orderId;
       setAccountEmail(sub?.accountEmail ?? order.targetEmail ?? order.guestEmail ?? '');
       setAccountPassword(sub?.accountPassword ?? '');
       return true;
@@ -93,18 +98,29 @@ export const LookupPage: React.FC = () => {
     }
   };
 
-  // Handle OTP send — verifies the email actually owns an order in DB first
+  // Handle OTP send — server issues a real bcrypt-hashed OTP bound to the order
   const handleSendOtp = async () => {
     if (!emailInput.includes('@')) {
       setErrorMsg('Vui lòng nhập địa chỉ email hợp lệ');
       return;
     }
     setErrorMsg('');
+    // Confirm the email owns an order in PostgreSQL (metadata-only gate)
     const found = await fetchOrderFromDb({ email: emailInput });
-    if (!found) return;
-    setOtpSent(true);
-    setOtpCooldown(60);
-    trackEvent('otp_requested', { email: emailInput });
+    if (!found || !lookupOrderIdRef.current) return;
+    await issueOtp(lookupOrderIdRef.current);
+  };
+
+  const issueOtp = async (orderId: string) => {
+    try {
+      const res = await ordersApi.requestLookupOtp(emailInput, orderId);
+      setOtpSent(true);
+      setOtpCooldown(60);
+      setDevOtpHint(res.devCode ? `Mã test (dev): ${res.devCode}` : '');
+      trackEvent('otp_requested', { email: emailInput, order_id: orderId });
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Không thể gửi mã OTP. Vui lòng thử lại.');
+    }
   };
 
   // Handle OTP input change with auto-focus next
@@ -118,8 +134,7 @@ export const LookupPage: React.FC = () => {
       });
       setOtpValues(newOtp);
       if (digits.length === 6) {
-        setIsVerified(true);
-        trackEvent('order_lookup_success', { lookup_method: 'email_otp' });
+        void verifyServerOtp(digits.join(''));
       }
       return;
     }
@@ -133,8 +148,37 @@ export const LookupPage: React.FC = () => {
     }
 
     if (newOtp.every((d) => d !== '')) {
+      void verifyServerOtp(newOtp.join(''));
+    }
+  };
+
+  /**
+   * Server-side OTP validation against lookup_otps table. Only on success do
+   * we unlock credentials (the public lookup gate never returns them).
+   */
+  const verifyServerOtp = async (code: string) => {
+    const targetOrderId = matchedOrder?.orderId ?? orderIdInput.trim().toUpperCase();
+    const targetEmail = emailInput || matchedOrder?.guestEmail || '';
+    if (!targetOrderId || !targetEmail) {
+      setErrorMsg('Thiếu thông tin đơn hàng để xác thực OTP.');
+      return;
+    }
+    setOtpVerifying(true);
+    try {
+      const data = await ordersApi.verifyLookupOtp(targetEmail, targetOrderId, code);
+      setMatchedOrder(data.order);
+      setSubscription(data.subscription);
+      setAccountEmail(data.subscription?.accountEmail ?? data.order.targetEmail ?? data.order.guestEmail ?? '');
+      setAccountPassword(data.subscription?.accountPassword ?? '');
       setIsVerified(true);
-      trackEvent('order_lookup_success', { lookup_method: 'email_otp' });
+      setDevOtpHint('');
+      trackEvent('order_lookup_success', { lookup_method: 'email_otp', order_id: targetOrderId });
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Mã OTP không đúng hoặc đã hết hạn.');
+      setOtpValues(['', '', '', '', '', '']);
+      otpInputsRef.current[0]?.focus();
+    } finally {
+      setOtpVerifying(false);
     }
   };
 
@@ -304,8 +348,13 @@ export const LookupPage: React.FC = () => {
               {otpSent && (
                 <div className="pt-3 border-t border-border-subtle/50 animate-fadeIn">
                   <span className="block text-xs text-text-muted mb-2 text-center">
-                    Nhập mã 6 số gửi về email của bạn (Demo OTP: nhập 6 số bất kỳ):
+                    Nhập mã 6 số vừa được gửi về email của bạn (hiệu lực 5 phút):
                   </span>
+                  {devOtpHint && (
+                    <p className="mb-2 text-center text-[11px] font-mono text-accent-cyan bg-accent-cyan/10 border border-accent-cyan/20 rounded-lg py-1">
+                      ⚡ {devOtpHint}
+                    </p>
+                  )}
                   <div className="flex justify-center gap-2">
                     {otpValues.map((val, idx) => (
                       <input
@@ -314,13 +363,19 @@ export const LookupPage: React.FC = () => {
                         type="tel"
                         inputMode="numeric"
                         maxLength={1}
+                        disabled={otpVerifying}
                         value={val}
                         onChange={(e) => handleOtpChange(idx, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className="w-10 h-12 text-center font-mono text-lg font-bold rounded-xl bg-canvas border border-border-subtle focus:border-border-focus focus:outline-none text-accent-cyan"
+                        className="w-10 h-12 text-center font-mono text-lg font-bold rounded-xl bg-canvas border border-border-subtle focus:border-border-focus focus:outline-none text-accent-cyan disabled:opacity-60"
                       />
                     ))}
                   </div>
+                  {otpVerifying && (
+                    <p className="mt-2 flex items-center justify-center gap-2 text-xs text-text-muted">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang xác thực OTP với máy chủ...
+                    </p>
+                  )}
                 </div>
               )}
             </div>

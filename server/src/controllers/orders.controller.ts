@@ -1,7 +1,24 @@
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import { pool } from '../config/db.js';
+import { env } from '../config/env.js';
 import { catchAsync } from '../utils/catch-async.js';
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/app-error.js';
+
+/**
+ * In-memory cache for the last issued OTP per order (plaintext code is only
+ * ever held here transiently so the development channel can echo it back —
+ * in production this is where an email/SMS provider hook would deliver it).
+ */
+const otpCodeCache = new Map<string, { code: string; expiresAt: number }>();
+
+const constantTimeEquals = (a: string, b: string): boolean => {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+};
 
 /**
  * Format an order row from DB (snake_case → camelCase)
@@ -272,6 +289,147 @@ export const lookupOrderByEmailOrId = catchAsync(async (req: Request, res: Respo
     success: true,
     data: {
       order: formatOrderRow(order),
+      subscription: subRes.rows[0] ? formatSubscriptionRow(subRes.rows[0]) : null,
+    },
+  });
+});
+
+/**
+ * POST /api/orders/lookup/otp
+ * Issue a real, server-side OTP for the warranty self-service lookup.
+ * The code is hashed into lookup_otps (5-min expiry); plaintext is only
+ * echoed back in development so QA can complete the flow without an email
+ * provider. In production the echo disappears and a mailer hook delivers it.
+ */
+export const requestLookupOtp = catchAsync(async (req: Request, res: Response) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const orderId = String(req.body?.orderId || '').trim().toUpperCase();
+
+  if (!email || !orderId) {
+    throw new BadRequestError('Thiếu email hoặc mã đơn hàng để gửi OTP.');
+  }
+
+  // Order must exist AND the claimed email must own it
+  const orderRes = await pool.query(
+    `SELECT id, guest_email, target_email FROM orders WHERE UPPER(id) = $1`,
+    [orderId]
+  );
+  if (orderRes.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy đơn hàng.');
+  }
+  const owner = orderRes.rows[0];
+  const ownsEmail =
+    String(owner.guest_email || '').toLowerCase() === email ||
+    String(owner.target_email || '').toLowerCase() === email;
+  if (!ownsEmail) {
+    throw new UnauthorizedError('Email không sở hữu đơn hàng này.');
+  }
+
+  // Throttle: refuse to re-issue while a live (unconsumed) OTP is < 60s old
+  const recentRes = await pool.query(
+    `SELECT created_at FROM lookup_otps
+     WHERE order_id = $1 AND LOWER(email) = $2 AND consumed_at IS NULL
+     ORDER BY created_at DESC LIMIT 1`,
+    [owner.id, email]
+  );
+  if (recentRes.rows.length > 0) {
+    const ageMs = Date.now() - new Date(recentRes.rows[0].created_at).getTime();
+    if (ageMs < 60_000) {
+      throw new BadRequestError('OTP đã được gửi cách đây chưa lâu. Vui lòng chờ hoặc nhập mã.');
+    }
+  }
+
+  const code = String(crypto.randomInt(100000, 999999));
+  const codeHash = await bcrypt.hash(code, 10);
+
+  await pool.query(
+    `INSERT INTO lookup_otps (order_id, email, code_hash, expires_at)
+     VALUES ($1, $2, $3, NOW() + INTERVAL '5 minutes')`,
+    [owner.id, email, codeHash]
+  );
+
+  otpCodeCache.set(`${owner.id}:${email}`, {
+    code,
+    expiresAt: Date.now() + 5 * 60_000,
+  });
+
+  const payload: Record<string, unknown> = {
+    success: true,
+    message: 'Mã OTP đã được gửi (hiệu lực 5 phút).',
+    data: { orderId: owner.id, expiresInSec: 300 },
+  };
+  if (env.NODE_ENV !== 'production') {
+    // Dev-only delivery channel — replace with SendGrid/SES hook in production.
+    (payload as any).devCode = code;
+  }
+  res.status(201).json(payload);
+});
+
+/**
+ * POST /api/orders/lookup/verify-otp
+ * Validate the OTP against PostgreSQL (bcrypt compare, expiry, attempt cap).
+ * On success returns the FULL order + subscription record including
+ * credentials, which are never exposed by the unauthenticated lookup gate.
+ */
+export const verifyLookupOtp = catchAsync(async (req: Request, res: Response) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const orderId = String(req.body?.orderId || '').trim().toUpperCase();
+  const code = String(req.body?.code || '').trim();
+
+  if (!email || !orderId || !/^\d{6}$/.test(code)) {
+    throw new BadRequestError('Mã OTP không hợp lệ (cần 6 chữ số).');
+  }
+
+  const otpRes = await pool.query(
+    `SELECT * FROM lookup_otps
+     WHERE order_id = $1 AND LOWER(email) = $2 AND consumed_at IS NULL
+       AND expires_at > NOW()
+     ORDER BY created_at DESC LIMIT 1`,
+    [orderId, email]
+  );
+  if (otpRes.rows.length === 0) {
+    throw new UnauthorizedError('OTP hết hạn hoặc chưa được gửi. Hãy yêu cầu mã mới.');
+  }
+  const otp = otpRes.rows[0];
+
+  if (Number(otp.attempts) >= 5) {
+    await pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
+    throw new UnauthorizedError('Nhập sai quá 5 lần. OTP đã bị vô hiệu hóa.');
+  }
+
+  const cached = otpCodeCache.get(`${orderId}:${email}`);
+  const devMatch =
+    env.NODE_ENV !== 'production' &&
+    cached &&
+    cached.expiresAt > Date.now() &&
+    constantTimeEquals(cached.code, code);
+
+  const ok = devMatch || (await bcrypt.compare(code, otp.code_hash));
+
+  if (!ok) {
+    await pool.query(`UPDATE lookup_otps SET attempts = attempts + 1 WHERE id = $1`, [otp.id]);
+    throw new UnauthorizedError('Mã OTP không đúng.');
+  }
+
+  await pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
+  otpCodeCache.delete(`${orderId}:${email}`);
+
+  const orderRes = await pool.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
+  if (orderRes.rows.length === 0) {
+    throw new NotFoundError('Đơn hàng tương ứng không còn tồn tại.');
+  }
+  const subRes = await pool.query(
+    `SELECT s.*, p.brand AS prod_brand FROM subscriptions s
+     LEFT JOIN products p ON p.id = s.product_id
+     WHERE s.order_id = $1 ORDER BY s.created_at DESC LIMIT 1`,
+    [orderId]
+  );
+
+  res.status(200).json({
+    success: true,
+    message: 'Xác minh OTP thành công.',
+    data: {
+      order: formatOrderRow(orderRes.rows[0]),
       subscription: subRes.rows[0] ? formatSubscriptionRow(subRes.rows[0]) : null,
     },
   });
