@@ -19,6 +19,7 @@ import { ComparisonTableSection } from '@/components/home/ComparisonTableSection
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { FaqAccordion } from '@/components/home/FaqAccordion';
 import { FinalCtaSection } from '@/components/home/FinalCtaSection';
+import { ReferralEventSection } from '@/components/home/ReferralEventSection';
 import { Hero3DShowcase } from '@/components/home/Hero3DShowcase';
 import { PromoCarousel } from '@/components/home/PromoCarousel';
 import { Reveal } from '@/components/home/Reveal';
@@ -335,6 +336,11 @@ export const HomePage: React.FC = () => {
       {/* 9. DEVELOPER TESTIMONIALS SECTION */}
       <Reveal>
         <TestimonialsSection />
+
+        {/* Sự kiện viral: Mời bạn mua — Nhận ngay tài khoản đã được thanh toán */}
+        <ErrorBoundary contextName="ReferralEventSection">
+          <ReferralEventSection />
+        </ErrorBoundary>
       </Reveal>
 
       {/* 10. FAQ ACCORDION SECTION */}
