@@ -5,6 +5,7 @@ import { pool } from '../config/db.js';
 import { env } from '../config/env.js';
 import { catchAsync } from '../utils/catch-async.js';
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/app-error.js';
+import { processOrderReferral } from './referral.controller.js';
 
 /**
  * In-memory cache for the last issued OTP per order (plaintext code is only
@@ -46,6 +47,7 @@ export const formatOrderRow = (row: any) => ({
   paymentGatewayRef: row.payment_gateway_ref,
   status: row.status,
   couponCode: row.coupon_code,
+  referralCode: row.referral_code,
   warrantyExpireDate: row.warranty_expire_date,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -111,6 +113,7 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
     paymentMethod,
     paymentGatewayRef,
     couponCode,
+    referralCode,
   } = req.body;
 
   // Validate required fields
@@ -153,8 +156,8 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
       plan_duration_months, provisioning_type, target_email, quantity,
       unit_price_vnd, unit_price_usd, discount_vnd, discount_usd,
       total_vnd, total_usd, currency, payment_method, payment_gateway_ref,
-      status, coupon_code, warranty_expire_date
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+      status, coupon_code, warranty_expire_date, referral_code
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
     RETURNING *`,
     [
       orderId,
@@ -179,10 +182,28 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
       'paid', // PayPal confirms payment before we create order
       couponCode || null,
       warrantyDate.toISOString().split('T')[0],
+      String(referralCode || '').trim().toUpperCase() || null,
     ]
   );
 
   const newOrder = result.rows[0];
+
+  // ── Referral attribution & reward (FAB validation happens server-side) ──
+  // Never blocks a paid order: failures are logged, admin can reconcile later.
+  let referralOutcome: { attributed: boolean; rewardGranted: boolean; reason?: string } | null = null;
+  if (newOrder.referral_code) {
+    try {
+      referralOutcome = await processOrderReferral({
+        referralCode: newOrder.referral_code,
+        orderId: newOrder.id,
+        buyerUserId: userId,
+        buyerEmail: guestEmail.trim().toLowerCase(),
+        orderTotalVND: Number(totalVND),
+      });
+    } catch (refErr) {
+      console.error('[Referral] Processing failed for order', newOrder.id, refErr);
+    }
+  }
 
   // ── Auto-provisioning: allocate a real account from the warehouse (PostgreSQL) ──
   let allocatedAccount: { email: string; password: string } | null = null;
@@ -245,7 +266,12 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
     message: allocatedAccount
       ? 'Đơn hàng đã được tạo và tự động bàn giao tài khoản từ kho.'
       : 'Đơn hàng đã được tạo! Hệ thống sẽ bàn giao tài khoản trong thời gian sớm nhất.',
-    data: { ...formatOrderRow(newOrder), provisioned: Boolean(allocatedAccount) },
+    data: {
+      ...formatOrderRow(newOrder),
+      provisioned: Boolean(allocatedAccount),
+      referral: referralOutcome,
+      referralRewardGranted: Boolean(referralOutcome?.rewardGranted),
+    },
   });
 });
 

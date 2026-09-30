@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -12,7 +12,10 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
+import { ordersApi } from '@/services/api';
 import { trackEvent } from '@/utils/telemetry';
+import { setPendingReferral } from '@/utils/referral';
 
 /**
  * ============================================================
@@ -32,25 +35,48 @@ import { trackEvent } from '@/utils/telemetry';
  *  - Toàn bộ funnel được instrument qua dataLayer (GA4/Pinterest/Meta events)
  */
 
-const INVITE_BASE_URL = 'https://aipro.global/r';
+// Invite links resolve on our own origin so the /r/:code landing route can
+// validate + attribute clicks server-side (works in dev & prod behind the same domain).
+const INVITE_BASE_URL = `${window.location.origin}/r`;
 
 export const ReferralEventSection: React.FC = () => {
   const { products } = useApp();
+  const { token } = useAuth();
   const navigate = useNavigate();
   const [emailInput, setEmailInput] = useState('');
   const [copied, setCopied] = useState(false);
+  const [issuing, setIssuing] = useState(true);
 
-  // Generate a deterministic-looking personal referral code for the visitor session.
-  // In production this comes from POST /api/referral/code (idempotent per user/session).
-  const refCode = React.useMemo(() => {
-    const saved = sessionStorage.getItem('aipro_ref_code');
-    if (saved) return saved;
-    const code = `APX-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
-    sessionStorage.setItem('aipro_ref_code', code);
-    return code;
-  }, []);
+  // Real referral code issued by POST /api/referral/code (idempotent per user/session).
+  // The backend re-validates every code at click & order time, so codes are always DB-backed.
+  const [refCode, setRefCode] = useState<string>('');
 
-  const inviteLink = `${INVITE_BASE_URL}/${refCode}?utm_source=referral&utm_medium=event&utm_campaign=invite2pay`;
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { code } = await ordersApi.issueCode(undefined, token || undefined);
+        if (cancelled) return;
+        sessionStorage.setItem('aipro_ref_code', code);
+        setRefCode(code);
+        setPendingReferral(code); // own-session attribution harmless; overwritten by last-click
+      } catch {
+        if (cancelled) return;
+        // API unreachable → leave link empty; Copy/Share buttons stay disabled
+        // rather than minting unverifiable codes.
+      } finally {
+        if (!cancelled) setIssuing(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const inviteLink = refCode
+    ? `${INVITE_BASE_URL}/${refCode}?utm_source=referral&utm_medium=event&utm_campaign=invite2pay`
+    : '';
 
   const prizeProduct = React.useMemo(
     () => [...products].sort((a, b) => b.currentPriceVND - a.currentPriceVND)[0],
@@ -58,6 +84,7 @@ export const ReferralEventSection: React.FC = () => {
   );
 
   const handleCopy = async () => {
+    if (!inviteLink) return;
     try {
       await navigator.clipboard.writeText(inviteLink);
       setCopied(true);
@@ -70,6 +97,7 @@ export const ReferralEventSection: React.FC = () => {
   };
 
   const handleShare = (channel: 'facebook' | 'zalo' | 'messenger') => {
+    if (!inviteLink) return;
     const text = encodeURIComponent(
       'Mình đang dùng tài khoản AI xịn mà không tốn tiền 💸 Bạn mua gói Claude/Cursor, hệ thống tặng NGAY tài khoản đã thanh toán cho mình — cùng có lợi! Nhận ưu đãi tại:',
     );
@@ -95,7 +123,7 @@ export const ReferralEventSection: React.FC = () => {
       campaign: 'invite2pay',
     });
     // Persist pending attribution so checkout can attach it to the order payload.
-    localStorage.setItem('aipro_pending_referral', JSON.stringify({ code: refCode, email: emailInput }));
+    setPendingReferral(refCode, emailInput);
     navigate('/checkout', { state: { referralCode: refCode, referralEmail: emailInput } });
   };
 
@@ -229,14 +257,16 @@ export const ReferralEventSection: React.FC = () => {
                   <span className="pl-4 pr-2 text-text-secondary font-mono text-xs select-none">#</span>
                   <input
                     readOnly
-                    value={inviteLink}
+                    disabled={!inviteLink}
+                    value={issuing || !inviteLink ? 'Đang tạo link mời cá nhân hóa…' : inviteLink}
                     onFocus={(e) => e.target.select()}
                     aria-label="Link mời cá nhân"
                     className="w-full bg-transparent px-2 py-3.5 text-sm font-mono text-text-primary outline-none"
                   />
                   <button
                     onClick={handleCopy}
-                    className={`m-1.5 mr-1.5 px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
+                    disabled={!inviteLink}
+                    className={`m-1.5 mr-1.5 px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                       copied
                         ? 'bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/40'
                         : 'bg-primary-blue text-white hover:bg-primary-blue/90 shadow-md shadow-primary-blue/30'

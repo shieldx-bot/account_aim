@@ -21,6 +21,7 @@ import { AboutPage } from '@/pages/AboutPage';
 import { StatusPage } from '@/pages/StatusPage';
 import { DocsPage } from '@/pages/DocsPage';
 import { CartPage } from '@/pages/CartPage';
+import { ReferralLandingPage } from '@/pages/ReferralLandingPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { CartProvider } from '@/context/CartContext';
 
@@ -118,6 +119,9 @@ export const App: React.FC = () => {
               {/* Distraction-Free Customer Checkout Corridor */}
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/order/success/:orderId" element={<DeliveryPage />} />
+
+              {/* Invite Landing — destination of every personal referral link /r/:CODE */}
+              <Route path="/r/:code" element={<ReferralLandingPage />} />
 
               {/* Dedicated Member Portal (Giao diện riêng của Thành viên) */}
               <Route

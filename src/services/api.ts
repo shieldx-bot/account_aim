@@ -275,6 +275,61 @@ export const statusApi = {
 
 export const ordersApi = {
   /**
+   * Issue (idempotent) a personal referral invite code from the backend.
+   * Auth optional — anonymous callers must provide an email to claim later.
+   */
+  async issueCode(email?: string, token?: string): Promise<{ code: string; reused: boolean }> {
+    const res = await fetch(`${API_BASE_URL}/referral/code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ email }),
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      throw new Error(body.message || 'Không thể tạo mã mời.');
+    }
+    return body.data;
+  },
+
+  /**
+   * Validate an invite code exists (used by the /r/:code landing route).
+   */
+  async validateCode(code: string): Promise<boolean> {
+    const res = await fetch(`${API_BASE_URL}/referral/validate/${encodeURIComponent(code)}`);
+    const body = await res.json().catch(() => null);
+    return Boolean(res.ok && body?.data?.valid);
+  },
+
+  /**
+   * Record an invite click → server-side 30-day last-click attribution.
+   */
+  async recordClick(code: string, visitorId: string): Promise<boolean> {
+    const res = await fetch(`${API_BASE_URL}/referral/click`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, visitorId }),
+    });
+    return res.ok;
+  },
+
+  /**
+   * Referrer stats for the member dashboard (clicks, FABs, rewards).
+   */
+  async getMyStats(token: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/referral/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      throw new Error(body.message || 'Không tải được thống kê mời bạn.');
+    }
+    return body.data;
+  },
+
+  /**
    * Create a new order after payment confirmed
    */
   async create(token: string, orderData: {
@@ -296,6 +351,7 @@ export const ordersApi = {
     paymentMethod: string;
     paymentGatewayRef?: string;
     couponCode?: string;
+    referralCode?: string;
   }): Promise<{ success: boolean; data?: any; message?: string }> {
     const res = await fetch(`${API_BASE_URL}/orders`, {
       method: 'POST',
