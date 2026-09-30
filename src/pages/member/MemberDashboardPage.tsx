@@ -20,7 +20,23 @@ import {
   ChevronRight,
   Sparkles,
   Loader2,
+  Gift,
+  Users,
 } from 'lucide-react';
+
+interface ReferralStats {
+  codes: string[];
+  totalClicks: number;
+  totalRewards: number;
+  pendingRewards: number;
+  conversions: Array<{
+    order_id: string;
+    amount_vnd: number;
+    status: string;
+    created_at: string;
+    product_name?: string;
+  }>;
+}
 
 export const MemberDashboardPage: React.FC = () => {
   const { user, token } = useAuth();
@@ -30,6 +46,8 @@ export const MemberDashboardPage: React.FC = () => {
   const [userSubscriptions, setUserSubscriptions] = useState<MemberSubscription[]>([]);
   const [userOrders, setUserOrders] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // #InviteToPay — referrer program stats (GET /api/referral/me)
+  const [referral, setReferral] = useState<ReferralStats | null>(null);
 
   // Production: dashboard KPIs & vault come from PostgreSQL via API
   useEffect(() => {
@@ -54,6 +72,16 @@ export const MemberDashboardPage: React.FC = () => {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
+    // Referral stats are non-critical — load independently so a failure
+    // never blocks the vault/orders dashboard.
+    ordersApi
+      .getMyStats(token)
+      .then((data) => {
+        if (!cancelled) setReferral(data as ReferralStats);
+      })
+      .catch((err: Error) => console.warn('[MemberDashboard] Referral stats unavailable:', err.message));
+
     return () => {
       cancelled = true;
     };
@@ -294,6 +322,138 @@ export const MemberDashboardPage: React.FC = () => {
           <div className="text-center py-8 bg-canvas rounded-xl border border-border-subtle">
             <p className="text-xs text-text-muted">Bạn chưa có tài khoản AI nào. Khám phá cửa hàng ngay!</p>
             <Link to="/" className="inline-block mt-3 px-4 py-2 rounded-lg bg-primary-blue text-white text-xs font-bold hover:bg-primary-hover transition-colors">Mua ngay</Link>
+          </div>
+        )}
+      </div>
+
+      {/* Referral Program Panel (#InviteToPay) */}
+      <div className="bg-surface border border-border-subtle rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+              <Gift className="w-4 h-4 text-accent-cyan" />
+              Chương trình mời bạn nhận thưởng
+            </h2>
+            <p className="text-xs text-text-secondary">
+              Mỗi bạn bè mua hàng hợp lệ (FAB) — quà tự động cộng vào ví của bạn.
+            </p>
+          </div>
+          <Link
+            to="/#referral-event"
+            className="text-xs font-semibold text-primary-blue hover:text-accent-cyan flex items-center gap-1 transition-colors"
+          >
+            <Users className="w-4 h-4" />
+            <span>Lấy link mời</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {referral && referral.codes.length > 0 ? (
+          <div className="space-y-4">
+            {/* Invite code + shareable link */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-canvas border border-border-subtle">
+              <div className="flex-1 min-w-0">
+                <span className="text-[10px] font-mono uppercase text-text-muted block mb-1">Mã mời của bạn</span>
+                <div className="font-mono text-lg font-extrabold text-accent-cyan truncate">
+                  {referral.codes[0]}
+                </div>
+                <span className="text-[11px] text-text-muted font-mono block mt-1 truncate">
+                  {`${window.location.origin}/r/${referral.codes[0]}`}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  handleCopy(`${window.location.origin}/r/${referral.codes[0]}`, 'invite-link')
+                }
+                className="px-4 py-2 rounded-lg bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold transition-colors flex items-center gap-2 shrink-0"
+              >
+                {copiedId === 'invite-link' ? (
+                  <><Check className="w-4 h-4" /> Đã copy link</>
+                ) : (
+                  <><Copy className="w-4 h-4" /> Copy link mời</>
+                )}
+              </button>
+            </div>
+
+            {/* Referral KPIs */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 rounded-xl bg-canvas border border-border-subtle">
+                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Lượt nhấp link</span>
+                <div className="font-mono text-xl font-extrabold text-text-primary">{referral.totalClicks}</div>
+              </div>
+              <div className="p-4 rounded-xl bg-canvas border border-border-subtle">
+                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Quy đổi FAB</span>
+                <div className="font-mono text-xl font-extrabold text-text-primary">
+                  {referral.conversions.filter((c) => c.status !== 'rejected').length}
+                </div>
+              </div>
+              <div className="p-4 rounded-xl bg-canvas border border-border-subtle">
+                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Thưởng đã nhận</span>
+                <div className="font-mono text-xl font-extrabold text-status-success">
+                  {formatPrice(referral.totalRewards, referral.totalRewards / 25000)}
+                </div>
+              </div>
+              <div className="p-4 rounded-xl bg-canvas border border-border-subtle">
+                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Thưởng đang treo</span>
+                <div className="font-mono text-xl font-extrabold text-status-warning">{referral.pendingRewards}</div>
+              </div>
+            </div>
+
+            {/* Conversion history */}
+            {referral.conversions.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-mono">
+                  <thead className="bg-canvas border-b border-border-subtle text-text-muted uppercase text-[10px]">
+                    <tr>
+                      <th className="py-2.5 px-4">Đơn của bạn</th>
+                      <th className="py-2.5 px-4">Sản phẩm</th>
+                      <th className="py-2.5 px-4">Thời gian</th>
+                      <th className="py-2.5 px-4">Phần thưởng</th>
+                      <th className="py-2.5 px-4 text-right">Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-subtle">
+                    {referral.conversions.slice(0, 5).map((c) => (
+                      <tr key={c.order_id}>
+                        <td className="py-2.5 px-4 text-accent-cyan font-bold">{c.order_id}</td>
+                        <td className="py-2.5 px-4 font-sans text-text-primary">{c.product_name || '—'}</td>
+                        <td className="py-2.5 px-4 text-text-muted">{new Date(c.created_at).toLocaleDateString('vi-VN')}</td>
+                        <td className="py-2.5 px-4 font-bold text-text-primary">
+                          {formatPrice(Number(c.amount_vnd), Number(c.amount_vnd) / 25000)}
+                        </td>
+                        <td className="py-2.5 px-4 text-right">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              c.status === 'granted'
+                                ? 'bg-status-success/15 text-status-success'
+                                : c.status === 'pending'
+                                  ? 'bg-status-warning/15 text-status-warning'
+                                  : 'bg-text-muted/15 text-text-muted'
+                            }`}
+                          >
+                            {c.status === 'granted' ? 'Đã cộng ví' : c.status === 'pending' ? 'Chờ xác thực FAB' : 'Bị từ chối'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-8 bg-canvas rounded-xl border border-border-subtle">
+            <p className="text-xs text-text-muted mb-3">
+              Bạn chưa có mã mời nào. Hãy tạo link mời đầu tiên để bắt đầu nhận thưởng!
+            </p>
+            <Link
+              to="/#referral-event"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-blue text-white text-xs font-bold hover:bg-primary-hover transition-colors"
+            >
+              <Sparkles className="w-4 h-4" />
+              Mời bạn bè ngay
+            </Link>
           </div>
         )}
       </div>

@@ -15,6 +15,8 @@ const auth_controller_js_1 = require("./controllers/auth.controller.js");
 const product_routes_js_1 = require("./routes/product.routes.js");
 const status_routes_js_1 = require("./routes/status.routes.js");
 const orders_routes_js_1 = require("./routes/orders.routes.js");
+const inventory_warranty_routes_js_1 = require("./routes/inventory-warranty.routes.js");
+const referral_routes_js_1 = require("./routes/referral.routes.js");
 const error_middleware_js_1 = require("./middleware/error.middleware.js");
 const product_controller_js_1 = require("./controllers/product.controller.js");
 const db_js_1 = require("./config/db.js");
@@ -27,7 +29,7 @@ const PORT = env_js_1.env.PORT;
 // Security Middleware
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: env_js_1.env.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -66,7 +68,11 @@ app.use('/api/products', product_routes_js_1.productRouter);
 app.use('/api/status', status_routes_js_1.statusRouter);
 app.use('/api/orders', orders_routes_js_1.ordersRouter);
 app.use('/api/subscriptions', orders_routes_js_1.subscriptionsRouter);
+app.use('/api/warranty', inventory_warranty_routes_js_1.warrantyPublicRouter);
+app.use('/api/referral', referral_routes_js_1.referralRouter);
 app.use('/api/admin', orders_routes_js_1.adminRouter);
+app.use('/api/admin/inventory', inventory_warranty_routes_js_1.inventoryAdminRouter);
+app.use('/api/admin/warranty', inventory_warranty_routes_js_1.warrantyAdminRouter);
 // Error handling middleware (must be last)
 app.use(error_middleware_js_1.errorMiddleware);
 /**
@@ -77,6 +83,24 @@ const runMigrations = async () => {
         const sqlPath = path_1.default.join(__dirname, 'db', 'init.sql');
         const sql = fs_1.default.readFileSync(sqlPath, 'utf-8');
         await db_js_1.pool.query(sql);
+        // Production tables: inventory_accounts & warranty_tickets (migration 002)
+        const prodSqlPath = path_1.default.join(__dirname, 'db', 'migrations', '002_production_tables.sql');
+        if (fs_1.default.existsSync(prodSqlPath)) {
+            const prodSql = fs_1.default.readFileSync(prodSqlPath, 'utf-8');
+            await db_js_1.pool.query(prodSql);
+        }
+        // Server-issued lookup OTPs (migration 003)
+        const otpSqlPath = path_1.default.join(__dirname, 'db', 'migrations', '003_lookup_otp.sql');
+        if (fs_1.default.existsSync(otpSqlPath)) {
+            const otpSql = fs_1.default.readFileSync(otpSqlPath, 'utf-8');
+            await db_js_1.pool.query(otpSql);
+        }
+        // Referral / #InviteToPay system (migration 004)
+        const refSqlPath = path_1.default.join(__dirname, 'db', 'migrations', '004_referral_system.sql');
+        if (fs_1.default.existsSync(refSqlPath)) {
+            const refSql = fs_1.default.readFileSync(refSqlPath, 'utf-8');
+            await db_js_1.pool.query(refSql);
+        }
         console.log('[DB] Schema migrations applied successfully.');
     }
     catch (err) {
@@ -85,12 +109,14 @@ const runMigrations = async () => {
 };
 // Start server
 app.listen(PORT, async () => {
-    console.log(`🚀 [AIPro Backend] Server running on http://localhost:${PORT}`);
+    console.log(`🚀 [AIPro Backend] Server running on http://localhost:${PORT} (${env_js_1.env.NODE_ENV})`);
     console.log(`📖 [AIPro Backend] Swagger docs at http://localhost:${PORT}/api/docs`);
     // Run DB schema migrations (creates orders, subscriptions tables if not exist)
     await runMigrations();
-    // Seed demo accounts
-    await (0, auth_controller_js_1.ensureSeedUsers)();
-    // Seed initial AI products catalog
+    // Seed demo accounts only outside production — real signups own the DB in prod
+    if (env_js_1.env.NODE_ENV !== 'production') {
+        await (0, auth_controller_js_1.ensureSeedUsers)();
+    }
+    // Seed initial AI products catalog (idempotent upsert)
     await (0, product_controller_js_1.ensureSeedProducts)();
 });
