@@ -29,7 +29,7 @@ export const DeliveryPage: React.FC = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [healthStatus, setHealthStatus] = useState<'idle' | 'testing' | 'active'>('idle');
+  const [healthStatus, setHealthStatus] = useState<'idle' | 'testing' | 'active' | 'error'>('idle');
   const [mgmtPassword, setMgmtPassword] = useState('');
   const [passwordSaved, setPasswordSaved] = useState(false);
 

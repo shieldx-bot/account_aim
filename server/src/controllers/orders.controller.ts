@@ -250,6 +250,16 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
 });
 
 /**
+ * Strip credential material from a subscription payload. The unauthenticated
+ * lookup gate must never expose account passwords / 2FA tokens — those are
+ * only released after server-side OTP verification (verifyLookupOtp).
+ */
+export const redactSubscriptionCredentials = (sub: any) => {
+  if (!sub) return sub;
+  return { ...sub, accountPassword: '', accessToken: '' };
+};
+
+/**
  * GET /api/orders/lookup?email=&orderId=
  * Public lookup gate: find an order by Order ID alone, or by Email + guestEmail.
  * Returns only non-sensitive metadata (credentials require OTP verification client-side
@@ -289,7 +299,8 @@ export const lookupOrderByEmailOrId = catchAsync(async (req: Request, res: Respo
     success: true,
     data: {
       order: formatOrderRow(order),
-      subscription: subRes.rows[0] ? formatSubscriptionRow(subRes.rows[0]) : null,
+      // Credentials stay redacted until the customer passes OTP verification
+      subscription: subRes.rows[0] ? redactSubscriptionCredentials(formatSubscriptionRow(subRes.rows[0])) : null,
     },
   });
 });

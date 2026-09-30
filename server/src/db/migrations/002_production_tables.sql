@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS warranty_tickets (
 
 CREATE INDEX IF NOT EXISTS idx_warranty_status ON warranty_tickets(status);
 CREATE INDEX IF NOT EXISTS idx_warranty_order ON warranty_tickets(order_id);
+-- Supports server-enforced daily replacement quota per customer email
+CREATE INDEX IF NOT EXISTS idx_warranty_email_created ON warranty_tickets(customer_email, created_at);
 
 -- ───────────────────────── 003: users.status (lock/ban accounts) ─────────────────────────
 ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'active'

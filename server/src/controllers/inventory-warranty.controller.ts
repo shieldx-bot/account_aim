@@ -203,27 +203,76 @@ export const getWarrantyTickets = catchAsync(async (req: Request, res: Response)
  * POST /api/warranty (customer-facing, authenticated or guest)
  * Create a new warranty/dispute ticket
  */
+const MAX_REPLACEMENTS_PER_DAY = 2;
+
 export const createWarrantyTicket = catchAsync(async (req: Request, res: Response) => {
-  const { orderId, customerEmail, tool, reason, attempts } = req.body;
+  const { orderId, customerEmail, tool, reason } = req.body;
 
   if (!orderId || !customerEmail || !tool || !reason) {
     throw new BadRequestError('Vui lòng cung cấp đủ Mã đơn, Email, Công cụ và Mô tả sự cố.');
   }
 
+  const email = String(customerEmail).trim().toLowerCase();
+
   const orderCheck = await pool.query('SELECT id FROM orders WHERE id = $1', [orderId]);
   if (orderCheck.rows.length === 0) throw new NotFoundError('Không tìm thấy đơn hàng tương ứng.');
+
+  // ── Server-enforced daily replacement quota (source of truth = DB, not localStorage) ──
+  const todayCount = await pool.query(
+    `SELECT COUNT(*)::int AS count
+     FROM warranty_tickets
+     WHERE customer_email = $1
+       AND created_at >= DATE_TRUNC('day', NOW())`,
+    [email]
+  );
+  const usedToday: number = todayCount.rows[0]?.count ?? 0;
+  if (usedToday >= MAX_REPLACEMENTS_PER_DAY) {
+    throw new BadRequestError(
+      `Bạn đã sử dụng hết ${MAX_REPLACEMENTS_PER_DAY} lượt đổi tài khoản hôm nay. Vui lòng liên hệ hỗ trợ Telegram.`
+    );
+  }
 
   const id = `DISP-${Date.now()}`;
   const result = await pool.query(
     `INSERT INTO warranty_tickets (id, order_id, customer_email, tool, reason, attempts, sla_left_minutes, status)
      VALUES ($1, $2, $3, $4, $5, $6, 30, 'agent_pending') RETURNING *`,
-    [id, orderId, String(customerEmail).trim().toLowerCase(), tool, reason, Number(attempts) || 1]
+    [id, orderId, email, tool, reason, usedToday + 1]
   );
 
   res.status(201).json({
     success: true,
     message: 'Đã ghi nhận khiếu nại bảo hành vào hệ thống. Bot SLA sẽ phản hồi trong 30 phút.',
     data: formatWarrantyRow(result.rows[0]),
+  });
+});
+
+/**
+ * GET /api/warranty/quota?email=...
+ * Customer-facing: daily replacement usage derived from warranty_tickets.
+ * This is the source of truth for the LookupPage stepper (replaces localStorage).
+ */
+export const getWarrantyQuota = catchAsync(async (req: Request, res: Response) => {
+  const email = String(req.query.email || '').trim().toLowerCase();
+  if (!email) throw new BadRequestError('Thiếu email để tra cứu hạn mức bảo hành.');
+
+  const result = await pool.query(
+    `SELECT COUNT(*)::int AS used,
+            COALESCE(MAX(attempts), 0)::int AS attempts
+     FROM warranty_tickets
+     WHERE customer_email = $1
+       AND created_at >= DATE_TRUNC('day', NOW())`,
+    [email]
+  );
+
+  const usedToday: number = result.rows[0]?.used ?? 0;
+
+  res.status(200).json({
+    success: true,
+    data: {
+      usedToday,
+      maxPerDay: MAX_REPLACEMENTS_PER_DAY,
+      remaining: Math.max(0, MAX_REPLACEMENTS_PER_DAY - usedToday),
+    },
   });
 });
 

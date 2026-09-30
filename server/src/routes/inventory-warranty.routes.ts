@@ -7,6 +7,7 @@ import {
   getWarrantyTickets,
   createWarrantyTicket,
   resolveWarrantyTicket,
+  getWarrantyQuota,
 } from '../controllers/inventory-warranty.controller.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.middleware.js';
 
@@ -60,3 +61,9 @@ warrantyAdminRouter.patch('/:id/resolve', authenticateToken, requireAdmin, resol
  * Customer files a warranty/dispute ticket against an order
  */
 warrantyPublicRouter.post('/', createWarrantyTicket);
+
+/**
+ * GET /api/warranty/quota?email=...
+ * Daily replacement usage (source of truth = warranty_tickets table)
+ */
+warrantyPublicRouter.get('/quota', getWarrantyQuota);

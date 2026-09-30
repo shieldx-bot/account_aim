@@ -426,7 +426,7 @@ export const warrantyApi = {
   /**
    * Customer: file a warranty/dispute ticket against an order
    */
-  async createTicket(data: { orderId: string; customerEmail: string; tool: string; reason: string; attempts?: number }): Promise<any> {
+  async createTicket(data: { orderId: string; customerEmail: string; tool: string; reason: string }): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/warranty`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -434,6 +434,16 @@ export const warrantyApi = {
     });
     const body = await res.json();
     if (!res.ok) throw new Error(body.message || 'Không thể ghi nhận khiếu nại bảo hành.');
+    return body.data;
+  },
+
+  /**
+   * Customer: daily replacement quota derived from warranty_tickets (DB source of truth)
+   */
+  async getQuota(email: string): Promise<{ usedToday: number; maxPerDay: number; remaining: number }> {
+    const res = await fetch(`${API_BASE_URL}/warranty/quota?email=${encodeURIComponent(email)}`);
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể tải hạn mức bảo hành.');
     return body.data;
   },
 
