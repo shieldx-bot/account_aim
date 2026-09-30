@@ -78,10 +78,11 @@ export const productsApi = {
    */
   async getAll(all: boolean = false): Promise<ProductPlan[]> {
     const res = await fetch(`${API_BASE_URL}/products${all ? '?all=true' : ''}`);
-    const body = await res.json();
     if (!res.ok) {
-      throw new Error(body.message || 'Không thể tải danh sách sản phẩm.');
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || 'Không thể tải danh sách sản phẩm từ database.');
     }
+    const body = await res.json();
     return body.data || [];
   },
 
@@ -90,10 +91,11 @@ export const productsApi = {
    */
   async getBySlug(slug: string): Promise<ProductPlan> {
     const res = await fetch(`${API_BASE_URL}/products/${slug}`);
-    const body = await res.json();
     if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
       throw new Error(body.message || `Không tìm thấy sản phẩm ${slug}.`);
     }
+    const body = await res.json();
     return body.data;
   },
 
@@ -349,11 +351,30 @@ export const subscriptionsApi = {
     const res = await fetch(`${API_BASE_URL}/subscriptions/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    const body = await res.json();
     if (!res.ok) {
-      throw new Error(body.message || 'Không thể tải danh sách đăng ký.');
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || 'Không thể tải danh sách đăng ký từ database.');
     }
+    const body = await res.json();
     return body.data || [];
+  },
+
+  /**
+   * Toggle auto-renew for a subscription (persisted in PostgreSQL)
+   */
+  async updateAutoRenew(token: string, id: string, autoRenew: boolean): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/subscriptions/${id}/auto-renew`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ autoRenew }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || 'Không thể cập nhật tự động gia hạn.');
+    }
   },
 };
 

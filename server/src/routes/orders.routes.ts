@@ -4,6 +4,7 @@ import {
   getMyOrders,
   getOrderById,
   getMySubscriptions,
+  updateSubscriptionAutoRenew,
   getAllOrdersAdmin,
   updateOrderStatus,
   getAllUsersAdmin,
@@ -44,6 +45,12 @@ ordersRouter.get('/:orderId', authenticateToken, getOrderById);
  * Get my active subscriptions (requires auth)
  */
 subscriptionsRouter.get('/me', authenticateToken, getMySubscriptions);
+
+/**
+ * PATCH /api/subscriptions/:id/auto-renew
+ * Toggle auto-renew for own subscription (requires auth)
+ */
+subscriptionsRouter.patch('/:id/auto-renew', authenticateToken, updateSubscriptionAutoRenew);
 
 // ─────────── Admin ───────────
 

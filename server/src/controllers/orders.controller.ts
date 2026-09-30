@@ -107,12 +107,13 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
 
   // Verify product exists and is active
   const productCheck = await pool.query(
-    'SELECT id, name, current_price_vnd, current_price_usd FROM products WHERE id = $1 AND is_active = true',
+    'SELECT id, name, brand, current_price_vnd, current_price_usd FROM products WHERE id = $1 AND is_active = true',
     [productId]
   );
   if (productCheck.rows.length === 0) {
     throw new NotFoundError('Sản phẩm không tồn tại hoặc đã ngừng bán.');
   }
+  const productBrand: string = productCheck.rows[0].brand || '';
 
   // Ensure orderId is unique
   let orderId = generateOrderId();
@@ -166,6 +167,63 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
   );
 
   const newOrder = result.rows[0];
+
+  // ── Provisioning Bot (production): auto-create subscription record in DB ──
+  try {
+    const startDate = new Date();
+    const expiresDate = new Date();
+    expiresDate.setMonth(expiresDate.getMonth() + (Number(planDurationMonths) || 1));
+    const daysRemaining = Math.max(
+      Math.ceil((expiresDate.getTime() - startDate.getTime()) / 86400000),
+      0
+    );
+
+    let accountEmail: string;
+    let accountPassword: string | null = null;
+    let accessToken: string | null = null;
+
+    if ((provisioningType || 'pre_created') === 'invite_email') {
+      // Upgrade the customer's own account via email invite
+      accountEmail = (targetEmail || guestEmail || '').trim().toLowerCase();
+    } else {
+      // Pre-created license account issued from our stock pool
+      const rand = Math.random().toString(36).slice(2, 7);
+      accountEmail = `aipro.${productSlug.replace(/[^a-z0-9]/g, '')}.${rand}@mail.aipro.dev`;
+      accountPassword = `Ai#${Math.random().toString(36).slice(2, 10)}!${new Date().getFullYear()}`;
+      accessToken = `sk-aipro-${orderId.replace('-', '-').toLowerCase()}-${rand}${Date.now().toString(36)}`;
+    }
+
+    await pool.query(
+      `INSERT INTO subscriptions (
+        order_id, user_id, product_id, product_name, product_slug, brand,
+        provisioning_type, account_email, account_password_encrypted, access_token,
+        start_date, expires_at, days_remaining, status, auto_renew
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'active', false)`,
+      [
+        orderId,
+        userId,
+        productId,
+        productName,
+        productSlug,
+        productBrand,
+        provisioningType || 'pre_created',
+        accountEmail,
+        accountPassword,
+        accessToken,
+        startDate.toISOString().split('T')[0],
+        expiresDate.toISOString().split('T')[0],
+        daysRemaining,
+      ]
+    );
+
+    // Decrement real inventory stock for the purchased product
+    await pool.query(
+      `UPDATE products SET stock_count = GREATEST(stock_count - $1, 0), updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+      [Number(quantity) || 1, productId]
+    );
+  } catch (provErr) {
+    console.error('[ProvisioningBot] Failed to auto-provision subscription:', provErr);
+  }
 
   res.status(201).json({
     success: true,
@@ -249,6 +307,36 @@ export const getMySubscriptions = catchAsync(async (req: Request, res: Response)
     success: true,
     data: result.rows.map(formatSubscriptionRow),
     count: result.rows.length,
+  });
+});
+
+/**
+ * PATCH /api/subscriptions/:id/auto-renew
+ * Toggle auto-renew flag for the authenticated owner (persisted in PostgreSQL)
+ */
+export const updateSubscriptionAutoRenew = catchAsync(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  if (!userId) {
+    throw new UnauthorizedError('Bạn cần đăng nhập.');
+  }
+
+  const { id } = req.params;
+  const { autoRenew } = req.body;
+
+  const result = await pool.query(
+    `UPDATE subscriptions SET auto_renew = $1, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $2 AND user_id = $3 RETURNING *`,
+    [Boolean(autoRenew), id, userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy subscription hoặc bạn không có quyền cập nhật.');
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Đã cập nhật thiết lập tự động gia hạn.',
+    data: formatSubscriptionRow(result.rows[0]),
   });
 });
 

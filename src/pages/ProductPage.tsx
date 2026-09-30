@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { useApp } from '@/context/AppContext';
 import { useCart } from '@/context/CartContext';
 import { ProvisioningType, DurationOption } from '@/types';
@@ -31,16 +30,12 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 export const ProductPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { formatPrice, currency, updateConfig, products } = useApp();
+  const { formatPrice, currency, updateConfig, products, isLoadingProducts, productsError } = useApp();
   const { addItem } = useCart();
 
+  // Product is resolved strictly from the PostgreSQL catalog (via AppContext)
   const product = useMemo(() => {
-    return (
-      products.find((p) => p.slug === slug) ||
-      MOCK_PRODUCTS.find((p) => p.slug === slug) ||
-      products[0] ||
-      MOCK_PRODUCTS[0]
-    );
+    return products.find((p) => p.slug === slug) || null;
   }, [slug, products]);
 
   const [provisioningType, setProvisioningType] = useState<ProvisioningType>('invite_email');
@@ -51,6 +46,7 @@ export const ProductPage: React.FC = () => {
   const [honeypot, setHoneypot] = useState('');
 
   useEffect(() => {
+    if (!product) return;
     trackEvent('view_item', {
       item_id: product.slug,
       item_name: product.name,
@@ -60,8 +56,8 @@ export const ProductPage: React.FC = () => {
 
   // Pricing math
   const durationConfig = DURATION_OPTIONS[selectedDurationIndex];
-  const baseMonthlyVND = product.currentPriceVND;
-  const baseMonthlyUSD = product.currentPriceUSD;
+  const baseMonthlyVND = product?.currentPriceVND ?? 0;
+  const baseMonthlyUSD = product?.currentPriceUSD ?? 0;
 
   const rawTotalVND = baseMonthlyVND * durationConfig.months;
   const rawTotalUSD = baseMonthlyUSD * durationConfig.months;
@@ -74,6 +70,7 @@ export const ProductPage: React.FC = () => {
 
   const handleCheckout = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!product) return;
 
     // Bot trap
     if (honeypot) return;
@@ -115,6 +112,7 @@ export const ProductPage: React.FC = () => {
 
   const handleAddToCart = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!product) return;
     if (honeypot) return;
 
     if (provisioningType === 'invite_email' && !EMAIL_REGEX.test(targetEmail.trim())) {
