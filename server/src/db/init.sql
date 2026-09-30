@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     access_token TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     expires_at DATE NOT NULL,
-    days_remaining INT GENERATED ALWAYS AS (GREATEST(0, (expires_at - CURRENT_DATE)::INT)) STORED,
+    days_remaining INT NOT NULL DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'expiring_soon', 'expired', 'suspended')),
     auto_renew BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
