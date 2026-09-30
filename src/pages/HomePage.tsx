@@ -79,8 +79,18 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="w-full relative overflow-hidden">
-      {/* Ambient background: animated aurora blobs + tech grid */}
+      {/* Ambient background: real photo layer + aurora blobs + tech grid */}
       <div className="absolute inset-x-0 top-0 h-[720px] pointer-events-none -z-10 overflow-hidden">
+        {/* Real photography backdrop (downloaded from Unsplash, served locally) */}
+        <img
+          src="/images/hero-code.jpg"
+          alt=""
+          aria-hidden="true"
+          fetchPriority="low"
+          className="absolute inset-0 w-full h-full object-cover opacity-[0.14] saturate-[0.7]"
+        />
+        {/* Fade the photo into page background so it never looks pasted-on */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
         <div className="aurora-blob animate-aurora w-[560px] h-[420px] bg-primary-blue/20 -top-32 left-[8%]" />
         <div className="aurora-blob animate-aurora w-[480px] h-[380px] bg-accent-cyan/10 -top-20 right-[6%]" style={{ animationDelay: '-9s' }} />
         <div className="aurora-blob animate-aurora w-[420px] h-[320px] bg-[#8B5CF6]/10 top-[320px] left-[38%]" style={{ animationDelay: '-4s' }} />

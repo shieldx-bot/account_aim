@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Flame, Gift, Rocket } from 'lucide-react';
+import { PromoBackdrop } from './PromoBackdrop';
 
 interface PromoSlide {
   id: string;
@@ -65,6 +66,7 @@ export const PromoCarousel: React.FC = () => {
           {SLIDES.map((s) => (
             <div key={s.id} className="min-w-full relative">
               <div className={`absolute inset-0 bg-gradient-to-r ${s.gradient}`} />
+              <PromoBackdrop slideId={s.id} />
               <div className="relative px-5 py-4 sm:px-8 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="p-2 rounded-xl bg-elevated border border-border-subtle text-accent-cyan">{s.icon}</span>

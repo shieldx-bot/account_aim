@@ -132,6 +132,23 @@ export const BentoFeaturesSection: React.FC = () => {
             Tự do liên kết tài khoản AI vào email công ty hoặc email cá nhân có sẵn. Bạn không phải dùng chung profile hay lịch sử chat với người khác, bảo vệ trọn vẹn bí mật kinh doanh và source code của dự án.
           </p>
 
+          {/* Real workspace photography (downloaded locally from Unsplash) */}
+          <div className="relative mt-2 mb-4 rounded-2xl overflow-hidden border border-border-subtle group/img">
+            <img
+              src="/images/bento-workspace.jpg"
+              alt="Góc làm việc của kỹ sư với nhiều màn hình code"
+              loading="lazy"
+              decoding="async"
+              className="w-full h-40 sm:h-48 object-cover opacity-80 saturate-[0.75] transition-transform duration-700 ease-out group-hover/img:scale-[1.06]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/30 to-transparent" />
+            <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+              <span className="text-[10px] font-mono text-text-secondary bg-canvas/80 backdrop-blur px-2 py-1 rounded-lg border border-border-subtle">
+                No shared profiles · Your machine, your history
+              </span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-3 gap-3 font-mono text-xs">
             <div className="p-3 rounded-xl bg-canvas border border-border-subtle text-center">
               <span className="text-[10px] text-text-muted block">Lịch sử chat</span>
