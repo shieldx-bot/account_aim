@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Currency, ProductPlan, ConfigurationState, DurationOption, ProvisioningType } from '@/types';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { productsApi } from '@/services/api';
 import { trackEvent } from '@/utils/telemetry';
+
+const PRODUCTS_CACHE_KEY = 'aipro_products_cache';
 
 export interface FeatureFlags {
   isVietQREnabled: boolean;
@@ -24,6 +25,7 @@ interface AppContextType {
   clearConfig: () => void;
   products: ProductPlan[];
   isLoadingProducts: boolean;
+  productsError: string | null;
   refreshProducts: () => Promise<void>;
 }
 
@@ -36,11 +38,29 @@ const DEFAULT_DURATION: DurationOption = {
 };
 
 const DEFAULT_CONFIG: ConfigurationState = {
-  product: MOCK_PRODUCTS[0],
+  product: null as unknown as ProductPlan,
   provisioningType: 'invite_email',
   targetEmail: '',
   duration: DEFAULT_DURATION,
   guestEmail: '',
+};
+
+/**
+ * Read the last successful PostgreSQL catalog snapshot from localStorage
+ * (offline resilience only — source of truth is always the database).
+ */
+const readProductsCache = (): ProductPlan[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(PRODUCTS_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {
+    // ignore corrupted cache
+  }
+  return [];
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -78,18 +98,40 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return DEFAULT_CONFIG;
   });
 
-  const [products, setProducts] = useState<ProductPlan[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<ProductPlan[]>(readProductsCache);
   const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
+
+  // Keep the default configuration product in sync with the database catalog
+  useEffect(() => {
+    if (products.length === 0) return;
+    setActiveConfig((prev) => {
+      if (!prev.product || !products.some((p) => p.id === prev.product?.id)) {
+        const next = { ...prev, product: products[0] };
+        sessionStorage.setItem('aipro_active_config', JSON.stringify(next));
+        return next;
+      }
+      return prev;
+    });
+  }, [products]);
 
   const refreshProducts = useCallback(async () => {
     try {
       setIsLoadingProducts(true);
       const data = await productsApi.getAll();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         setProducts(data);
+        setProductsError(null);
+        // Cache latest DB snapshot for offline resilience
+        try {
+          localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(data));
+        } catch {
+          // storage full — non critical
+        }
       }
-    } catch (err) {
-      console.warn('[AppContext] Failed to load products from database, using cached/mock fallback:', err);
+    } catch (err: any) {
+      console.error('[AppContext] Failed to load products from PostgreSQL:', err);
+      setProductsError(err.message || 'Không thể tải danh mục sản phẩm từ cơ sở dữ liệu.');
     } finally {
       setIsLoadingProducts(false);
     }
@@ -154,6 +196,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         clearConfig,
         products,
         isLoadingProducts,
+        productsError,
         refreshProducts,
       }}
     >
