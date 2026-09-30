@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
-import { MOCK_MEMBER_ORDERS } from '@/data/mockMemberData';
+import { OrderItem } from '@/types';
+import { ordersApi } from '@/services/api';
 import {
   Search,
   Download,
@@ -14,27 +15,71 @@ import {
 import { useAuth } from '@/context/AuthContext';
 
 export const MemberOrdersPage: React.FC = () => {
-  const { user } = useAuth();
+  const { token } = useAuth();
   const { formatPrice } = useApp();
-  const isDemoUser = user?.email === 'alex.dev@gmail.com';
-  const initialOrders = isDemoUser ? MOCK_MEMBER_ORDERS : [];
+
+  // Load real orders from PostgreSQL via API (no mock/demo data)
+  const [orders, setOrders] = useState<OrderItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const fetchOrders = async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const ords = await ordersApi.getMyOrders(token);
+        if (cancelled) return;
+        setOrders(
+          ords.map((o: any) => ({
+            orderId: o.orderId,
+            productSlug: o.productSlug,
+            productName: o.productName,
+            planDurationMonths: o.planDurationMonths,
+            provisioningType: o.provisioningType,
+            guestEmail: o.guestEmail,
+            targetEmail: o.targetEmail,
+            totalAmount: Number(o.totalVND ?? o.totalAmount ?? 0),
+            currency: o.currency,
+            paymentMethod: o.paymentMethod,
+            status: o.status,
+            warrantyExpireDate: o.warrantyExpireDate,
+            createdAt: o.createdAt ? new Date(o.createdAt).toLocaleString('vi-VN') : '',
+          }))
+        );
+      } catch (err: any) {
+        if (!cancelled) setLoadError(err.message || 'Không thể tải đơn hàng từ máy chủ.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchOrders();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'dispatched' | 'pending'>('all');
 
   const filteredOrders = useMemo(() => {
-    return initialOrders.filter((ord) => {
+    return orders.filter((ord) => {
       const matchSearch =
         ord.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ord.productName.toLowerCase().includes(searchTerm.toLowerCase());
       const matchFilter = selectedFilter === 'all' || ord.status === selectedFilter;
       return matchSearch && matchFilter;
     });
-  }, [searchTerm, selectedFilter]);
+  }, [orders, searchTerm, selectedFilter]);
 
   const handleDownloadInvoice = (orderId: string) => {
     const json = JSON.stringify(
-      initialOrders.find((o) => o.orderId === orderId),
+      orders.find((o) => o.orderId === orderId),
       null,
       2
     );
@@ -104,7 +149,15 @@ export const MemberOrdersPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {filteredOrders.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-xs text-text-muted">Đang tải đơn hàng từ cơ sở dữ liệu...</td>
+                </tr>
+              ) : loadError ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-xs text-status-error">{loadError}</td>
+                </tr>
+              ) : filteredOrders.length > 0 ? (
                 filteredOrders.map((ord) => (
                   <tr key={ord.orderId} className="hover:bg-canvas/40 transition-colors">
                     <td className="py-4 px-4 font-bold text-accent-cyan">{ord.orderId}</td>

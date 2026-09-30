@@ -1,5 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { adminApi } from '@/services/api';
 import {
   Search,
   CheckCircle2,
@@ -17,7 +19,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-interface MockAdminOrder {
+interface AdminOrderRow {
   id: string;
   createdAt: string;
   customerEmail: string;
@@ -25,97 +27,60 @@ interface MockAdminOrder {
   duration: string;
   amountExpected: number;
   amountReceived: number;
-  gateway: 'VietQR' | 'Stripe' | 'Crypto';
-  status: 'dispatched' | 'mismatch_amount' | 'missing_memo' | 'pending';
+  gateway: string;
+  status: 'dispatched' | 'paid' | 'pending' | 'cancelled' | 'refunded';
   bankCode?: string;
   memo: string;
 }
 
-const INITIAL_ORDERS: MockAdminOrder[] = [
-  {
-    id: 'AIPRO-94820',
-    createdAt: '22/03/2026 14:20:15',
-    customerEmail: 'alex.dev@gmail.com',
-    product: 'Cursor Pro',
-    duration: '3 Tháng',
-    amountExpected: 749000,
-    amountReceived: 749000,
-    gateway: 'VietQR',
-    status: 'dispatched',
-    bankCode: 'MBB_FT8492023',
-    memo: 'AIPRO94820',
-  },
-  {
-    id: 'AIPRO-94821',
-    createdAt: '22/03/2026 14:25:30',
-    customerEmail: 'tran.engineer@fpt.com',
-    product: 'Claude Pro',
-    duration: '1 Tháng',
-    amountExpected: 289000,
-    amountReceived: 250000,
-    gateway: 'VietQR',
-    status: 'mismatch_amount',
-    bankCode: 'TCB_29103810',
-    memo: 'AIPRO94821',
-  },
-  {
-    id: 'AIPRO-94822',
-    createdAt: '22/03/2026 14:32:00',
-    customerEmail: 'nguyen.devops@vng.vn',
-    product: 'ChatGPT Plus',
-    duration: '1 Tháng',
-    amountExpected: 275000,
-    amountReceived: 275000,
-    gateway: 'Stripe',
-    status: 'dispatched',
-    bankCode: 'STRIPE_CH_99182',
-    memo: 'AIPRO94822',
-  },
-  {
-    id: 'AIPRO-94823',
-    createdAt: '22/03/2026 14:40:11',
-    customerEmail: 'le.coder@hcmut.edu.vn',
-    product: 'Cursor Pro',
-    duration: '1 Tháng',
-    amountExpected: 249000,
-    amountReceived: 0,
-    gateway: 'VietQR',
-    status: 'pending',
-    memo: 'AIPRO94823',
-  },
-  {
-    id: 'AIPRO-94824',
-    createdAt: '22/03/2026 14:48:02',
-    customerEmail: 'david.crypto@solana.org',
-    product: 'Claude Team',
-    duration: '3 Tháng',
-    amountExpected: 1797000,
-    amountReceived: 1797000,
-    gateway: 'Crypto',
-    status: 'dispatched',
-    memo: 'AIPRO94824',
-  },
-  {
-    id: 'AIPRO-94825',
-    createdAt: '22/03/2026 14:52:19',
-    customerEmail: 'hoang.frontend@gmail.com',
-    product: 'GitHub Copilot',
-    duration: '6 Tháng',
-    amountExpected: 894000,
-    amountReceived: 894000,
-    gateway: 'VietQR',
-    status: 'missing_memo',
-    bankCode: 'VCB_49201829',
-    memo: 'CK TIEN MUA TAI KHOAN',
-  },
-];
+/** Map DB order row (from /api/admin/orders) to the table view model */
+const mapOrderRow = (o: any): AdminOrderRow => ({
+  id: o.orderId,
+  createdAt: o.createdAt ? new Date(o.createdAt).toLocaleString('vi-VN') : '',
+  customerEmail: o.userEmail || o.guestEmail || '',
+  product: o.productName,
+  duration: `${o.planDurationMonths} Tháng`,
+  amountExpected: Number(o.totalVND ?? 0),
+  // Orders are only created server-side after payment is confirmed → amount received = total
+  amountReceived: o.status === 'pending' ? 0 : Number(o.totalVND ?? 0),
+  gateway: String(o.paymentMethod || '').toUpperCase(),
+  status: o.status,
+  bankCode: o.paymentGatewayRef || undefined,
+  memo: o.orderId,
+});
 
 export const AdminOrdersPage: React.FC = () => {
-  const [orders, setOrders] = useState<MockAdminOrder[]>(INITIAL_ORDERS);
+  const { token } = useAuth();
+  // Load real orders from PostgreSQL via admin API (no mock data)
+  const [orders, setOrders] = useState<AdminOrderRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'mismatch' | 'dispatched' | 'pending'>('all');
-  const [selectedOrder, setSelectedOrder] = useState<MockAdminOrder | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'dispatched' | 'paid' | 'pending'>('all');
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrderRow | null>(null);
   const [maskPrivacy, setMaskPrivacy] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    const fetchOrders = async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const body = await adminApi.getAllOrders(token, { limit: 200 });
+        if (cancelled) return;
+        setOrders((body.data || []).map(mapOrderRow));
+      } catch (err: any) {
+        if (!cancelled) setLoadError(err.message || 'Không thể tải đơn hàng từ máy chủ.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchOrders();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
@@ -124,23 +89,29 @@ export const AdminOrdersPage: React.FC = () => {
         o.customerEmail.toLowerCase().includes(search.toLowerCase()) ||
         o.memo.toLowerCase().includes(search.toLowerCase());
 
-      const matchStatus =
-        statusFilter === 'all' ||
-        (statusFilter === 'mismatch' && (o.status === 'mismatch_amount' || o.status === 'missing_memo')) ||
-        (statusFilter === 'dispatched' && o.status === 'dispatched') ||
-        (statusFilter === 'pending' && o.status === 'pending');
+      const matchStatus = statusFilter === 'all' || o.status === statusFilter;
 
       return matchSearch && matchStatus;
     });
   }, [orders, search, statusFilter]);
 
-  // Handle Manual Approval Override
-  const handleManualApprove = (orderId: string) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: 'dispatched', amountReceived: o.amountExpected } : o))
-    );
+  // Handle Manual Approval Override — persists "dispatched" status to PostgreSQL
+  const handleManualApprove = async (orderId: string) => {
+    if (!token) return;
+    const prevOrders = orders;
+    const prevSelected = selectedOrder;
+    const applyDispatched = (list: AdminOrderRow[]) =>
+      list.map((o) => (o.id === orderId ? { ...o, status: 'dispatched' as const, amountReceived: o.amountExpected } : o));
+    setOrders((prev) => applyDispatched(prev));
     if (selectedOrder?.id === orderId) {
       setSelectedOrder((prev) => (prev ? { ...prev, status: 'dispatched' } : null));
+    }
+    try {
+      await adminApi.updateOrderStatus(token, orderId, 'dispatched', 'Duyệt thủ công bởi admin');
+    } catch (err: any) {
+      setOrders(prevOrders);
+      setSelectedOrder(prevSelected);
+      setLoadError(err.message || 'Không thể cập nhật trạng thái đơn hàng.');
     }
   };
 
@@ -226,9 +197,9 @@ export const AdminOrdersPage: React.FC = () => {
         </div>
 
         <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
-          <span className="text-xs text-text-muted font-medium">Đơn Chờ Xử Lý &bull; Lệch Tiền</span>
+          <span className="text-xs text-text-muted font-medium">Đơn Chờ Xử Lý &bull; Chưa Bàn Giao</span>
           <div className="text-2xl font-extrabold font-mono text-status-warning mt-1">
-            {orders.filter((o) => o.status === 'mismatch_amount' || o.status === 'missing_memo').length} Đơn
+            {orders.filter((o) => o.status === 'pending' || o.status === 'paid').length} Đơn
           </div>
           <span className="text-[11px] text-status-warning mt-1 inline-block">Cần admin xác nhận</span>
         </div>
@@ -263,13 +234,13 @@ export const AdminOrdersPage: React.FC = () => {
             Tất Cả ({orders.length})
           </button>
           <button
-            onClick={() => setStatusFilter('mismatch')}
+            onClick={() => setStatusFilter('paid')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-colors ${
-              statusFilter === 'mismatch' ? 'bg-status-warning text-black font-bold' : 'text-status-warning hover:bg-status-warning/10'
+              statusFilter === 'paid' ? 'bg-status-warning text-black font-bold' : 'text-status-warning hover:bg-status-warning/10'
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
-            <span>Cần Xử Lý Lệch (2)</span>
+            <span>Đã Thanh Toán ({orders.filter((o) => o.status === 'paid').length})</span>
           </button>
           <button
             onClick={() => setStatusFilter('dispatched')}
@@ -320,13 +291,13 @@ export const AdminOrdersPage: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-border-subtle/50">
               {filteredOrders.map((order) => {
-                const isMismatch = order.status === 'mismatch_amount' || order.status === 'missing_memo';
+                const isPendingDispatch = order.status === 'paid' || order.status === 'pending';
                 return (
                   <tr
                     key={order.id}
                     onClick={() => setSelectedOrder(order)}
                     className={`hover:bg-elevated/50 transition-colors cursor-pointer ${
-                      isMismatch ? 'bg-status-warning/5 border-l-2 border-l-status-warning' : ''
+                      isPendingDispatch && order.status === 'pending' ? 'bg-status-warning/5 border-l-2 border-l-status-warning' : ''
                     }`}
                   >
                     <td className="p-4 font-mono font-bold text-text-primary">{order.id}</td>
@@ -357,24 +328,29 @@ export const AdminOrdersPage: React.FC = () => {
                           <CheckCircle2 className="w-3 h-3" /> Đã giao
                         </span>
                       )}
-                      {order.status === 'mismatch_amount' && (
+                      {order.status === 'paid' && (
                         <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-status-warning text-black flex items-center gap-1 w-fit">
-                          <AlertTriangle className="w-3 h-3" /> Thiếu tiền
+                          <AlertTriangle className="w-3 h-3" /> Đã TT, chờ giao
                         </span>
                       )}
-                      {order.status === 'missing_memo' && (
-                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-status-warning text-black flex items-center gap-1 w-fit">
-                          <AlertTriangle className="w-3 h-3" /> Sai Memo
+                      {order.status === 'cancelled' && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-status-error/15 text-status-error border border-status-error/30 flex items-center gap-1 w-fit">
+                          <AlertTriangle className="w-3 h-3" /> Đã hủy
                         </span>
                       )}
                       {order.status === 'pending' && (
                         <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-canvas text-text-muted border border-border-subtle flex items-center gap-1 w-fit">
-                          <Clock className="w-3 h-3" /> Chờ chuyển
+                          <Clock className="w-3 h-3" /> Chờ chuyển tiền
+                        </span>
+                      )}
+                      {(order.status === 'cancelled' || order.status === 'refunded') && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-canvas text-text-muted border border-border-subtle flex items-center gap-1 w-fit">
+                          <AlertTriangle className="w-3 h-3" /> {order.status === 'cancelled' ? 'Đã hủy' : 'Đã hoàn tiền'}
                         </span>
                       )}
                     </td>
                     <td className="p-4 text-right">
-                      {isMismatch ? (
+                      {isPendingDispatch ? (
                         <button
                           type="button"
                           onClick={(e) => {

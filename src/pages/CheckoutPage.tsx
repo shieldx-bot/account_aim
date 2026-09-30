@@ -23,7 +23,7 @@ const ORDER_DURATION_SECONDS = 600; // 10 minutes
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { activeConfig, formatPrice, currency } = useApp();
+  const { activeConfig: rawActiveConfig, formatPrice, currency } = useApp();
   const { user, token } = useAuth();
   const { items, finalTotalVND, finalTotalUSD, discountVND, discountUSD, couponCode, clearCart } = useCart();
 
@@ -48,6 +48,28 @@ export const CheckoutPage: React.FC = () => {
   // Determine if we're using cart mode or single-product mode
   const isCartMode = items.length > 0;
 
+  // Single-product checkout requires a product selected from the DB catalog.
+  // If missing (e.g. stale sessionStorage), bounce back to the products page.
+  useEffect(() => {
+    if (!rawActiveConfig?.product && items.length === 0) {
+      navigate('/products', { replace: true });
+    }
+  }, [rawActiveConfig, items.length, navigate]);
+
+  const activeConfig = rawActiveConfig ?? {
+    product: null as any,
+    provisioningType: 'invite_email' as const,
+    targetEmail: '',
+    duration: {
+      months: 1,
+      label: '1 Tháng',
+      discountPercent: 0,
+      monthlyEquivalentVND: 0,
+      monthlyEquivalentUSD: 0,
+    },
+    guestEmail: '',
+  };
+
   // Calculate pricing: prefer cart totals, fallback to activeConfig
   const totalAmountVND = isCartMode
     ? finalTotalVND
@@ -59,7 +81,7 @@ export const CheckoutPage: React.FC = () => {
   useEffect(() => {
     trackEvent('checkout_viewed', {
       order_id: orderId,
-      product: isCartMode ? `${items.length} items` : activeConfig.product.name,
+      product: isCartMode ? `${items.length} items` : activeConfig.product?.name ?? 'unknown',
       amount_usd: totalAmountUSD,
       currency: 'USD',
       gateway: 'paypal',
@@ -200,7 +222,7 @@ export const CheckoutPage: React.FC = () => {
         card_type: methodType === 'card_visa' ? detectedCardType : 'paypal_balance',
         items: isCartMode
           ? items.map((i) => ({ item_id: i.product.slug, item_name: i.product.name, quantity: i.quantity }))
-          : [{ item_id: activeConfig.product.slug, item_name: activeConfig.product.name, quantity: 1 }],
+          : [{ item_id: activeConfig.product?.slug, item_name: activeConfig.product?.name, quantity: 1 }],
       });
 
       setTimeout(() => {
@@ -642,7 +664,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-text-secondary">Sản phẩm:</span>
                 <span className="font-semibold text-text-primary">
-                  {activeConfig.product.name} ({activeConfig.duration.label})
+                  {activeConfig.product?.name ?? '—'} ({activeConfig.duration.label})
                 </span>
               </div>
               <div className="flex justify-between">

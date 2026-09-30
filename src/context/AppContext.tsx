@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Currency, ProductPlan, ConfigurationState, DurationOption, ProvisioningType } from '@/types';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { productsApi } from '@/services/api';
 import { trackEvent } from '@/utils/telemetry';
 
@@ -19,11 +18,12 @@ interface AppContextType {
   isOnline: boolean;
   featureFlags: FeatureFlags;
   setFeatureFlags: React.Dispatch<React.SetStateAction<FeatureFlags>>;
-  activeConfig: ConfigurationState;
+  activeConfig: ConfigurationState | null;
   updateConfig: (patch: Partial<ConfigurationState>) => void;
   clearConfig: () => void;
   products: ProductPlan[];
   isLoadingProducts: boolean;
+  productsError: string | null;
   refreshProducts: () => Promise<void>;
 }
 
@@ -35,8 +35,10 @@ const DEFAULT_DURATION: DurationOption = {
   monthlyEquivalentUSD: 9.99,
 };
 
-const DEFAULT_CONFIG: ConfigurationState = {
-  product: MOCK_PRODUCTS[0],
+// Placeholder config used before the user selects a product from the DB catalog.
+// `product` is null until set via updateConfig({ product }) on the product page.
+const DEFAULT_CONFIG: Omit<ConfigurationState, 'product'> & { product: ProductPlan | null } = {
+  product: null,
   provisioningType: 'invite_email',
   targetEmail: '',
   duration: DEFAULT_DURATION,
@@ -78,18 +80,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return DEFAULT_CONFIG;
   });
 
-  const [products, setProducts] = useState<ProductPlan[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<ProductPlan[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
 
   const refreshProducts = useCallback(async () => {
     try {
       setIsLoadingProducts(true);
+      setProductsError(null);
       const data = await productsApi.getAll();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         setProducts(data);
+      } else {
+        setProducts([]);
+        setProductsError('Dữ liệu sản phẩm trả về không hợp lệ.');
       }
     } catch (err) {
-      console.warn('[AppContext] Failed to load products from database, using cached/mock fallback:', err);
+      console.error('[AppContext] Failed to load products from database:', err);
+      setProductsError(
+        'Không thể tải danh sách sản phẩm từ cơ sở dữ liệu. Hãy chắc chắn backend API (cổng 5000) và PostgreSQL đang chạy.',
+      );
     } finally {
       setIsLoadingProducts(false);
     }
@@ -154,6 +164,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         clearConfig,
         products,
         isLoadingProducts,
+        productsError,
         refreshProducts,
       }}
     >

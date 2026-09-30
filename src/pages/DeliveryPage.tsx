@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { trackEvent } from '@/utils/telemetry';
 import { openTelegramSupport } from '@/utils/diagnostics';
@@ -21,7 +21,23 @@ import {
 
 export const DeliveryPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
-  const { activeConfig } = useApp();
+  const navigate = useNavigate();
+  const { activeConfig: rawActiveConfig } = useApp();
+
+  // Delivery page requires a completed checkout config (product chosen from DB catalog)
+  useEffect(() => {
+    if (!rawActiveConfig?.product) {
+      navigate('/products', { replace: true });
+    }
+  }, [rawActiveConfig, navigate]);
+
+  const activeConfig = rawActiveConfig ?? {
+    product: null as any,
+    provisioningType: 'invite_email' as const,
+    targetEmail: '',
+    duration: { months: 1, label: '1 Tháng', discountPercent: 0, monthlyEquivalentVND: 0, monthlyEquivalentUSD: 0 },
+    guestEmail: '',
+  };
 
   const [showPassword, setShowPassword] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -70,7 +86,7 @@ export const DeliveryPage: React.FC = () => {
       content = JSON.stringify(
         {
           orderId,
-          product: activeConfig.product.name,
+          product: activeConfig.product?.name ?? 'AI License',
           accountEmail: credentials.email,
           password: credentials.password,
           twoFactorSecret: credentials.token2FA,
@@ -85,7 +101,7 @@ export const DeliveryPage: React.FC = () => {
     } else {
       content = [
         `# AIPRO.DEV LICENSE VAULT - ORDER ${orderId}`,
-        `AIPRO_PRODUCT="${activeConfig.product.name}"`,
+        `AIPRO_PRODUCT="${activeConfig.product?.name ?? 'AI License'}"`,
         `AIPRO_ACCOUNT_EMAIL="${credentials.email}"`,
         `AIPRO_ACCOUNT_PASSWORD="${credentials.password}"`,
         `AIPRO_2FA_SECRET="${credentials.token2FA}"`,
@@ -108,7 +124,7 @@ export const DeliveryPage: React.FC = () => {
 
   // Copy full markdown block for Notion / Password Managers
   const handleCopyMarkdown = () => {
-    const md = `### AIPro.dev License Vault - ${activeConfig.product.name}
+    const md = `### AIPro.dev License Vault - ${activeConfig.product?.name ?? 'AI License'}
 - **Order ID**: \`${orderId}\`
 - **Email**: \`${credentials.email}\`
 - **Password**: \`${credentials.password}\`
@@ -156,7 +172,7 @@ export const DeliveryPage: React.FC = () => {
               The Credentials Vault
             </span>
             <h2 className="text-lg font-bold text-text-primary mt-0.5">
-              {activeConfig.product.name} ({activeConfig.duration.label})
+              {activeConfig.product?.name ?? '—'} ({activeConfig.duration.label})
             </h2>
           </div>
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-status-success/15 text-status-success border border-status-success/30">

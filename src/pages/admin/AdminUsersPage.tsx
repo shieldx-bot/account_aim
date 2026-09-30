@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { User, UserRole } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { adminApi } from '@/services/api';
 import {
   Search,
   Users,
@@ -15,71 +16,48 @@ import {
   Mail,
 } from 'lucide-react';
 
-interface MockUserEntry extends User {
+interface AdminUserEntry extends User {
   ordersCount: number;
   totalSpentVND: number;
   status: 'active' | 'banned';
 }
 
-const INITIAL_USERS: MockUserEntry[] = [
-  {
-    id: 'usr-member-8829',
-    email: 'alex.dev@gmail.com',
-    name: 'Alex Nguyễn',
-    role: 'member',
-    balanceVND: 650000,
-    balanceUSD: 25.5,
-    tier: 'VIP Dev',
-    createdAt: '2025-01-15',
-    ordersCount: 3,
-    totalSpentVND: 1647000,
-    status: 'active',
-  },
-  {
-    id: 'usr-member-3312',
-    email: 'jane.fullstack@outlook.com',
-    name: 'Jane Trần',
-    role: 'member',
-    balanceVND: 120000,
-    balanceUSD: 4.8,
-    tier: 'Standard',
-    createdAt: '2025-02-10',
-    ordersCount: 1,
-    totalSpentVND: 249000,
-    status: 'active',
-  },
-  {
-    id: 'usr-member-5521',
-    email: 'minh.techlead@vng.com',
-    name: 'Minh Lê (TechLead)',
-    role: 'member',
-    balanceVND: 2400000,
-    balanceUSD: 96.0,
-    tier: 'Enterprise',
-    createdAt: '2024-12-05',
-    ordersCount: 8,
-    totalSpentVND: 5490000,
-    status: 'active',
-  },
-  {
-    id: 'usr-admin-0001',
-    email: 'admin@aipro.dev',
-    name: 'Root Operator',
-    role: 'admin',
-    balanceVND: 99999999,
-    balanceUSD: 4000.0,
-    tier: 'Enterprise',
-    createdAt: '2024-11-01',
-    ordersCount: 0,
-    totalSpentVND: 0,
-    status: 'active',
-  },
-];
-
 export const AdminUsersPage: React.FC = () => {
-  const [users, setUsers] = useState<MockUserEntry[]>(INITIAL_USERS);
+  const { token } = useAuth();
+  // Load real users from PostgreSQL via admin API (no mock data)
+  const [users, setUsers] = useState<AdminUserEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<'all' | 'member' | 'admin'>('all');
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    const fetchUsers = async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const rows = await adminApi.getAllUsers(token);
+        if (cancelled) return;
+        setUsers(
+          rows.map((u: any) => ({
+            ...u,
+            createdAt: u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '',
+            status: u.status === 'banned' ? ('banned' as const) : ('active' as const),
+          }))
+        );
+      } catch (err: any) {
+        if (!cancelled) setLoadError(err.message || 'Không thể tải danh sách thành viên từ máy chủ.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchUsers();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -92,34 +70,35 @@ export const AdminUsersPage: React.FC = () => {
   }, [users, searchTerm, selectedRole]);
 
   const handleToggleRole = (userId: string) => {
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id === userId) {
-          const nextRole: UserRole = u.role === 'admin' ? 'member' : 'admin';
-          return { ...u, role: nextRole };
-        }
-        return u;
-      })
-    );
+    if (!token) return;
+    const target = users.find((u) => u.id === userId);
+    if (!target) return;
+    const nextRole: UserRole = target.role === 'admin' ? 'member' : 'admin';
+    // Optimistic update, then persist to PostgreSQL
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: nextRole } : u)));
+    adminApi.updateUserRole(token, userId, nextRole).catch((err: any) => {
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, role: target.role } : u)));
+      setLoadError(err.message || 'Không thể cập nhật vai trò.');
+    });
   };
 
   const handleAddBalance = (userId: string) => {
+    if (!token) return;
     const amount = 200000;
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, balanceVND: u.balanceVND + amount } : u))
     );
+    adminApi.addUserBalance(token, userId, amount).catch((err: any) => {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, balanceVND: u.balanceVND - amount } : u))
+      );
+      setLoadError(err.message || 'Không thể nạp số dư ví.');
+    });
   };
 
   const handleToggleStatus = (userId: string) => {
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id === userId) {
-          const nextStatus = u.status === 'active' ? 'banned' : 'active';
-          return { ...u, status: nextStatus };
-        }
-        return u;
-      })
-    );
+    // TODO: needs a `status` column in the users table + PATCH /api/admin/users/:id/status endpoint
+    alert('Tính năng khóa/mở khóa tài khoản chưa được hỗ trợ bởi máy chủ. Vui lòng thêm cột "status" vào bảng users trong PostgreSQL.');
   };
 
   return (
@@ -180,7 +159,21 @@ export const AdminUsersPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {filteredUsers.map((u) => (
+              {loadError && (
+                <tr>
+                  <td colSpan={6} className="py-4 text-center text-xs text-status-error">{loadError}</td>
+                </tr>
+              )}
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-xs text-text-muted">Đang tải thành viên từ cơ sở dữ liệu...</td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-xs text-text-muted">Không tìm thấy thành viên nào.</td>
+                </tr>
+              ) : (
+              filteredUsers.map((u) => (
                 <tr key={u.id} className="hover:bg-canvas/40 transition-colors">
                   <td className="py-4 px-4 font-sans">
                     <span className="font-bold text-text-primary block">{u.name}</span>
@@ -257,7 +250,8 @@ export const AdminUsersPage: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>

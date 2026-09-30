@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MOCK_MEMBER_SUBSCRIPTIONS } from '@/data/mockMemberData';
+import { MemberSubscription } from '@/types';
+import { subscriptionsApi } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
 import {
   KeyRound,
@@ -17,12 +18,44 @@ import {
 } from 'lucide-react';
 
 export const MemberSubscriptionsPage: React.FC = () => {
-  const { user } = useAuth();
-  const isDemoUser = user?.email === 'alex.dev@gmail.com';
-  const initialSubscriptions = isDemoUser ? MOCK_MEMBER_SUBSCRIPTIONS : [];
-  const [subscriptions, setSubscriptions] = useState(initialSubscriptions);
+  const { token } = useAuth();
+  // Load real subscriptions from PostgreSQL via API (no mock/demo data)
+  const [subscriptions, setSubscriptions] = useState<MemberSubscription[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const fetchSubs = async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const subs = await subscriptionsApi.getMySubscriptions(token);
+        if (cancelled) return;
+        setSubscriptions(
+          subs.map((s: any) => ({
+            ...s,
+            startDate: s.startDate ? new Date(s.startDate).toLocaleDateString('vi-VN') : '',
+            expiresAt: s.expiresAt ? new Date(s.expiresAt).toLocaleDateString('vi-VN') : '',
+          }))
+        );
+      } catch (err: any) {
+        if (!cancelled) setLoadError(err.message || 'Không thể tải danh sách đăng ký từ máy chủ.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchSubs();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const toggleReveal = (id: string) => {
     setRevealedIds((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -35,9 +68,20 @@ export const MemberSubscriptionsPage: React.FC = () => {
   };
 
   const toggleAutoRenew = (id: string) => {
+    const sub = subscriptions.find((s) => s.id === id);
+    if (!sub || !token) return;
+    const nextValue = !sub.autoRenew;
+    // Optimistic update, then persist to PostgreSQL
     setSubscriptions((prev) =>
-      prev.map((sub) => (sub.id === id ? { ...sub, autoRenew: !sub.autoRenew } : sub))
+      prev.map((s) => (s.id === id ? { ...s, autoRenew: nextValue } : s))
     );
+    subscriptionsApi.updateAutoRenew(token, id, nextValue).catch((err: any) => {
+      // Revert on failure
+      setSubscriptions((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, autoRenew: !nextValue } : s))
+      );
+      setLoadError(err.message || 'Không thể lưu thiết lập tự động gia hạn.');
+    });
   };
 
   return (
@@ -60,8 +104,17 @@ export const MemberSubscriptionsPage: React.FC = () => {
       </div>
 
       {/* Subscriptions Cards */}
+      {loadError && (
+        <div className="p-3 rounded-xl bg-status-error/10 border border-status-error/30 text-xs text-status-error">
+          {loadError}
+        </div>
+      )}
       <div className="space-y-4">
-        {subscriptions.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-12 bg-surface rounded-2xl border border-border-subtle">
+            <p className="text-xs text-text-muted">Đang tải tài khoản từ cơ sở dữ liệu...</p>
+          </div>
+        ) : subscriptions.length > 0 ? (
           subscriptions.map((sub) => {
             const isRevealed = !!revealedIds[sub.id];
 

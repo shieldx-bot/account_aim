@@ -253,6 +253,37 @@ export const getMySubscriptions = catchAsync(async (req: Request, res: Response)
 });
 
 /**
+ * PATCH /api/subscriptions/:id/auto-renew
+ * Toggle auto-renew flag for the authenticated user's subscription
+ */
+export const updateSubscriptionAutoRenew = catchAsync(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  if (!userId) {
+    throw new UnauthorizedError('Bạn cần đăng nhập.');
+  }
+
+  const { autoRenew } = req.body;
+  if (typeof autoRenew !== 'boolean') {
+    throw new BadRequestError('Giá trị autoRenew không hợp lệ.');
+  }
+
+  const result = await pool.query(
+    `UPDATE subscriptions SET auto_renew = $1 WHERE id = $2 AND user_id = $3 RETURNING *`,
+    [autoRenew, req.params.id, userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy đăng ký hoặc bạn không có quyền cập nhật.');
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Đã cập nhật thiết lập tự động gia hạn.',
+    data: formatSubscriptionRow(result.rows[0]),
+  });
+});
+
+/**
  * GET /api/admin/orders
  * Admin: Get all orders with filtering
  */

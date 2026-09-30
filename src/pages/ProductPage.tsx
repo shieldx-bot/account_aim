@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
+import { productsApi } from '@/services/api';
 import { useApp } from '@/context/AppContext';
 import { useCart } from '@/context/CartContext';
-import { ProvisioningType, DurationOption } from '@/types';
+import { ProvisioningType, DurationOption, ProductPlan } from '@/types';
 import { trackEvent } from '@/utils/telemetry';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import {
@@ -17,6 +17,7 @@ import {
   AlertCircle,
   HelpCircle,
   ShoppingBag,
+  RefreshCw,
 } from 'lucide-react';
 
 const DURATION_OPTIONS: { months: number; label: string; discountPercent: number; isGiftExtraMonth?: boolean }[] = [
@@ -34,14 +35,43 @@ export const ProductPage: React.FC = () => {
   const { formatPrice, currency, updateConfig, products } = useApp();
   const { addItem } = useCart();
 
-  const product = useMemo(() => {
-    return (
-      products.find((p) => p.slug === slug) ||
-      MOCK_PRODUCTS.find((p) => p.slug === slug) ||
-      products[0] ||
-      MOCK_PRODUCTS[0]
-    );
+  // Product is fetched directly from the PostgreSQL-backed API by slug
+  const [dbProduct, setDbProduct] = useState<ProductPlan | null>(null);
+  const [isFetchingProduct, setIsFetchingProduct] = useState<boolean>(true);
+  const [productFetchError, setProductFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchProduct = async () => {
+      if (!slug) return;
+      // Prefer the already-loaded catalog from AppContext to avoid an extra request
+      const fromCatalog = products.find((p) => p.slug === slug);
+      if (fromCatalog) {
+        if (!cancelled) {
+          setDbProduct(fromCatalog);
+          setIsFetchingProduct(false);
+        }
+        return;
+      }
+      try {
+        setIsFetchingProduct(true);
+        setProductFetchError(null);
+        const data = await productsApi.getBySlug(slug);
+        if (!cancelled) setDbProduct(data);
+      } catch (err) {
+        console.error('[ProductPage] Failed to fetch product from database:', err);
+        if (!cancelled) setProductFetchError('Không tìm thấy sản phẩm này trong cơ sở dữ liệu.');
+      } finally {
+        if (!cancelled) setIsFetchingProduct(false);
+      }
+    };
+    fetchProduct();
+    return () => {
+      cancelled = true;
+    };
   }, [slug, products]);
+
+  const product = dbProduct;
 
   const [provisioningType, setProvisioningType] = useState<ProvisioningType>('invite_email');
   const [targetEmail, setTargetEmail] = useState('');
@@ -51,6 +81,7 @@ export const ProductPage: React.FC = () => {
   const [honeypot, setHoneypot] = useState('');
 
   useEffect(() => {
+    if (!product) return;
     trackEvent('view_item', {
       item_id: product.slug,
       item_name: product.name,
@@ -60,8 +91,8 @@ export const ProductPage: React.FC = () => {
 
   // Pricing math
   const durationConfig = DURATION_OPTIONS[selectedDurationIndex];
-  const baseMonthlyVND = product.currentPriceVND;
-  const baseMonthlyUSD = product.currentPriceUSD;
+  const baseMonthlyVND = product?.currentPriceVND ?? 0;
+  const baseMonthlyUSD = product?.currentPriceUSD ?? 0;
 
   const rawTotalVND = baseMonthlyVND * durationConfig.months;
   const rawTotalUSD = baseMonthlyUSD * durationConfig.months;
@@ -77,6 +108,8 @@ export const ProductPage: React.FC = () => {
 
     // Bot trap
     if (honeypot) return;
+
+    if (!product) return;
 
     if (!isGuestEmailValid) {
       setGuestEmailError('Vui lòng nhập địa chỉ email hợp lệ để nhận thông tin license');
@@ -116,6 +149,7 @@ export const ProductPage: React.FC = () => {
   const handleAddToCart = (e: React.FormEvent) => {
     e.preventDefault();
     if (honeypot) return;
+    if (!product) return;
 
     if (provisioningType === 'invite_email' && !EMAIL_REGEX.test(targetEmail.trim())) {
       setGuestEmailError('Vui lòng nhập email cá nhân cần nâng cấp');
@@ -138,6 +172,35 @@ export const ProductPage: React.FC = () => {
       unitPriceUSD: finalTotalUSD,
     });
   };
+
+  // Loading / error states while fetching the product from PostgreSQL
+  if (!product) {
+    return (
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-20">
+        <div className="flex flex-col items-center justify-center gap-4 text-center">
+          {isFetchingProduct ? (
+            <>
+              <RefreshCw className="w-8 h-8 animate-spin text-brand-primary" />
+              <p className="text-sm text-text-secondary">Đang tải sản phẩm từ cơ sở dữ liệu...</p>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="w-8 h-8 text-red-500" />
+              <p className="text-sm text-text-secondary">
+                {productFetchError || 'Không tìm thấy sản phẩm.'}
+              </p>
+              <Link
+                to="/products"
+                className="text-sm text-brand-primary hover:underline"
+              >
+                ← Quay lại danh sách sản phẩm
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-6 pb-28 sm:pb-20">

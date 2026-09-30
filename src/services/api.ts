@@ -355,6 +355,25 @@ export const subscriptionsApi = {
     }
     return body.data || [];
   },
+
+  /**
+   * Toggle auto-renew for a subscription (persisted in PostgreSQL)
+   */
+  async updateAutoRenew(token: string, id: string, autoRenew: boolean): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/subscriptions/${id}/auto-renew`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ autoRenew }),
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      throw new Error(body.message || 'Không thể cập nhật tự động gia hạn.');
+    }
+    return body.data;
+  },
 };
 
 export const adminApi = {

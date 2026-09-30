@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
-import { MOCK_MEMBER_SUBSCRIPTIONS, MOCK_MEMBER_ORDERS } from '@/data/mockMemberData';
+import { MemberSubscription, OrderItem } from '@/types';
+import { ordersApi, subscriptionsApi } from '@/services/api';
 import {
   KeyRound,
   ShieldCheck,
@@ -21,14 +22,68 @@ import {
 } from 'lucide-react';
 
 export const MemberDashboardPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { formatPrice } = useApp();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [revealedPassId, setRevealedPassId] = useState<string | null>(null);
 
-  const isDemoUser = user?.email === 'alex.dev@gmail.com';
-  const userSubscriptions = isDemoUser ? MOCK_MEMBER_SUBSCRIPTIONS : [];
-  const userOrders = isDemoUser ? MOCK_MEMBER_ORDERS : [];
+  // Load real data from PostgreSQL via API (no mock/demo data)
+  const [userSubscriptions, setUserSubscriptions] = useState<MemberSubscription[]>([]);
+  const [userOrders, setUserOrders] = useState<OrderItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const fetchData = async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const [subs, ords] = await Promise.all([
+          subscriptionsApi.getMySubscriptions(token),
+          ordersApi.getMyOrders(token),
+        ]);
+        if (cancelled) return;
+        setUserSubscriptions(
+          subs.map((s: any) => ({
+            ...s,
+            startDate: s.startDate ? new Date(s.startDate).toLocaleDateString('vi-VN') : '',
+            expiresAt: s.expiresAt ? new Date(s.expiresAt).toLocaleDateString('vi-VN') : '',
+          }))
+        );
+        setUserOrders(
+          ords.map((o: any) => ({
+            orderId: o.orderId,
+            productSlug: o.productSlug,
+            productName: o.productName,
+            planDurationMonths: o.planDurationMonths,
+            provisioningType: o.provisioningType,
+            guestEmail: o.guestEmail,
+            targetEmail: o.targetEmail,
+            totalAmount: Number(o.totalVND ?? o.totalAmount ?? 0),
+            currency: o.currency,
+            paymentMethod: o.paymentMethod,
+            status: o.status,
+            warrantyExpireDate: o.warrantyExpireDate,
+            createdAt: o.createdAt ? new Date(o.createdAt).toLocaleString('vi-VN') : '',
+          }))
+        );
+      } catch (err: any) {
+        if (!cancelled) setLoadError(err.message || 'Không thể tải dữ liệu từ máy chủ.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchData();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   const activeCount = userSubscriptions.filter((s) => s.status === 'active').length;
   const expiringCount = userSubscriptions.filter((s) => s.status === 'expiring_soon').length;
   const expiringSub = userSubscriptions.find((s) => s.status === 'expiring_soon');
@@ -155,7 +210,15 @@ export const MemberDashboardPage: React.FC = () => {
           </Link>
         </div>
 
-        {userSubscriptions.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-8 bg-canvas rounded-xl border border-border-subtle">
+            <p className="text-xs text-text-muted">Đang tải dữ liệu từ cơ sở dữ liệu...</p>
+          </div>
+        ) : loadError ? (
+          <div className="text-center py-8 bg-canvas rounded-xl border border-status-error/30">
+            <p className="text-xs text-status-error">{loadError}</p>
+          </div>
+        ) : userSubscriptions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {userSubscriptions.map((sub) => {
               const isRevealed = revealedPassId === sub.id;
