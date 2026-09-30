@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { trackEvent } from '@/utils/telemetry';
 import { openTelegramSupport } from '@/utils/diagnostics';
 import { ordersApi } from '@/services/api';
+import { peekPendingReferral, consumePendingReferral, captureRefFromUrl } from '@/utils/referral';
 import {
   Check,
   Clock,
@@ -22,6 +23,7 @@ const ORDER_DURATION_SECONDS = 600; // 10 minutes
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { activeConfig, formatPrice, currency } = useApp();
   const { user, token } = useAuth();
@@ -34,6 +36,14 @@ export const CheckoutPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processStage, setProcessStage] = useState<'idle' | 'authorizing' | 'capturing' | 'completed'>('idle');
   const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  // ── Referral attribution (#InviteToPay) ──
+  // Priority: router state (from ReferralEventSection) → ?ref= URL → pending localStorage.
+  const [referralCode] = useState<string | null>(() => {
+    const fromState = (location.state as any)?.referralCode as string | undefined;
+    if (fromState) return String(fromState).toUpperCase();
+    return captureRefFromUrl() ?? peekPendingReferral()?.code ?? null;
+  });
 
   // Visa / Card input form states
   const [cardNumber, setCardNumber] = useState('');
@@ -168,6 +178,7 @@ export const CheckoutPage: React.FC = () => {
           paymentMethod: methodType === 'card_visa' ? 'paypal_card' : methodType === 'paypal_wallet' ? 'paypal_wallet' : 'paypal_credit',
           paymentGatewayRef: `PAYPAL-${Date.now()}`,
           couponCode: couponCode || undefined,
+          referralCode: consumePendingReferral() ?? referralCode ?? undefined,
         });
         if (result.data?.orderId) {
           createdOrderId = result.data.orderId;
@@ -193,6 +204,7 @@ export const CheckoutPage: React.FC = () => {
           currency: 'VND',
           paymentMethod: methodType === 'card_visa' ? 'paypal_card' : methodType === 'paypal_wallet' ? 'paypal_wallet' : 'paypal_credit',
           paymentGatewayRef: `PAYPAL-${Date.now()}`,
+          referralCode: consumePendingReferral() ?? referralCode ?? undefined,
         });
         if (result.data?.orderId) {
           createdOrderId = result.data.orderId;
@@ -204,6 +216,7 @@ export const CheckoutPage: React.FC = () => {
 
       trackEvent('purchase', {
         transaction_id: createdOrderId,
+        referral_code: referralCode ?? undefined,
         value: totalAmountUSD,
         currency: 'USD',
         payment_method: 'paypal',
@@ -255,6 +268,18 @@ export const CheckoutPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* LEFT COLUMN: 7 Cols (PayPal & Visa Gateway) */}
         <div className="lg:col-span-7 space-y-6">
+          {/* Referral Attribution Banner (#InviteToPay) */}
+          {referralCode && (
+            <div className="p-4 rounded-xl bg-accent-cyan/5 border border-accent-cyan/30 flex items-center gap-2.5">
+              <Sparkles className="w-4 h-4 text-accent-cyan shrink-0" />
+              <p className="text-xs text-text-secondary">
+                Đơn hàng này được quy kết cho lời mời{' '}
+                <span className="font-mono font-bold text-accent-cyan">{referralCode}</span> — người gửi lời mời
+                sẽ tự động nhận quà sau khi thanh toán hợp lệ (FAB).
+              </p>
+            </div>
+          )}
+
           {/* Guest Email Verified Notice */}
           <div className="p-4 rounded-xl bg-surface border border-border-subtle flex items-center justify-between">
             <div className="flex items-center gap-2.5">

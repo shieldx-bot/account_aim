@@ -45,6 +45,29 @@ export const authenticateToken = (
   }
 };
 
+/**
+ * Like authenticateToken but never rejects: attaches req.user when a valid
+ * Bearer token is present, otherwise continues anonymously. Used by endpoints
+ * that support both guests and logged-in users (e.g. referral code issuing).
+ */
+export const optionalAuth = (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): void => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+
+  if (token) {
+    try {
+      req.user = jwt.verify(token, JWT_SECRET) as AuthUserPayload;
+    } catch {
+      // Invalid/expired token on an optional route → treat as anonymous
+    }
+  }
+  next();
+};
+
 export const requireAdmin = (
   req: Request,
   res: Response,

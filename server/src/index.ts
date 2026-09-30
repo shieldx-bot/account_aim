@@ -11,6 +11,7 @@ import { productRouter } from './routes/product.routes.js';
 import { statusRouter } from './routes/status.routes.js';
 import { ordersRouter, subscriptionsRouter, adminRouter } from './routes/orders.routes.js';
 import { inventoryAdminRouter, warrantyAdminRouter, warrantyPublicRouter } from './routes/inventory-warranty.routes.js';
+import { referralRouter } from './routes/referral.routes.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { ensureSeedProducts } from './controllers/product.controller.js';
 import { pool } from './config/db.js';
@@ -72,6 +73,7 @@ app.use('/api/status', statusRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/warranty', warrantyPublicRouter);
+app.use('/api/referral', referralRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/admin/inventory', inventoryAdminRouter);
 app.use('/api/admin/warranty', warrantyAdminRouter);
@@ -100,6 +102,13 @@ const runMigrations = async () => {
     if (fs.existsSync(otpSqlPath)) {
       const otpSql = fs.readFileSync(otpSqlPath, 'utf-8');
       await pool.query(otpSql);
+    }
+
+    // Referral / #InviteToPay system (migration 004)
+    const refSqlPath = path.join(__dirname, 'db', 'migrations', '004_referral_system.sql');
+    if (fs.existsSync(refSqlPath)) {
+      const refSql = fs.readFileSync(refSqlPath, 'utf-8');
+      await pool.query(refSql);
     }
 
     console.log('[DB] Schema migrations applied successfully.');
