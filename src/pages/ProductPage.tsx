@@ -123,8 +123,8 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
       item_id: product.slug,
       provisioning_type: provisioningType,
       duration_months: durationConfig.months,
-      total_amount: currency === 'VND' ? finalTotalVND : finalTotalUSD,
-      currency,
+      total_amount: finalTotalUSD,
+      currency: 'USD',
     });
 
     updateConfig({
@@ -396,7 +396,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
                 </div>
                 <div className="flex justify-between text-text-secondary">
                   <span>Thuế VAT &amp; Phí giao dịch:</span>
-                  <span className="font-mono text-status-success font-semibold">+ 0 ₫ (Miễn phí)</span>
+                  <span className="font-mono text-status-success font-semibold">+ $0.00 (Miễn phí)</span>
                 </div>
               </div>
 

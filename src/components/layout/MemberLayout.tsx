@@ -3,6 +3,7 @@ import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
 import { useCart } from '@/context/CartContext';
+import { usdToVnd } from '@/types';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 import {
   LayoutDashboard,
@@ -23,12 +24,12 @@ import {
 
 export const MemberLayout: React.FC = () => {
   const { user, logout, addBalance } = useAuth();
-  const { currency, setCurrency, formatPrice } = useApp();
+  const { formatPrice } = useApp();
   const { openCart, totalCount } = useCart();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showTopUpModal, setShowTopUpModal] = useState(false);
-  const [topUpAmount, setTopUpAmount] = useState(200000);
+  const [topUpAmountUSD, setTopUpAmountUSD] = useState(8);
 
   const handleLogout = () => {
     logout();
@@ -36,8 +37,8 @@ export const MemberLayout: React.FC = () => {
   };
 
   const handleConfirmTopUp = () => {
-    const usdEquivalent = topUpAmount / 25000;
-    addBalance(topUpAmount, usdEquivalent);
+    // USD is the single source of truth; VND fields are derived for legacy payloads.
+    addBalance(usdToVnd(topUpAmountUSD), topUpAmountUSD);
     setShowTopUpModal(false);
   };
 
@@ -98,20 +99,20 @@ export const MemberLayout: React.FC = () => {
               Select a top-up package to pay via VietQR instantly. Balance will be added to the account immediately.
             </p>
             <div className="grid grid-cols-3 gap-2.5 mb-5">
-              {[100000, 200000, 500000].map((amt) => (
+              {[4, 8, 20].map((amt) => (
                 <button
                   key={amt}
                   type="button"
-                  onClick={() => setTopUpAmount(amt)}
+                  onClick={() => setTopUpAmountUSD(amt)}
                   className={`p-3 rounded-xl border text-center transition-all ${
-                    topUpAmount === amt
+                    topUpAmountUSD === amt
                       ? 'bg-primary-blue/20 border-primary-blue text-white font-bold ring-1 ring-primary-blue'
                       : 'bg-canvas border-border-subtle text-text-secondary hover:border-primary-blue/50'
                   }`}
                 >
-                  <span className="block text-xs font-mono">{amt.toLocaleString('vi-VN')} ₫</span>
+                  <span className="block text-xs font-mono">${amt.toFixed(2)}</span>
                   <span className="text-[10px] text-text-muted mt-0.5 block">
-                    +{(amt / 25000).toFixed(0)} USD
+                    Top up credit
                   </span>
                 </button>
               ))}
@@ -119,7 +120,7 @@ export const MemberLayout: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-canvas border border-border-subtle mb-5 flex items-center justify-between">
               <span className="text-xs text-text-secondary">Số tiền nạp:</span>
               <span className="font-mono text-base font-bold text-accent-cyan">
-                {topUpAmount.toLocaleString('vi-VN')} ₫
+                ${topUpAmountUSD.toFixed(2)}
               </span>
             </div>
             <div className="flex gap-3">
@@ -262,27 +263,10 @@ export const MemberLayout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Currency Selector */}
-            <div className="flex items-center bg-canvas border border-border-subtle rounded-lg p-0.5 text-xs font-mono">
-              <button
-                type="button"
-                onClick={() => setCurrency('VND')}
-                className={`px-2 py-1 rounded transition-colors ${
-                  currency === 'VND' ? 'bg-primary-blue text-white font-bold' : 'text-text-muted hover:text-text-primary'
-                }`}
-              >
-                VND
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrency('USD')}
-                className={`px-2 py-1 rounded transition-colors ${
-                  currency === 'USD' ? 'bg-primary-blue text-white font-bold' : 'text-text-muted hover:text-text-primary'
-                }`}
-              >
-                USD
-              </button>
-            </div>
+            {/* Single-currency badge: USD only */}
+            <span className="px-2.5 py-1 rounded-lg bg-canvas border border-border-subtle text-accent-cyan text-xs font-mono font-bold">
+              USD $
+            </span>
 
             {/* Shopping Cart Button */}
             <button

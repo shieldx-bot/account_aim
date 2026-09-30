@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { UserRole } from '@/types';
+import { UserRole, usdToVnd } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { adminApi } from '@/services/api';
 import {
@@ -81,7 +81,8 @@ export const AdminUsersPage: React.FC = () => {
   // POST /api/admin/users/:id/balance → PostgreSQL
   const handleAddBalance = async (u: AdminUserRow) => {
     if (!token) return;
-    const amount = 200000;
+    const amountUSD = 8; // $8 quick credit
+    const amount = usdToVnd(amountUSD);
     setBusyId(u.id);
     try {
       await adminApi.addUserBalance(token, u.id, amount);
@@ -217,13 +218,13 @@ export const AdminUsersPage: React.FC = () => {
                     </td>
 
                     <td className="py-4 px-4 font-bold text-status-success font-mono">
-                      {u.balanceVND.toLocaleString('vi-VN')} ₫
+                      ${(u.balanceUSD ?? u.balanceVND / 25000).toFixed(2)}
                     </td>
 
                     <td className="py-4 px-4 font-mono">
                       <span className="text-text-primary font-semibold">{u.ordersCount} đơn</span>
                       <span className="text-[10px] text-text-muted block">
-                        {u.totalSpentVND.toLocaleString('vi-VN')} ₫
+                        ${(u.totalSpentVND / 25000).toFixed(2)}
                       </span>
                     </td>
 
@@ -248,7 +249,7 @@ export const AdminUsersPage: React.FC = () => {
                           className="p-1.5 rounded-lg bg-canvas hover:bg-canvas-subtle border border-border-subtle text-status-success hover:border-status-success text-[11px] font-semibold disabled:opacity-40"
                           title="Nạp thưởng +200k (ghi vào DB)"
                         >
-                          +200k ₫
+                          +$8
                         </button>
 
                         <button

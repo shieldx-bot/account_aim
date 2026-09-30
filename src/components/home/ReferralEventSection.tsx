@@ -40,7 +40,7 @@ import { setPendingReferral } from '@/utils/referral';
 const INVITE_BASE_URL = `${window.location.origin}/r`;
 
 export const ReferralEventSection: React.FC = () => {
-  const { products } = useApp();
+  const { products, formatPrice } = useApp();
   const { token } = useAuth();
   const navigate = useNavigate();
   const [emailInput, setEmailInput] = useState('');
@@ -217,10 +217,10 @@ export const ReferralEventSection: React.FC = () => {
                     <p className="text-sm text-text-secondary mt-1">{prizeProduct.platformSubtext}</p>
                     <div className="mt-4 flex items-baseline gap-2">
                       <span className="text-2xl font-black text-accent-cyan">
-                        {prizeProduct.currentPriceVND.toLocaleString('vi-VN')}₫
+                        {formatPrice(prizeProduct.currentPriceVND, prizeProduct.currentPriceUSD)}
                       </span>
                       <span className="text-xs text-text-secondary line-through">
-                        {prizeProduct.originalPriceVND.toLocaleString('vi-VN')}₫
+                        {formatPrice(prizeProduct.originalPriceVND, prizeProduct.originalPriceUSD)}
                       </span>
                     </div>
                     <ul className="mt-4 space-y-2">

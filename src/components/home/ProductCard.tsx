@@ -52,8 +52,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
     trackEvent('select_item', {
       item_id: product.slug,
       item_name: product.name,
-      price: currency === 'VND' ? product.currentPriceVND : product.currentPriceUSD,
-      currency,
+      price: product.currentPriceUSD,
+      currency: 'USD',
     });
 
     updateConfig({

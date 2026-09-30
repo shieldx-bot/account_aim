@@ -16,13 +16,13 @@ import {
 
 export const AdminDashboardPage: React.FC = () => {
   const weeklyRevenue = [
-    { day: 'T2', amount: 8.5, height: '45%' },
-    { day: 'T3', amount: 12.2, height: '65%' },
-    { day: 'T4', amount: 15.0, height: '80%' },
-    { day: 'T5', amount: 11.4, height: '60%' },
-    { day: 'T6', amount: 18.9, height: '95%' },
-    { day: 'T7', amount: 21.0, height: '100%' },
-    { day: 'CN', amount: 14.8, height: '78%' },
+    { day: 'T2', amount: 340, height: '45%' },
+    { day: 'T3', amount: 488, height: '65%' },
+    { day: 'T4', amount: 600, height: '80%' },
+    { day: 'T5', amount: 456, height: '60%' },
+    { day: 'T6', amount: 756, height: '95%' },
+    { day: 'T7', amount: 840, height: '100%' },
+    { day: 'CN', amount: 592, height: '78%' },
   ];
 
   return (
@@ -56,7 +56,7 @@ export const AdminDashboardPage: React.FC = () => {
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-text-primary">14.850.000 ₫</div>
+          <div className="text-xl sm:text-2xl font-black text-text-primary">$594.00</div>
           <span className="text-[11px] text-status-success font-semibold flex items-center gap-1 mt-1">
             <TrendingUp className="w-3.5 h-3.5" />
             <span>+24.8% so với hôm qua</span>
@@ -109,10 +109,10 @@ export const AdminDashboardPage: React.FC = () => {
         <div className="lg:col-span-2 bg-[#0d0f14] border border-border-subtle rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6 font-sans">
             <div>
-              <h3 className="text-sm font-bold text-text-primary uppercase">Biểu đồ Doanh thu tuần (Triệu VND)</h3>
+              <h3 className="text-sm font-bold text-text-primary uppercase">Biểu đồ Doanh thu tuần (USD)</h3>
               <p className="text-[11px] text-text-secondary">Chu kỳ 7 ngày gần nhất qua VietQR, Stripe và Crypto.</p>
             </div>
-            <span className="text-xs font-mono font-bold text-status-success">Tổng: 101.8M ₫</span>
+            <span className="text-xs font-mono font-bold text-status-success">Tổng: $4,072</span>
           </div>
 
           {/* Bar Chart Container */}
@@ -120,7 +120,7 @@ export const AdminDashboardPage: React.FC = () => {
             {weeklyRevenue.map((item) => (
               <div key={item.day} className="flex-1 flex flex-col items-center gap-2 group">
                 <span className="text-[10px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">
-                  {item.amount}M
+                  ${item.amount}
                 </span>
                 <div className="w-full bg-canvas rounded-t-lg h-36 flex items-end overflow-hidden">
                   <div
@@ -154,7 +154,7 @@ export const AdminDashboardPage: React.FC = () => {
                   <span className="text-[10px] text-text-muted">3 phút trước</span>
                 </div>
                 <p className="text-text-primary text-[11px] font-sans">
-                  Chuyển thiếu tiền: Nhận <strong>200.000 ₫</strong> (Cần 249.000 ₫)
+                  Chuyển thiếu tiền: Nhận <strong>$8.00</strong> (Cần $9.96)
                 </p>
                 <div className="mt-2 flex justify-end">
                   <Link

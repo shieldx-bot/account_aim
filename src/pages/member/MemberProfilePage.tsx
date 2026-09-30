@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
+import { usdToVnd } from '@/types';
 import {
   User,
   Mail,
@@ -36,8 +37,9 @@ export const MemberProfilePage: React.FC = () => {
     setTimeout(() => setIsSaved(false), 2500);
   };
 
-  const handleTopup = (amt: number) => {
-    addBalance(amt, amt / 25000);
+  const handleTopup = (amtUSD: number) => {
+    // USD is the source of truth; VND field derived for legacy payloads.
+    addBalance(usdToVnd(amtUSD), amtUSD);
     setTopupSuccess(true);
     setTimeout(() => setTopupSuccess(false), 3000);
   };
@@ -87,14 +89,14 @@ export const MemberProfilePage: React.FC = () => {
             <div className="space-y-2">
               <span className="text-xs font-semibold text-text-secondary block">Nạp nhanh qua VietQR:</span>
               <div className="grid grid-cols-2 gap-2">
-                {[100000, 200000, 500000, 1000000].map((amt) => (
+                {[4, 8, 20, 50].map((amt) => (
                   <button
                     key={amt}
                     type="button"
                     onClick={() => handleTopup(amt)}
                     className="p-2.5 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle hover:border-primary-blue text-xs font-mono text-center transition-all"
                   >
-                    +{(amt / 1000).toLocaleString('vi-VN')}k ₫
+                    +${amt.toFixed(2)}
                   </button>
                 ))}
               </div>

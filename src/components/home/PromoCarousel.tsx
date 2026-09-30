@@ -36,7 +36,7 @@ const SLIDES: PromoSlide[] = [
   {
     id: 'referral',
     icon: <Rocket className="w-5 h-5" />,
-    title: 'Giới thiệu bạn dev — nhận 100.000đ/lượt vào ví AI Pro',
+    title: 'Giới thiệu bạn dev — nhận $4/lượt vào ví AI Pro',
     subtitle: 'Tiền thật, rút thật, cộng ngay khi bạn bè hoàn tất đơn đầu tiên.',
     cta: 'Nhận mã giới thiệu',
     href: '#calculator',

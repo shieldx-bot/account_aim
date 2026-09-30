@@ -19,7 +19,7 @@ import { useCart } from '@/context/CartContext';
 import { CartDrawer } from '@/components/cart/CartDrawer';
 
 export const Header: React.FC = () => {
-  const { currency, setCurrency, formatPrice } = useApp();
+  const { formatPrice } = useApp();
   const { user, isAuthenticated, logout } = useAuth();
   const { openCart, totalCount } = useCart();
   const location = useLocation();
@@ -75,30 +75,11 @@ export const Header: React.FC = () => {
 
             {/* Right Action Controls */}
             <div className="flex items-center gap-3">
-              {/* Currency Selector */}
+              {/* Currency Badge (USD-only) */}
               <div className="flex items-center p-0.5 rounded-lg bg-surface border border-border-subtle text-xs font-mono">
-                <button
-                  type="button"
-                  onClick={() => setCurrency('VND')}
-                  className={`px-2 py-1 rounded-md transition-all ${
-                    currency === 'VND'
-                      ? 'bg-primary-blue text-white font-bold shadow-sm'
-                      : 'text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  VND
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCurrency('USD')}
-                  className={`px-2 py-1 rounded-md transition-all ${
-                    currency === 'USD'
-                      ? 'bg-primary-blue text-white font-bold shadow-sm'
-                      : 'text-text-muted hover:text-text-primary'
-                  }`}
-                >
-                  USD
-                </button>
+                <span className="px-2 py-1 rounded-md bg-primary-blue text-white font-bold shadow-sm">
+                  USD $
+                </span>
               </div>
 
               {/* Order Lookup Ghost Button */}

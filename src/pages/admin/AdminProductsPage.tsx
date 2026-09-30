@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
 import { productsApi } from '@/services/api';
-import { ProductPlan, ProductCategory } from '@/types';
+import { ProductPlan, ProductCategory, usdToVnd } from '@/types';
 import {
   Package,
   Plus,
@@ -54,8 +54,8 @@ export const AdminProductsPage: React.FC = () => {
     brand: '',
     brandLogo: '/assets/logos/logo_brand_cursor.svg',
     category: 'coding' as ProductCategory,
-    originalPriceVND: 500000,
-    currentPriceVND: 249000,
+    originalPriceVND: usdToVnd(20.0),
+    currentPriceVND: usdToVnd(9.99),
     originalPriceUSD: 20.0,
     currentPriceUSD: 9.99,
     discountPercent: 50,
@@ -107,8 +107,8 @@ export const AdminProductsPage: React.FC = () => {
       brand: '',
       brandLogo: '/assets/logos/logo_brand_cursor.svg',
       category: 'coding',
-      originalPriceVND: 500000,
-      currentPriceVND: 249000,
+      originalPriceVND: usdToVnd(20.0),
+      currentPriceVND: usdToVnd(9.99),
       originalPriceUSD: 20.0,
       currentPriceUSD: 9.99,
       discountPercent: 50,
@@ -170,8 +170,8 @@ export const AdminProductsPage: React.FC = () => {
         brand: formData.brand,
         brandLogo: formData.brandLogo,
         category: formData.category,
-        originalPriceVND: Number(formData.originalPriceVND),
-        currentPriceVND: Number(formData.currentPriceVND),
+        originalPriceVND: usdToVnd(Number(formData.originalPriceUSD)),
+        currentPriceVND: usdToVnd(Number(formData.currentPriceUSD)),
         originalPriceUSD: Number(formData.originalPriceUSD),
         currentPriceUSD: Number(formData.currentPriceUSD),
         discountPercent: Number(formData.discountPercent),
@@ -385,7 +385,7 @@ export const AdminProductsPage: React.FC = () => {
                 <tr>
                   <th className="py-3.5 px-4 font-semibold">Sản Phẩm &amp; Thương Hiệu</th>
                   <th className="py-3.5 px-4 font-semibold">Chuyên Mục</th>
-                  <th className="py-3.5 px-4 font-semibold">Giá Bán (VND / USD)</th>
+                  <th className="py-3.5 px-4 font-semibold">Giá Bán (USD)</th>
                   <th className="py-3.5 px-4 font-semibold">Tồn Kho</th>
                   <th className="py-3.5 px-4 font-semibold">Trạng Thái</th>
                   <th className="py-3.5 px-4 font-semibold text-right">Thao Tác</th>
@@ -433,10 +433,10 @@ export const AdminProductsPage: React.FC = () => {
                       {/* Price */}
                       <td className="py-4 px-4 font-mono">
                         <div className="font-bold text-text-primary">
-                          {prod.currentPriceVND.toLocaleString('vi-VN')} ₫
+                          ${prod.currentPriceUSD.toFixed(2)}
                         </div>
                         <div className="text-[11px] text-[#FFC439]">
-                          ${prod.currentPriceUSD.toFixed(2)} USD (-{prod.discountPercent}%)
+                          USD (-{prod.discountPercent}%)
                         </div>
                       </td>
 
@@ -638,33 +638,24 @@ export const AdminProductsPage: React.FC = () => {
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-[10px] text-text-muted uppercase mb-1">Giá bán VNĐ</label>
-                    <input
-                      type="number"
-                      required
-                      value={formData.currentPriceVND}
-                      onChange={(e) => setFormData({ ...formData, currentPriceVND: Number(e.target.value) })}
-                      className="w-full px-3 py-2 bg-canvas border border-border-subtle rounded-xl text-text-primary font-mono text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-text-muted uppercase mb-1">Giá gốc VNĐ</label>
-                    <input
-                      type="number"
-                      value={formData.originalPriceVND}
-                      onChange={(e) => setFormData({ ...formData, originalPriceVND: Number(e.target.value) })}
-                      className="w-full px-3 py-2 bg-canvas border border-border-subtle rounded-xl text-text-muted font-mono text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] text-text-muted uppercase mb-1">Giá bán USD</label>
+                    <label className="block text-[10px] text-text-muted uppercase mb-1">Giá bán USD ($)</label>
                     <input
                       type="number"
                       step="0.01"
                       required
                       value={formData.currentPriceUSD}
                       onChange={(e) => setFormData({ ...formData, currentPriceUSD: Number(e.target.value) })}
-                      className="w-full px-3 py-2 bg-canvas border border-border-subtle rounded-xl text-[#FFC439] font-mono text-xs"
+                      className="w-full px-3 py-2 bg-canvas border border-border-subtle rounded-xl text-text-primary font-mono text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-text-muted uppercase mb-1">Giá gốc USD ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.originalPriceUSD}
+                      onChange={(e) => setFormData({ ...formData, originalPriceUSD: Number(e.target.value) })}
+                      className="w-full px-3 py-2 bg-canvas border border-border-subtle rounded-xl text-text-muted font-mono text-xs"
                     />
                   </div>
                   <div>
