@@ -1,9 +1,29 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAdminStats = exports.addUserBalance = exports.updateUserRole = exports.getAllUsersAdmin = exports.updateOrderStatus = exports.getAllOrdersAdmin = exports.getMySubscriptions = exports.getOrderById = exports.getMyOrders = exports.createOrder = exports.formatSubscriptionRow = exports.formatOrderRow = void 0;
+exports.getAdminStats = exports.addUserBalance = exports.updateUserRole = exports.updateUserStatus = exports.getAllUsersAdmin = exports.updateOrderStatus = exports.getAllOrdersAdmin = exports.updateSubscriptionAutoRenew = exports.getMySubscriptions = exports.getOrderById = exports.getMyOrders = exports.verifyLookupOtp = exports.requestLookupOtp = exports.lookupOrderByEmailOrId = exports.redactSubscriptionCredentials = exports.createOrder = exports.formatSubscriptionRow = exports.formatOrderRow = void 0;
+const crypto_1 = __importDefault(require("crypto"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const db_js_1 = require("../config/db.js");
+const env_js_1 = require("../config/env.js");
 const catch_async_js_1 = require("../utils/catch-async.js");
 const app_error_js_1 = require("../utils/app-error.js");
+const referral_controller_js_1 = require("./referral.controller.js");
+/**
+ * In-memory cache for the last issued OTP per order (plaintext code is only
+ * ever held here transiently so the development channel can echo it back —
+ * in production this is where an email/SMS provider hook would deliver it).
+ */
+const otpCodeCache = new Map();
+const constantTimeEquals = (a, b) => {
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
+    if (bufA.length !== bufB.length)
+        return false;
+    return crypto_1.default.timingSafeEqual(bufA, bufB);
+};
 /**
  * Format an order row from DB (snake_case → camelCase)
  */
@@ -30,6 +50,7 @@ const formatOrderRow = (row) => ({
     paymentGatewayRef: row.payment_gateway_ref,
     status: row.status,
     couponCode: row.coupon_code,
+    referralCode: row.referral_code,
     warrantyExpireDate: row.warranty_expire_date,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -74,7 +95,7 @@ exports.createOrder = (0, catch_async_js_1.catchAsync)(async (req, res) => {
     if (!userId) {
         throw new app_error_js_1.UnauthorizedError('Bạn cần đăng nhập để đặt hàng.');
     }
-    const { productId, productName, productSlug, planDurationMonths, provisioningType, targetEmail, guestEmail, quantity, unitPriceVND, unitPriceUSD, discountVND, discountUSD, totalVND, totalUSD, currency, paymentMethod, paymentGatewayRef, couponCode, } = req.body;
+    const { productId, productName, productSlug, planDurationMonths, provisioningType, targetEmail, guestEmail, quantity, unitPriceVND, unitPriceUSD, discountVND, discountUSD, totalVND, totalUSD, currency, paymentMethod, paymentGatewayRef, couponCode, referralCode, } = req.body;
     // Validate required fields
     if (!productId || !productName || !productSlug || !guestEmail) {
         throw new app_error_js_1.BadRequestError('Thiếu thông tin đơn hàng bắt buộc.');
@@ -107,8 +128,8 @@ exports.createOrder = (0, catch_async_js_1.catchAsync)(async (req, res) => {
       plan_duration_months, provisioning_type, target_email, quantity,
       unit_price_vnd, unit_price_usd, discount_vnd, discount_usd,
       total_vnd, total_usd, currency, payment_method, payment_gateway_ref,
-      status, coupon_code, warranty_expire_date
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+      status, coupon_code, warranty_expire_date, referral_code
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
     RETURNING *`, [
         orderId,
         userId,
@@ -132,12 +153,230 @@ exports.createOrder = (0, catch_async_js_1.catchAsync)(async (req, res) => {
         'paid', // PayPal confirms payment before we create order
         couponCode || null,
         warrantyDate.toISOString().split('T')[0],
+        String(referralCode || '').trim().toUpperCase() || null,
     ]);
     const newOrder = result.rows[0];
+    // ── Referral attribution & reward (FAB validation happens server-side) ──
+    // Never blocks a paid order: failures are logged, admin can reconcile later.
+    let referralOutcome = null;
+    if (newOrder.referral_code) {
+        try {
+            referralOutcome = await (0, referral_controller_js_1.processOrderReferral)({
+                referralCode: newOrder.referral_code,
+                orderId: newOrder.id,
+                buyerUserId: userId,
+                buyerEmail: guestEmail.trim().toLowerCase(),
+                orderTotalVND: Number(totalVND),
+            });
+        }
+        catch (refErr) {
+            console.error('[Referral] Processing failed for order', newOrder.id, refErr);
+        }
+    }
+    // ── Auto-provisioning: allocate a real account from the warehouse (PostgreSQL) ──
+    let allocatedAccount = null;
+    try {
+        const accRes = await db_js_1.pool.query(`SELECT * FROM inventory_accounts
+       WHERE product_id = $1 AND pool = 'active' AND status = 'available'
+       ORDER BY created_at ASC LIMIT 1 FOR UPDATE SKIP LOCKED`, [productId]);
+        let acc = accRes.rows[0] ?? null;
+        if (!acc) {
+            // Fallback: match by tool name against product name/slug
+            const byTool = await db_js_1.pool.query(`SELECT * FROM inventory_accounts
+         WHERE LOWER(tool) = LOWER($1) AND pool = 'active' AND status = 'available'
+         ORDER BY created_at ASC LIMIT 1`, [productCheck.rows[0].name]);
+            acc = byTool.rows[0] ?? null;
+        }
+        if (acc) {
+            await db_js_1.pool.query(`UPDATE inventory_accounts
+         SET status = 'assigned', assigned_order_id = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`, [newOrder.id, acc.id]);
+            allocatedAccount = { email: acc.email, password: acc.password };
+            // Create subscription record bound to the allocated account
+            await db_js_1.pool.query(`INSERT INTO subscriptions (
+          order_id, user_id, product_id, product_name, product_slug, brand,
+          provisioning_type, account_email, account_password_encrypted,
+          start_date, expires_at, days_remaining, status
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CURRENT_DATE,$10,
+                  GREATEST(0, ($10::date - CURRENT_DATE)), 'active')`, [
+                newOrder.id,
+                userId,
+                productId,
+                productName,
+                productSlug,
+                productSlug.split('-')[0] || 'aipro',
+                provisioningType || 'pre_created',
+                acc.email,
+                acc.password,
+                warrantyDate.toISOString().split('T')[0],
+            ]);
+        }
+    }
+    catch (provErr) {
+        // Provisioning failure must not break the paid order — admin can fulfill manually
+        console.error('[Provisioning] Auto-allocation failed for order', newOrder.id, provErr);
+    }
     res.status(201).json({
         success: true,
-        message: 'Đơn hàng đã được tạo thành công!',
-        data: (0, exports.formatOrderRow)(newOrder),
+        message: allocatedAccount
+            ? 'Đơn hàng đã được tạo và tự động bàn giao tài khoản từ kho.'
+            : 'Đơn hàng đã được tạo! Hệ thống sẽ bàn giao tài khoản trong thời gian sớm nhất.',
+        data: {
+            ...(0, exports.formatOrderRow)(newOrder),
+            provisioned: Boolean(allocatedAccount),
+            referral: referralOutcome,
+            referralRewardGranted: Boolean(referralOutcome?.rewardGranted),
+        },
+    });
+});
+/**
+ * Strip credential material from a subscription payload. The unauthenticated
+ * lookup gate must never expose account passwords / 2FA tokens — those are
+ * only released after server-side OTP verification (verifyLookupOtp).
+ */
+const redactSubscriptionCredentials = (sub) => {
+    if (!sub)
+        return sub;
+    return { ...sub, accountPassword: '', accessToken: '' };
+};
+exports.redactSubscriptionCredentials = redactSubscriptionCredentials;
+/**
+ * GET /api/orders/lookup?email=&orderId=
+ * Public lookup gate: find an order by Order ID alone, or by Email + guestEmail.
+ * Returns only non-sensitive metadata (credentials require OTP verification client-side
+ * and are served through the owner's session / delivery page).
+ */
+exports.lookupOrderByEmailOrId = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+    const email = String(req.query.email || '').trim().toLowerCase();
+    const orderId = String(req.query.orderId || '').trim().toUpperCase();
+    if (!email && !orderId) {
+        throw new app_error_js_1.BadRequestError('Thiếu email hoặc mã đơn hàng để tra cứu.');
+    }
+    const result = orderId
+        ? await db_js_1.pool.query('SELECT * FROM orders WHERE UPPER(id) = $1', [orderId])
+        : await db_js_1.pool.query(`SELECT * FROM orders WHERE LOWER(guest_email) = $1 OR LOWER(target_email) = $1
+         ORDER BY created_at DESC LIMIT 1`, [email]);
+    if (result.rows.length === 0) {
+        throw new app_error_js_1.NotFoundError('Không tìm thấy đơn hàng khớp với thông tin tra cứu.');
+    }
+    const order = result.rows[0];
+    // Attach active subscription credentials for the matched order
+    const subRes = await db_js_1.pool.query(`SELECT s.*, p.brand AS prod_brand FROM subscriptions s
+     LEFT JOIN products p ON p.id = s.product_id
+     WHERE s.order_id = $1 ORDER BY s.created_at DESC LIMIT 1`, [order.id]);
+    res.status(200).json({
+        success: true,
+        data: {
+            order: (0, exports.formatOrderRow)(order),
+            // Credentials stay redacted until the customer passes OTP verification
+            subscription: subRes.rows[0] ? (0, exports.redactSubscriptionCredentials)((0, exports.formatSubscriptionRow)(subRes.rows[0])) : null,
+        },
+    });
+});
+/**
+ * POST /api/orders/lookup/otp
+ * Issue a real, server-side OTP for the warranty self-service lookup.
+ * The code is hashed into lookup_otps (5-min expiry); plaintext is only
+ * echoed back in development so QA can complete the flow without an email
+ * provider. In production the echo disappears and a mailer hook delivers it.
+ */
+exports.requestLookupOtp = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const orderId = String(req.body?.orderId || '').trim().toUpperCase();
+    if (!email || !orderId) {
+        throw new app_error_js_1.BadRequestError('Thiếu email hoặc mã đơn hàng để gửi OTP.');
+    }
+    // Order must exist AND the claimed email must own it
+    const orderRes = await db_js_1.pool.query(`SELECT id, guest_email, target_email FROM orders WHERE UPPER(id) = $1`, [orderId]);
+    if (orderRes.rows.length === 0) {
+        throw new app_error_js_1.NotFoundError('Không tìm thấy đơn hàng.');
+    }
+    const owner = orderRes.rows[0];
+    const ownsEmail = String(owner.guest_email || '').toLowerCase() === email ||
+        String(owner.target_email || '').toLowerCase() === email;
+    if (!ownsEmail) {
+        throw new app_error_js_1.UnauthorizedError('Email không sở hữu đơn hàng này.');
+    }
+    // Throttle: refuse to re-issue while a live (unconsumed) OTP is < 60s old
+    const recentRes = await db_js_1.pool.query(`SELECT created_at FROM lookup_otps
+     WHERE order_id = $1 AND LOWER(email) = $2 AND consumed_at IS NULL
+     ORDER BY created_at DESC LIMIT 1`, [owner.id, email]);
+    if (recentRes.rows.length > 0) {
+        const ageMs = Date.now() - new Date(recentRes.rows[0].created_at).getTime();
+        if (ageMs < 60_000) {
+            throw new app_error_js_1.BadRequestError('OTP đã được gửi cách đây chưa lâu. Vui lòng chờ hoặc nhập mã.');
+        }
+    }
+    const code = String(crypto_1.default.randomInt(100000, 999999));
+    const codeHash = await bcryptjs_1.default.hash(code, 10);
+    await db_js_1.pool.query(`INSERT INTO lookup_otps (order_id, email, code_hash, expires_at)
+     VALUES ($1, $2, $3, NOW() + INTERVAL '5 minutes')`, [owner.id, email, codeHash]);
+    otpCodeCache.set(`${owner.id}:${email}`, {
+        code,
+        expiresAt: Date.now() + 5 * 60_000,
+    });
+    const payload = {
+        success: true,
+        message: 'Mã OTP đã được gửi (hiệu lực 5 phút).',
+        data: { orderId: owner.id, expiresInSec: 300 },
+    };
+    if (env_js_1.env.NODE_ENV !== 'production') {
+        // Dev-only delivery channel — replace with SendGrid/SES hook in production.
+        payload.devCode = code;
+    }
+    res.status(201).json(payload);
+});
+/**
+ * POST /api/orders/lookup/verify-otp
+ * Validate the OTP against PostgreSQL (bcrypt compare, expiry, attempt cap).
+ * On success returns the FULL order + subscription record including
+ * credentials, which are never exposed by the unauthenticated lookup gate.
+ */
+exports.verifyLookupOtp = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const orderId = String(req.body?.orderId || '').trim().toUpperCase();
+    const code = String(req.body?.code || '').trim();
+    if (!email || !orderId || !/^\d{6}$/.test(code)) {
+        throw new app_error_js_1.BadRequestError('Mã OTP không hợp lệ (cần 6 chữ số).');
+    }
+    const otpRes = await db_js_1.pool.query(`SELECT * FROM lookup_otps
+     WHERE order_id = $1 AND LOWER(email) = $2 AND consumed_at IS NULL
+       AND expires_at > NOW()
+     ORDER BY created_at DESC LIMIT 1`, [orderId, email]);
+    if (otpRes.rows.length === 0) {
+        throw new app_error_js_1.UnauthorizedError('OTP hết hạn hoặc chưa được gửi. Hãy yêu cầu mã mới.');
+    }
+    const otp = otpRes.rows[0];
+    if (Number(otp.attempts) >= 5) {
+        await db_js_1.pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
+        throw new app_error_js_1.UnauthorizedError('Nhập sai quá 5 lần. OTP đã bị vô hiệu hóa.');
+    }
+    const cached = otpCodeCache.get(`${orderId}:${email}`);
+    const devMatch = env_js_1.env.NODE_ENV !== 'production' &&
+        cached &&
+        cached.expiresAt > Date.now() &&
+        constantTimeEquals(cached.code, code);
+    const ok = devMatch || (await bcryptjs_1.default.compare(code, otp.code_hash));
+    if (!ok) {
+        await db_js_1.pool.query(`UPDATE lookup_otps SET attempts = attempts + 1 WHERE id = $1`, [otp.id]);
+        throw new app_error_js_1.UnauthorizedError('Mã OTP không đúng.');
+    }
+    await db_js_1.pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
+    otpCodeCache.delete(`${orderId}:${email}`);
+    const orderRes = await db_js_1.pool.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
+    if (orderRes.rows.length === 0) {
+        throw new app_error_js_1.NotFoundError('Đơn hàng tương ứng không còn tồn tại.');
+    }
+    const subRes = await db_js_1.pool.query(`SELECT s.*, p.brand AS prod_brand FROM subscriptions s
+     LEFT JOIN products p ON p.id = s.product_id
+     WHERE s.order_id = $1 ORDER BY s.created_at DESC LIMIT 1`, [orderId]);
+    res.status(200).json({
+        success: true,
+        message: 'Xác minh OTP thành công.',
+        data: {
+            order: (0, exports.formatOrderRow)(orderRes.rows[0]),
+            subscription: subRes.rows[0] ? (0, exports.formatSubscriptionRow)(subRes.rows[0]) : null,
+        },
     });
 });
 /**
@@ -197,6 +436,31 @@ exports.getMySubscriptions = (0, catch_async_js_1.catchAsync)(async (req, res) =
         success: true,
         data: result.rows.map(exports.formatSubscriptionRow),
         count: result.rows.length,
+    });
+});
+/**
+ * PATCH /api/subscriptions/:id/auto-renew
+ * Toggle auto-renew flag on a subscription (owner only)
+ */
+exports.updateSubscriptionAutoRenew = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+    const userId = req.user?.id;
+    if (!userId)
+        throw new app_error_js_1.UnauthorizedError('Bạn cần đăng nhập.');
+    const { id } = req.params;
+    const { autoRenew } = req.body;
+    if (typeof autoRenew !== 'boolean') {
+        throw new app_error_js_1.BadRequestError('Giá trị autoRenew phải là true/false.');
+    }
+    const result = await db_js_1.pool.query(`UPDATE subscriptions SET auto_renew = $1, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $2 AND user_id = $3
+     RETURNING *`, [autoRenew, id, userId]);
+    if (result.rows.length === 0) {
+        throw new app_error_js_1.NotFoundError('Không tìm thấy đăng ký hoặc bạn không có quyền chỉnh sửa.');
+    }
+    res.status(200).json({
+        success: true,
+        message: `Đã ${autoRenew ? 'bật' : 'tắt'} tự động gia hạn.`,
+        data: (0, exports.formatSubscriptionRow)(result.rows[0]),
     });
 });
 /**
@@ -318,8 +582,28 @@ exports.getAllUsersAdmin = (0, catch_async_js_1.catchAsync)(async (req, res) => 
             createdAt: row.created_at,
             ordersCount: Number(row.orders_count),
             totalSpentVND: Number(row.total_spent_vnd),
-            status: 'active', // TODO: add status column to users table
+            status: row.status || 'active',
         })),
+    });
+});
+/**
+ * PATCH /api/admin/users/:userId/status
+ * Admin: Lock (ban) or unlock (activate) a user account
+ */
+exports.updateUserStatus = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+    const { userId } = req.params;
+    const { status } = req.body;
+    if (!['active', 'banned'].includes(status)) {
+        throw new app_error_js_1.BadRequestError(`Trạng thái không hợp lệ. Chỉ chấp nhận: active, banned`);
+    }
+    const result = await db_js_1.pool.query(`UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, email, name, role, status`, [status, userId]);
+    if (result.rows.length === 0) {
+        throw new app_error_js_1.NotFoundError('Không tìm thấy người dùng.');
+    }
+    res.status(200).json({
+        success: true,
+        message: `Đã ${status === 'banned' ? 'khóa' : 'mở khóa'} tài khoản ${result.rows[0].email}.`,
+        data: result.rows[0],
     });
 });
 /**
