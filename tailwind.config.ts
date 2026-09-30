@@ -42,6 +42,24 @@ const config: Config = {
       },
       animation: {
         'radar-pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        heroFloat: 'heroFloat 6s ease-in-out infinite',
+        aurora: 'aurora 18s ease-in-out infinite alternate',
+        gridPan: 'gridPan 30s linear infinite',
+      },
+      keyframes: {
+        heroFloat: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-14px)' },
+        },
+        aurora: {
+          '0%': { transform: 'translateX(-10%) scale(1)', opacity: '0.5' },
+          '50%': { transform: 'translateX(8%) scale(1.15)', opacity: '0.8' },
+          '100%': { transform: 'translateX(-4%) scale(1.05)', opacity: '0.6' },
+        },
+        gridPan: {
+          '0%': { backgroundPosition: '0 0' },
+          '100%': { backgroundPosition: '60px 60px' },
+        },
       },
     },
   },
