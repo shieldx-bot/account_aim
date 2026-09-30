@@ -10,6 +10,7 @@ import { ensureSeedUsers } from './controllers/auth.controller.js';
 import { productRouter } from './routes/product.routes.js';
 import { statusRouter } from './routes/status.routes.js';
 import { ordersRouter, subscriptionsRouter, adminRouter } from './routes/orders.routes.js';
+import { inventoryAdminRouter, warrantyAdminRouter, warrantyPublicRouter } from './routes/inventory-warranty.routes.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { ensureSeedProducts } from './controllers/product.controller.js';
 import { pool } from './config/db.js';
@@ -70,7 +71,10 @@ app.use('/api/products', productRouter);
 app.use('/api/status', statusRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/subscriptions', subscriptionsRouter);
+app.use('/api/warranty', warrantyPublicRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/admin/inventory', inventoryAdminRouter);
+app.use('/api/admin/warranty', warrantyAdminRouter);
 
 // Error handling middleware (must be last)
 app.use(errorMiddleware);
@@ -83,6 +87,14 @@ const runMigrations = async () => {
     const sqlPath = path.join(__dirname, 'db', 'init.sql');
     const sql = fs.readFileSync(sqlPath, 'utf-8');
     await pool.query(sql);
+
+    // Production tables: inventory_accounts & warranty_tickets (migration 002)
+    const prodSqlPath = path.join(__dirname, 'db', 'migrations', '002_production_tables.sql');
+    if (fs.existsSync(prodSqlPath)) {
+      const prodSql = fs.readFileSync(prodSqlPath, 'utf-8');
+      await pool.query(prodSql);
+    }
+
     console.log('[DB] Schema migrations applied successfully.');
   } catch (err) {
     console.error('[DB] Migration warning (tables may already exist):', (err as any).message);

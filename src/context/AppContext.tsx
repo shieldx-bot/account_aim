@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Currency, ProductPlan, ConfigurationState, DurationOption, ProvisioningType } from '@/types';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { productsApi } from '@/services/api';
 import { trackEvent } from '@/utils/telemetry';
 
@@ -19,11 +18,13 @@ interface AppContextType {
   isOnline: boolean;
   featureFlags: FeatureFlags;
   setFeatureFlags: React.Dispatch<React.SetStateAction<FeatureFlags>>;
-  activeConfig: ConfigurationState;
+  activeConfig: ConfigurationState | null;
   updateConfig: (patch: Partial<ConfigurationState>) => void;
   clearConfig: () => void;
+  initConfigForProduct: (product: ProductPlan) => void;
   products: ProductPlan[];
   isLoadingProducts: boolean;
+  productsError: string | null;
   refreshProducts: () => Promise<void>;
 }
 
@@ -35,13 +36,22 @@ const DEFAULT_DURATION: DurationOption = {
   monthlyEquivalentUSD: 9.99,
 };
 
-const DEFAULT_CONFIG: ConfigurationState = {
-  product: MOCK_PRODUCTS[0],
-  provisioningType: 'invite_email',
+/**
+ * Build an initial configuration from a product loaded from PostgreSQL.
+ * No mock products are bundled into production anymore — the catalog
+ * (and therefore any active config) always originates from the database.
+ */
+const buildConfigForProduct = (product: ProductPlan): ConfigurationState => ({
+  product,
+  provisioningType: product.outOfStockInvite ? 'invite_email' : 'pre_created',
   targetEmail: '',
-  duration: DEFAULT_DURATION,
+  duration: {
+    ...DEFAULT_DURATION,
+    monthlyEquivalentVND: product.currentPriceVND,
+    monthlyEquivalentUSD: product.currentPriceUSD,
+  },
   guestEmail: '',
-};
+});
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -66,30 +76,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     announcementBanner: null,
   });
 
-  const [activeConfig, setActiveConfig] = useState<ConfigurationState>(() => {
+  const [activeConfig, setActiveConfig] = useState<ConfigurationState | null>(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = sessionStorage.getItem('aipro_active_config');
         if (saved) return JSON.parse(saved);
       } catch {
-        // Fallback to default
+        // Ignore corrupted session config
       }
     }
-    return DEFAULT_CONFIG;
+    return null;
   });
 
-  const [products, setProducts] = useState<ProductPlan[]>(MOCK_PRODUCTS);
+  // Production source of truth: PostgreSQL catalog only — no bundled mock data.
+  const [products, setProducts] = useState<ProductPlan[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
 
   const refreshProducts = useCallback(async () => {
     try {
       setIsLoadingProducts(true);
+      setProductsError(null);
       const data = await productsApi.getAll();
-      if (Array.isArray(data) && data.length > 0) {
-        setProducts(data);
+      if (!Array.isArray(data)) {
+        throw new Error('Dữ liệu trả về không hợp lệ.');
       }
+      setProducts(data);
     } catch (err) {
-      console.warn('[AppContext] Failed to load products from database, using cached/mock fallback:', err);
+      console.error('[AppContext] Failed to load products from PostgreSQL:', err);
+      setProducts([]);
+      setProductsError(
+        err instanceof Error ? err.message : 'Không thể tải danh mục sản phẩm từ máy chủ.'
+      );
     } finally {
       setIsLoadingProducts(false);
     }
@@ -129,14 +147,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateConfig = (patch: Partial<ConfigurationState>) => {
     setActiveConfig((prev) => {
+      if (!prev) return prev;
       const next = { ...prev, ...patch };
       sessionStorage.setItem('aipro_active_config', JSON.stringify(next));
       return next;
     });
   };
 
+  const initConfigForProduct = (product: ProductPlan) => {
+    const next = buildConfigForProduct(product);
+    sessionStorage.setItem('aipro_active_config', JSON.stringify(next));
+    setActiveConfig(next);
+  };
+
   const clearConfig = () => {
-    setActiveConfig(DEFAULT_CONFIG);
+    setActiveConfig(null);
     sessionStorage.removeItem('aipro_active_config');
   };
 
@@ -152,8 +177,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         activeConfig,
         updateConfig,
         clearConfig,
+        initConfigForProduct,
         products,
         isLoadingProducts,
+        productsError,
         refreshProducts,
       }}
     >

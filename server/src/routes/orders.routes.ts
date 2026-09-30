@@ -4,10 +4,12 @@ import {
   getMyOrders,
   getOrderById,
   getMySubscriptions,
+  updateSubscriptionAutoRenew,
   getAllOrdersAdmin,
   updateOrderStatus,
   getAllUsersAdmin,
   updateUserRole,
+  updateUserStatus,
   addUserBalance,
   getAdminStats,
 } from '../controllers/orders.controller.js';
@@ -45,6 +47,12 @@ ordersRouter.get('/:orderId', authenticateToken, getOrderById);
  */
 subscriptionsRouter.get('/me', authenticateToken, getMySubscriptions);
 
+/**
+ * PATCH /api/subscriptions/:id/auto-renew
+ * Toggle auto-renew on own subscription (requires auth)
+ */
+subscriptionsRouter.patch('/:id/auto-renew', authenticateToken, updateSubscriptionAutoRenew);
+
 // ─────────── Admin ───────────
 
 /**
@@ -76,6 +84,12 @@ adminRouter.get('/users', authenticateToken, requireAdmin, getAllUsersAdmin);
  * Update user role (admin only)
  */
 adminRouter.patch('/users/:userId/role', authenticateToken, requireAdmin, updateUserRole);
+
+/**
+ * PATCH /api/admin/users/:userId/status
+ * Lock (ban) or unlock a user account (admin only)
+ */
+adminRouter.patch('/users/:userId/status', authenticateToken, requireAdmin, updateUserStatus);
 
 /**
  * POST /api/admin/users/:userId/balance

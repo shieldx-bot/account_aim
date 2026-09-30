@@ -37,3 +37,8 @@ CREATE TABLE IF NOT EXISTS warranty_tickets (
 
 CREATE INDEX IF NOT EXISTS idx_warranty_status ON warranty_tickets(status);
 CREATE INDEX IF NOT EXISTS idx_warranty_order ON warranty_tickets(order_id);
+
+-- ───────────────────────── 003: users.status (lock/ban accounts) ─────────────────────────
+ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'active'
+  CHECK (status IN ('active', 'banned'));
+CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);

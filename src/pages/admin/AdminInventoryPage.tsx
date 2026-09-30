@@ -1,69 +1,141 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Layers,
   Upload,
-  Plus,
-  Search,
   Eye,
   EyeOff,
-  Trash2,
   CheckCircle2,
   AlertTriangle,
-  ArrowRightLeft,
-  FileText,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { inventoryApi } from '@/services/api';
 
-interface MockAccountItem {
+/** Inventory row returned by GET /api/admin/inventory (table inventory_accounts) */
+interface AccountRow {
   id: string;
   tool: string;
+  productId?: string | null;
   email: string;
   pass: string;
   pool: 'active' | 'buffer';
   status: 'available' | 'assigned' | 'compromised';
+  assignedOrderId?: string | null;
   addedAt: string;
 }
 
-const INITIAL_ACCOUNTS: MockAccountItem[] = [
-  { id: 'ACC-01', tool: 'Cursor Pro', email: 'cursor.pro.batch91@gmail.com', pass: 'pX!9#vK2', pool: 'active', status: 'available', addedAt: '22/03/2026' },
-  { id: 'ACC-02', tool: 'Cursor Pro', email: 'cursor.pro.batch92@gmail.com', pass: 'mQ7@zL91', pool: 'active', status: 'available', addedAt: '22/03/2026' },
-  { id: 'ACC-03', tool: 'Cursor Pro', email: 'cursor.pro.buffer01@gmail.com', pass: 'bF2$xP89', pool: 'buffer', status: 'available', addedAt: '22/03/2026' },
-  { id: 'ACC-04', tool: 'Claude Pro', email: 'claude.sonnet.pool1@gmail.com', pass: 'vN9#kL33', pool: 'active', status: 'available', addedAt: '22/03/2026' },
-  { id: 'ACC-05', tool: 'ChatGPT Plus', email: 'gpt4o.canvas.acc1@gmail.com', pass: 'aB8*zT44', pool: 'active', status: 'available', addedAt: '22/03/2026' },
-];
+interface StockSummary {
+  tool: string;
+  activeAvailable: number;
+  bufferAvailable: number;
+  total: number;
+}
 
 export const AdminInventoryPage: React.FC = () => {
-  const [accounts, setAccounts] = useState<MockAccountItem[]>(INITIAL_ACCOUNTS);
+  const { token } = useAuth();
+  const [accounts, setAccounts] = useState<AccountRow[]>([]);
+  const [stockSummary, setStockSummary] = useState<StockSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
   const [activePoolFilter, setActivePoolFilter] = useState<'all' | 'active' | 'buffer'>('all');
   const [showPassMap, setShowPassMap] = useState<Record<string, boolean>>({});
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
   const [importPool, setImportPool] = useState<'active' | 'buffer'>('active');
+  const [importing, setImporting] = useState(false);
+
+  const fetchInventory = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await inventoryApi.getAccounts(token);
+      setAccounts(res.accounts || []);
+      setStockSummary(res.stockSummary || []);
+    } catch (err: any) {
+      setError(err.message || 'Không thể tải kho tài khoản từ database.');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory]);
 
   const togglePassword = (id: string) => {
     setShowPassMap((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleBulkImport = () => {
-    if (!importText.trim()) return;
+  // POST /api/admin/inventory/bulk -> INSERT vào PostgreSQL
+  const handleBulkImport = async () => {
+    if (!token || !importText.trim()) return;
     const lines = importText.trim().split('\n');
-    const newItems: MockAccountItem[] = lines.map((line, idx) => {
-      const parts = line.split(',');
-      return {
-        id: `ACC-IMP-${Date.now()}-${idx}`,
-        tool: parts[0]?.trim() || 'Cursor Pro',
-        email: parts[1]?.trim() || `import_${idx}@gmail.com`,
-        pass: parts[2]?.trim() || 'pass12345',
-        pool: importPool,
-        status: 'available',
-        addedAt: '22/03/2026',
-      };
-    });
+    const items = lines
+      .map((line) => {
+        const parts = line.split(',');
+        return {
+          tool: parts[0]?.trim() || '',
+          email: parts[1]?.trim() || '',
+          pass: parts[2]?.trim() || '',
+        };
+      })
+      .filter((i) => i.tool && i.email && i.pass);
 
-    setAccounts((prev) => [...newItems, ...prev]);
-    setShowImportModal(false);
-    setImportText('');
+    if (items.length === 0) {
+      alert('Không có dòng hợp lệ. Định dạng mỗi dòng: Công cụ,Email,Mật khẩu');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      await inventoryApi.bulkImport(token, items, importPool);
+      setShowImportModal(false);
+      setImportText('');
+      await fetchInventory();
+    } catch (err: any) {
+      alert(err.message || 'Nhập hàng thất bại.');
+    } finally {
+      setImporting(false);
+    }
   };
+
+  // PATCH /api/admin/inventory/:id/pool -> UPDATE trong PostgreSQL
+  const handleMovePool = async (acc: AccountRow) => {
+    if (!token) return;
+    setBusyId(acc.id);
+    try {
+      await inventoryApi.movePool(token, acc.id);
+      setAccounts((prev) =>
+        prev.map((a) => (a.id === acc.id ? { ...a, pool: a.pool === 'active' ? 'buffer' : 'active' } : a))
+      );
+    } catch (err: any) {
+      alert(err.message || 'Không thể chuyển kho.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  // DELETE /api/admin/inventory/:id -> DELETE trong PostgreSQL
+  const handleDelete = async (acc: AccountRow) => {
+    if (!token) return;
+    if (!confirm(`Xóa vĩnh viễn tài khoản ${acc.email} khỏi database?`)) return;
+    setBusyId(acc.id);
+    try {
+      await inventoryApi.deleteAccount(token, acc.id);
+      setAccounts((prev) => prev.filter((a) => a.id !== acc.id));
+    } catch (err: any) {
+      alert(err.message || 'Không thể xóa tài khoản.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const filteredAccounts = accounts.filter((a) => activePoolFilter === 'all' || a.pool === activePoolFilter);
 
   return (
     <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 py-6 pb-20 font-sans">
@@ -81,80 +153,90 @@ export const AdminInventoryPage: React.FC = () => {
           </h1>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowImportModal(true)}
-          className="px-4 py-2 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center gap-2"
-        >
-          <Upload className="w-4 h-4" />
-          <span>Nhập Hàng Hàng Loạt (CSV / JSON)</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={fetchInventory}
+            className="p-2 rounded-lg bg-surface border border-border-subtle text-text-muted hover:text-text-primary"
+            title="Tải lại từ Database"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowImportModal(true)}
+            className="px-4 py-2 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Nhập Hàng Hàng Loạt (CSV / JSON)</span>
+          </button>
+        </div>
       </div>
 
-      {/* Stock Health Gauges */}
+      {/* Error banner */}
+      {error && (
+        <div className="p-4 rounded-xl bg-status-error/10 border border-status-error/30 text-status-error text-xs font-semibold my-6">
+          ⚠️ {error} — kiểm tra kết nối backend PostgreSQL.
+        </div>
+      )}
+
+      {/* Stock Health Gauges (live GROUP BY tool from DB) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
-        <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
-          <div className="flex justify-between text-xs mb-2">
-            <span className="font-semibold text-text-primary">Cursor Pro</span>
-            <span className="text-status-success font-mono font-bold">42 Khả dụng</span>
+        {loading ? (
+          <div className="sm:col-span-3 p-8 rounded-2xl bg-surface border border-border-subtle text-center text-text-muted text-xs">
+            <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+            Đang tổng hợp tồn kho từ database...
           </div>
-          <div className="w-full h-2 bg-canvas rounded-full overflow-hidden mb-2">
-            <div className="h-full bg-status-success w-3/4" />
+        ) : stockSummary.length === 0 ? (
+          <div className="sm:col-span-3 p-8 rounded-2xl bg-surface border border-border-subtle text-center text-text-muted text-xs">
+            Kho đang trống — bấm "Nhập Hàng Hàng Loạt" để thêm tài khoản đầu tiên.
           </div>
-          <span className="text-[11px] text-text-muted">Kho Bán: 32 &bull; Kho Dự Phòng 1-Đổi-1: 10</span>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
-          <div className="flex justify-between text-xs mb-2">
-            <span className="font-semibold text-text-primary">Claude Pro (Sonnet 3.7)</span>
-            <span className="text-status-warning font-mono font-bold">5 Khả dụng</span>
-          </div>
-          <div className="w-full h-2 bg-canvas rounded-full overflow-hidden mb-2">
-            <div className="h-full bg-status-warning w-1/4" />
-          </div>
-          <span className="text-[11px] text-status-warning">⚠️ Cảnh báo tồn kho thấp (dưới mức 10)</span>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
-          <div className="flex justify-between text-xs mb-2">
-            <span className="font-semibold text-text-primary">ChatGPT Plus (GPT-4.5)</span>
-            <span className="text-status-success font-mono font-bold">25 Khả dụng</span>
-          </div>
-          <div className="w-full h-2 bg-canvas rounded-full overflow-hidden mb-2">
-            <div className="h-full bg-status-success w-2/3" />
-          </div>
-          <span className="text-[11px] text-text-muted">Kho Bán: 20 &bull; Kho Dự Phòng: 5</span>
-        </div>
+        ) : (
+          stockSummary.map((s) => {
+            const available = s.activeAvailable + s.bufferAvailable;
+            const lowStock = available < 10;
+            const pct = Math.min(100, Math.round((available / Math.max(s.total, 1)) * 100));
+            return (
+              <div key={s.tool} className="p-5 rounded-2xl bg-surface border border-border-subtle">
+                <div className="flex justify-between text-xs mb-2">
+                  <span className="font-semibold text-text-primary">{s.tool}</span>
+                  <span className={`font-mono font-bold ${lowStock ? 'text-status-warning' : 'text-status-success'}`}>
+                    {available} Khả dụng
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-canvas rounded-full overflow-hidden mb-2">
+                  <div className={`h-full ${lowStock ? 'bg-status-warning' : 'bg-status-success'}`} style={{ width: `${pct}%` }} />
+                </div>
+                <span className={`text-[11px] ${lowStock ? 'text-status-warning' : 'text-text-muted'}`}>
+                  {lowStock
+                    ? '⚠️ Cảnh báo tồn kho thấp (dưới mức 10)'
+                    : `Kho Bán: ${s.activeAvailable} • Kho Dự Phòng 1-Đổi-1: ${s.bufferAvailable}`}
+                </span>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Accounts Table */}
       <div className="rounded-2xl bg-surface border border-border-subtle overflow-hidden">
         <div className="p-4 bg-canvas/60 border-b border-border-subtle flex items-center justify-between">
           <div className="flex gap-2">
-            <button
-              onClick={() => setActivePoolFilter('all')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                activePoolFilter === 'all' ? 'bg-primary-blue text-white' : 'text-text-muted'
-              }`}
-            >
-              Tất Cả ({accounts.length})
-            </button>
-            <button
-              onClick={() => setActivePoolFilter('active')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                activePoolFilter === 'active' ? 'bg-primary-blue text-white' : 'text-text-muted'
-              }`}
-            >
-              Kho Bán Trực Tiếp
-            </button>
-            <button
-              onClick={() => setActivePoolFilter('buffer')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                activePoolFilter === 'buffer' ? 'bg-primary-blue text-white' : 'text-text-muted'
-              }`}
-            >
-              Kho Dự Phòng 1-Đổi-1
-            </button>
+            {(['all', 'active', 'buffer'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setActivePoolFilter(p)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                  activePoolFilter === p ? 'bg-primary-blue text-white' : 'text-text-muted'
+                }`}
+              >
+                {p === 'all'
+                  ? `Tất Cả (${accounts.length})`
+                  : p === 'active'
+                  ? 'Kho Bán Trực Tiếp'
+                  : 'Kho Dự Phòng 1-Đổi-1'}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -172,17 +254,27 @@ export const AdminInventoryPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle/50">
-              {accounts
-                .filter((a) => activePoolFilter === 'all' || a.pool === activePoolFilter)
-                .map((acc) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="p-10 text-center text-text-muted">
+                    <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
+                    Đang tải kho tài khoản từ database...
+                  </td>
+                </tr>
+              ) : filteredAccounts.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-10 text-center text-text-muted">
+                    Chưa có tài khoản nào trong kho này.
+                  </td>
+                </tr>
+              ) : (
+                filteredAccounts.map((acc) => (
                   <tr key={acc.id} className="hover:bg-elevated/40">
-                    <td className="p-4 font-mono font-bold text-text-primary">{acc.id}</td>
+                    <td className="p-4 font-mono font-bold text-text-primary">{acc.id.slice(0, 8).toUpperCase()}</td>
                     <td className="p-4 font-semibold text-text-primary">{acc.tool}</td>
                     <td className="p-4 font-mono text-text-primary select-all">{acc.email}</td>
                     <td className="p-4 font-mono">
-                      <span className="mr-2">
-                        {showPassMap[acc.id] ? acc.pass : '••••••••'}
-                      </span>
+                      <span className="mr-2">{showPassMap[acc.id] ? acc.pass : '••••••••'}</span>
                       <button
                         onClick={() => togglePassword(acc.id)}
                         className="text-text-muted hover:text-text-primary"
@@ -202,32 +294,42 @@ export const AdminInventoryPage: React.FC = () => {
                       )}
                     </td>
                     <td className="p-4">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-status-success/15 text-status-success font-semibold">
-                        Sẵn sàng
-                      </span>
+                      {acc.status === 'available' && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-status-success/15 text-status-success font-semibold flex items-center gap-1 w-fit">
+                          <CheckCircle2 className="w-3 h-3" /> Sẵn sàng
+                        </span>
+                      )}
+                      {acc.status === 'assigned' && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-canvas text-text-muted border border-border-subtle font-semibold">
+                          Đã gán đơn
+                        </span>
+                      )}
+                      {acc.status === 'compromised' && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] bg-status-error/15 text-status-error font-semibold flex items-center gap-1 w-fit">
+                          <AlertTriangle className="w-3 h-3" /> Lỗi/Hack
+                        </span>
+                      )}
                     </td>
                     <td className="p-4 text-right">
+                      {busyId === acc.id && <Loader2 className="w-3.5 h-3.5 animate-spin inline mr-2 text-accent-cyan" />}
                       <button
-                        onClick={() =>
-                          setAccounts((prev) =>
-                            prev.map((a) =>
-                              a.id === acc.id ? { ...a, pool: a.pool === 'active' ? 'buffer' : 'active' } : a
-                            )
-                          )
-                        }
-                        className="text-xs text-primary-blue hover:underline mr-3"
+                        disabled={busyId === acc.id}
+                        onClick={() => handleMovePool(acc)}
+                        className="text-xs text-primary-blue hover:underline mr-3 disabled:opacity-40"
                       >
                         Chuyển kho
                       </button>
                       <button
-                        onClick={() => setAccounts((prev) => prev.filter((a) => a.id !== acc.id))}
-                        className="text-xs text-status-error hover:underline"
+                        disabled={busyId === acc.id}
+                        onClick={() => handleDelete(acc)}
+                        className="text-xs text-status-error hover:underline disabled:opacity-40"
                       >
                         Xóa
                       </button>
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -239,35 +341,27 @@ export const AdminInventoryPage: React.FC = () => {
           <div className="p-6 rounded-2xl bg-surface border border-border-focus max-w-lg w-full space-y-4 shadow-2xl">
             <h3 className="text-lg font-bold text-text-primary">Nhập Hàng Hàng Loạt (Bulk Account Import)</h3>
             <p className="text-xs text-text-secondary">
-              Nhập theo định dạng mỗi dòng 1 tài khoản: <code className="font-mono text-accent-cyan">Công cụ,Email,Mật khẩu</code>
+              Nhập theo định dạng mỗi dòng 1 tài khoản:{' '}
+              <code className="font-mono text-accent-cyan">Công cụ,Email,Mật khẩu</code>. Dữ liệu được ghi trực tiếp
+              vào bảng <span className="font-mono">inventory_accounts</span>.
             </p>
 
             <textarea
               rows={6}
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
-              placeholder="Cursor Pro,cursor.batch101@gmail.com,password_strong_1&#10;Cursor Pro,cursor.batch102@gmail.com,password_strong_2"
+              placeholder={'Cursor Pro,cursor.batch101@gmail.com,password_strong_1\nCursor Pro,cursor.batch102@gmail.com,password_strong_2'}
               className="w-full p-3 rounded-xl bg-canvas border border-border-subtle font-mono text-xs text-text-primary focus:border-border-focus focus:outline-none"
             />
 
             <div className="flex items-center gap-4 text-xs">
               <span className="text-text-secondary">Nhập vào kho:</span>
               <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="pool"
-                  checked={importPool === 'active'}
-                  onChange={() => setImportPool('active')}
-                />
+                <input type="radio" name="pool" checked={importPool === 'active'} onChange={() => setImportPool('active')} />
                 <span>Kho Bán Trực Tiếp</span>
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="pool"
-                  checked={importPool === 'buffer'}
-                  onChange={() => setImportPool('buffer')}
-                />
+                <input type="radio" name="pool" checked={importPool === 'buffer'} onChange={() => setImportPool('buffer')} />
                 <span>Kho Dự Phòng 1-Đổi-1</span>
               </label>
             </div>
@@ -281,8 +375,10 @@ export const AdminInventoryPage: React.FC = () => {
               </button>
               <button
                 onClick={handleBulkImport}
-                className="flex-1 h-10 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold"
+                disabled={importing}
+                className="flex-1 h-10 rounded-xl bg-primary-blue hover:bg-primary-hover disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5"
               >
+                {importing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Thêm vào kho ngay
               </button>
             </div>

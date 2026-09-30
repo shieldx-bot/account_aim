@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
-import { MOCK_MEMBER_SUBSCRIPTIONS, MOCK_MEMBER_ORDERS } from '@/data/mockMemberData';
+import { ordersApi, subscriptionsApi } from '@/services/api';
+import type { MemberSubscription, OrderItem } from '@/types';
 import {
   KeyRound,
   ShieldCheck,
@@ -18,18 +19,47 @@ import {
   ExternalLink,
   ChevronRight,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
 
 export const MemberDashboardPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { formatPrice } = useApp();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [revealedPassId, setRevealedPassId] = useState<string | null>(null);
+  const [userSubscriptions, setUserSubscriptions] = useState<MemberSubscription[]>([]);
+  const [userOrders, setUserOrders] = useState<OrderItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const isDemoUser = user?.email === 'alex.dev@gmail.com';
-  const userSubscriptions = isDemoUser ? MOCK_MEMBER_SUBSCRIPTIONS : [];
-  const userOrders = isDemoUser ? MOCK_MEMBER_ORDERS : [];
-  const activeCount = userSubscriptions.filter((s) => s.status === 'active').length;
+  // Production: dashboard KPIs & vault come from PostgreSQL via API
+  useEffect(() => {
+    if (!token) {
+      setUserSubscriptions([]);
+      setUserOrders([]);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([subscriptionsApi.getMySubscriptions(token), ordersApi.getMyOrders(token)])
+      .then(([subs, ords]) => {
+        if (!cancelled) {
+          setUserSubscriptions(subs as MemberSubscription[]);
+          setUserOrders(ords as OrderItem[]);
+        }
+      })
+      .catch((err: Error) => {
+        console.warn('[MemberDashboard] Failed to load data from API:', err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  const activeCount = userSubscriptions.filter((s) => s.status === 'active' || s.status === 'expiring_soon').length;
   const expiringCount = userSubscriptions.filter((s) => s.status === 'expiring_soon').length;
   const expiringSub = userSubscriptions.find((s) => s.status === 'expiring_soon');
   const totalSpentVND = userOrders.reduce((acc, curr) => acc + curr.totalAmount, 0);
@@ -155,7 +185,12 @@ export const MemberDashboardPage: React.FC = () => {
           </Link>
         </div>
 
-        {userSubscriptions.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-8 bg-canvas rounded-xl border border-border-subtle">
+            <Loader2 className="w-5 h-5 animate-spin text-primary-blue inline mr-2" />
+            <span className="text-xs text-text-muted">Đang tải vault tài khoản…</span>
+          </div>
+        ) : userSubscriptions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {userSubscriptions.map((sub) => {
               const isRevealed = revealedPassId === sub.id;
@@ -292,21 +327,44 @@ export const MemberDashboardPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {userOrders.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center">
+                    <Loader2 className="w-4 h-4 animate-spin text-primary-blue inline mr-2" />
+                    <span className="text-xs text-text-muted">Đang tải dữ liệu từ máy chủ…</span>
+                  </td>
+                </tr>
+              ) : userOrders.length > 0 ? (
                 userOrders.map((ord) => (
                   <tr key={ord.orderId} className="hover:bg-canvas/50 transition-colors">
                     <td className="py-3 px-4 font-bold text-accent-cyan">{ord.orderId}</td>
                     <td className="py-3 px-4 font-sans font-medium text-text-primary">
                       {ord.productName} ({ord.planDurationMonths} tháng)
                     </td>
-                    <td className="py-3 px-4 text-text-muted">{ord.createdAt}</td>
+                    <td className="py-3 px-4 text-text-muted">{new Date(ord.createdAt).toLocaleString('vi-VN')}</td>
                     <td className="py-3 px-4 font-bold text-text-primary">
-                      {formatPrice(ord.totalAmount, ord.totalAmount / 25000)}
+                      {formatPrice(ord.totalAmount, ord.totalUSD ?? ord.totalAmount / 25000)}
                     </td>
                     <td className="py-3 px-4">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-status-success/15 text-status-success text-[10px] font-bold">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          ord.status === 'dispatched' || ord.status === 'paid'
+                            ? 'bg-status-success/15 text-status-success'
+                            : ord.status === 'pending'
+                              ? 'bg-status-warning/15 text-status-warning'
+                              : 'bg-text-muted/15 text-text-muted'
+                        }`}
+                      >
                         <Check className="w-3 h-3" />
-                        <span>Đã bàn giao</span>
+                        <span>
+                          {ord.status === 'dispatched'
+                            ? 'Đã bàn giao'
+                            : ord.status === 'paid'
+                              ? 'Đã thanh toán'
+                              : ord.status === 'pending'
+                                ? 'Chờ xử lý'
+                                : ord.status}
+                        </span>
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">

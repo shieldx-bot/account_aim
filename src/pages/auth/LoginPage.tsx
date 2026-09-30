@@ -63,12 +63,15 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleQuickLogin = (role: 'member' | 'admin') => {
-    loginAs(role);
-    if (role === 'admin') {
-      navigate('/admin/dashboard');
+  const handleQuickLogin = async (role: 'member' | 'admin') => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    const res = await loginAs(role);
+    setIsLoading(false);
+    if (res.success) {
+      navigate(role === 'admin' ? '/admin/dashboard' : '/member/dashboard');
     } else {
-      navigate('/member/dashboard');
+      setErrorMessage(res.message || 'Đăng nhập nhanh thất bại.');
     }
   };
 

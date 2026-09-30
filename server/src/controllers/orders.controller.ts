@@ -253,6 +253,39 @@ export const getMySubscriptions = catchAsync(async (req: Request, res: Response)
 });
 
 /**
+ * PATCH /api/subscriptions/:id/auto-renew
+ * Toggle auto-renew flag on a subscription (owner only)
+ */
+export const updateSubscriptionAutoRenew = catchAsync(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  if (!userId) throw new UnauthorizedError('Bạn cần đăng nhập.');
+
+  const { id } = req.params;
+  const { autoRenew } = req.body;
+
+  if (typeof autoRenew !== 'boolean') {
+    throw new BadRequestError('Giá trị autoRenew phải là true/false.');
+  }
+
+  const result = await pool.query(
+    `UPDATE subscriptions SET auto_renew = $1, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $2 AND user_id = $3
+     RETURNING *`,
+    [autoRenew, id, userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy đăng ký hoặc bạn không có quyền chỉnh sửa.');
+  }
+
+  res.status(200).json({
+    success: true,
+    message: `Đã ${autoRenew ? 'bật' : 'tắt'} tự động gia hạn.`,
+    data: formatSubscriptionRow(result.rows[0]),
+  });
+});
+
+/**
  * GET /api/admin/orders
  * Admin: Get all orders with filtering
  */
@@ -395,8 +428,36 @@ export const getAllUsersAdmin = catchAsync(async (req: Request, res: Response) =
       createdAt: row.created_at,
       ordersCount: Number(row.orders_count),
       totalSpentVND: Number(row.total_spent_vnd),
-      status: 'active', // TODO: add status column to users table
+      status: row.status || 'active',
     })),
+  });
+});
+
+/**
+ * PATCH /api/admin/users/:userId/status
+ * Admin: Lock (ban) or unlock (activate) a user account
+ */
+export const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const { status } = req.body;
+
+  if (!['active', 'banned'].includes(status)) {
+    throw new BadRequestError(`Trạng thái không hợp lệ. Chỉ chấp nhận: active, banned`);
+  }
+
+  const result = await pool.query(
+    `UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, email, name, role, status`,
+    [status, userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy người dùng.');
+  }
+
+  res.status(200).json({
+    success: true,
+    message: `Đã ${status === 'banned' ? 'khóa' : 'mở khóa'} tài khoản ${result.rows[0].email}.`,
+    data: result.rows[0],
   });
 });
 

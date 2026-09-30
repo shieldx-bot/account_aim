@@ -48,23 +48,30 @@ export const CheckoutPage: React.FC = () => {
   // Determine if we're using cart mode or single-product mode
   const isCartMode = items.length > 0;
 
-  // Calculate pricing: prefer cart totals, fallback to activeConfig
+  // Calculate pricing: prefer cart totals, then activeConfig (DB-driven)
   const totalAmountVND = isCartMode
     ? finalTotalVND
-    : activeConfig.duration.monthlyEquivalentVND * activeConfig.duration.months;
+    : (activeConfig?.duration.monthlyEquivalentVND ?? 0) * (activeConfig?.duration.months ?? 0);
   const totalAmountUSD = isCartMode
     ? finalTotalUSD
-    : activeConfig.duration.monthlyEquivalentUSD * activeConfig.duration.months;
+    : (activeConfig?.duration.monthlyEquivalentUSD ?? 0) * (activeConfig?.duration.months ?? 0);
 
   useEffect(() => {
     trackEvent('checkout_viewed', {
       order_id: orderId,
-      product: isCartMode ? `${items.length} items` : activeConfig.product.name,
+      product: isCartMode ? `${items.length} items` : activeConfig?.product.name ?? 'unknown',
       amount_usd: totalAmountUSD,
       currency: 'USD',
       gateway: 'paypal',
     });
   }, [orderId, activeConfig, totalAmountUSD, isCartMode, items.length]);
+
+  // Guard: no cart items and no DB-backed configuration → nothing to checkout
+  useEffect(() => {
+    if (!isCartMode && !activeConfig) {
+      navigate('/', { replace: true });
+    }
+  }, [isCartMode, activeConfig, navigate]);
 
   // 10-Minute Countdown Timer based on wall-clock delta
   useEffect(() => {
@@ -163,8 +170,8 @@ export const CheckoutPage: React.FC = () => {
           createdOrderId = result.data.orderId;
         }
         clearCart();
-      } else {
-        // Single product mode (activeConfig)
+      } else if (activeConfig) {
+        // Single product mode (activeConfig — sourced from DB catalog)
         const result = await ordersApi.create(token, {
           productId: activeConfig.product.id,
           productName: activeConfig.product.name,
@@ -200,7 +207,7 @@ export const CheckoutPage: React.FC = () => {
         card_type: methodType === 'card_visa' ? detectedCardType : 'paypal_balance',
         items: isCartMode
           ? items.map((i) => ({ item_id: i.product.slug, item_name: i.product.name, quantity: i.quantity }))
-          : [{ item_id: activeConfig.product.slug, item_name: activeConfig.product.name, quantity: 1 }],
+          : [{ item_id: activeConfig?.product.slug ?? '', item_name: activeConfig?.product.name ?? '', quantity: 1 }],
       });
 
       setTimeout(() => {
@@ -254,7 +261,7 @@ export const CheckoutPage: React.FC = () => {
               <div>
                 <span className="text-xs text-text-muted block">Tài khoản &amp; bản quyền sẽ gửi về:</span>
                 <span className="text-xs font-semibold text-text-primary font-mono">
-                  {activeConfig.guestEmail || 'Khách vãng lai (Chưa nhập mail)'}
+                  {activeConfig?.guestEmail || 'Khách vãng lai (Chưa nhập mail)'}
                 </span>
               </div>
             </div>
@@ -642,7 +649,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-text-secondary">Sản phẩm:</span>
                 <span className="font-semibold text-text-primary">
-                  {activeConfig.product.name} ({activeConfig.duration.label})
+                  {activeConfig?.product.name ?? '—'} ({activeConfig?.duration.label ?? '—'})
                 </span>
               </div>
               <div className="flex justify-between">
@@ -654,7 +661,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-text-secondary">Loại bàn giao:</span>
                 <span className="text-text-primary">
-                  {activeConfig.provisioningType === 'invite_email' ? 'Nâng chính chủ' : 'Cấp sẵn độc quyền'}
+                  {activeConfig?.provisioningType === 'invite_email' ? 'Nâng chính chủ' : 'Cấp sẵn độc quyền'}
                 </span>
               </div>
               <div className="flex justify-between text-text-muted">

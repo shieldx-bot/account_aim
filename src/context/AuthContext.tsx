@@ -3,35 +3,10 @@ import { User, UserRole, AuthState } from '@/types';
 import { trackEvent } from '@/utils/telemetry';
 import { authApi } from '@/services/api';
 
-export const DEMO_MEMBER_USER: User = {
-  id: 'usr-member-8829',
-  email: 'alex.dev@gmail.com',
-  name: 'Alex Nguyễn',
-  role: 'member',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  balanceVND: 650000,
-  balanceUSD: 25.5,
-  tier: 'VIP Dev',
-  createdAt: '2025-01-15T08:30:00.000Z',
-  phone: '0987654321',
-};
-
-export const DEMO_ADMIN_USER: User = {
-  id: 'usr-admin-0001',
-  email: 'admin@aipro.dev',
-  name: 'Root Operator',
-  role: 'admin',
-  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-  balanceVND: 99999999,
-  balanceUSD: 4000.0,
-  tier: 'Enterprise',
-  createdAt: '2024-11-01T00:00:00.000Z',
-  phone: '0909000999',
-};
-
 interface AuthContextType extends AuthState {
+  token: string | null;
   login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
-  loginAs: (role: UserRole) => Promise<void>;
+  loginAs: (role: UserRole) => Promise<{ success: boolean; message?: string }>;
   register: (
     name: string,
     email: string,
@@ -143,7 +118,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const loginAs = async (role: UserRole) => {
+  const loginAs = async (role: UserRole): Promise<{ success: boolean; message?: string }> => {
+    // Quick-login seeds use REAL credentials stored in PostgreSQL — no fake JWT fallback.
     const creds =
       role === 'admin'
         ? { email: 'admin@aipro.dev', pass: 'admin123' }
@@ -154,19 +130,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (res.success && res.user && res.token) {
         saveSession(res.user, res.token);
         trackEvent('demo_login', { role });
-        return;
+        return { success: true };
       }
+      return { success: false, message: res.message || 'Đăng nhập thất bại.' };
     } catch {
-      // Fallback
+      return { success: false, message: 'Không thể kết nối máy chủ. Vui lòng thử lại sau.' };
     }
-
-    // Fallback if backend not ready
-    if (role === 'admin') {
-      saveSession(DEMO_ADMIN_USER, 'token-jwt-admin-secret-9988');
-    } else {
-      saveSession(DEMO_MEMBER_USER, 'token-jwt-member-valid-1122');
-    }
-    trackEvent('demo_login', { role });
   };
 
   const register = async (
