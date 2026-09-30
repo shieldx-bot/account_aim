@@ -33,7 +33,7 @@ export const FaqAccordion: React.FC = () => {
 
   return (
     <div className="w-full max-w-3xl mx-auto my-16">
-      <div className="text-center mb-10">
+      <div data-section-header className="text-center mb-10">
         <h2 className="text-2xl font-bold text-text-primary">Developer FAQs</h2>
         <p className="text-xs text-text-secondary mt-1">100% transparency on delivery mechanism, licensing, and SLA commitments.</p>
       </div>

@@ -40,7 +40,7 @@ const TESTIMONIALS = [
 export const TestimonialsSection: React.FC = () => {
   return (
     <section className="py-20 max-w-[1240px] mx-auto px-4 sm:px-6">
-      <div className="text-center max-w-3xl mx-auto mb-14">
+      <div data-section-header className="text-center max-w-3xl mx-auto mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-status-warning/10 border border-status-warning/30 text-status-warning text-xs font-mono font-semibold mb-3">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Real Feedback from Developer Community</span>
@@ -79,6 +79,10 @@ export const TestimonialsSection: React.FC = () => {
                 src={t.avatar}
                 alt={t.name}
                 className="w-10 h-10 rounded-full object-cover border border-primary-blue/40"
+                onError={(e) => {
+                  const el = e.currentTarget;
+                  el.src = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(el.alt)}&backgroundColor=0066FF,00F0FF&fontFamily=Arial,Helvetica`;
+                }}
               />
               <div className="overflow-hidden">
                 <div className="flex items-center gap-1.5">

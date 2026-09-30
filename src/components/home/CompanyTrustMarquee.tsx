@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
+import gsap from 'gsap';
+import { prefersReducedMotion } from '@/hooks/useGsapContext';
 
 const COMPANIES = [
   { name: 'VNG Corporation', tag: 'Tech Giant' },
@@ -12,17 +14,54 @@ const COMPANIES = [
 ];
 
 export const CompanyTrustMarquee: React.FC = () => {
+  const trackRef = useRef<HTMLDivElement | null>(null);
+
+  // GSAP ticker marquee — replaces the CSS `animate-marquee` so the strip
+  // slows down (not freezes) on hover and fades at both edges via mask-image.
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    if (!track || prefersReducedMotion()) return;
+
+    const wrapWidth = () => track.scrollWidth / 2; // duplicated list → half = 1 loop
+    const baseSpeed = 60; // px/s
+    let currentSpeed = baseSpeed;
+    let x = 0;
+    let last = performance.now();
+
+    const onEnter = () => { currentSpeed = baseSpeed * 0.3; };
+    const onLeave = () => { currentSpeed = baseSpeed; };
+
+    track.addEventListener('mouseenter', onEnter);
+    track.addEventListener('mouseleave', onLeave);
+
+    const tick = gsap.ticker.add((time) => {
+      const dt = Math.min(time - last, 64) / 1000; // clamp tab-switch spikes
+      last = time;
+      x -= currentSpeed * dt;
+      const w = wrapWidth();
+      if (w > 0 && x <= -w) x += w;
+      gsap.set(track, { x });
+    });
+
+    return () => {
+      gsap.ticker.remove(tick);
+      track.removeEventListener('mouseenter', onEnter);
+      track.removeEventListener('mouseleave', onLeave);
+      gsap.set(track, { clearProps: 'transform' });
+    };
+  }, []);
+
   return (
     <div className="w-full py-10 border-y border-border-subtle/60 bg-surface/30 backdrop-blur-sm overflow-hidden my-8">
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 mb-6 text-center">
-<p className="text-xs uppercase tracking-widest text-text-muted font-mono">
+        <p className="text-xs uppercase tracking-widest text-text-muted font-mono">
           Trusted by software engineers & Tech Leads at leading companies
         </p>
       </div>
 
-      <div className="relative flex overflow-x-hidden">
-        {/* Infinite CSS horizontal marquee */}
-        <div className="flex animate-marquee whitespace-nowrap gap-8 items-center">
+      <div className="relative flex overflow-x-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+        {/* Infinite horizontal marquee driven by GSAP ticker */}
+        <div ref={trackRef} className="flex whitespace-nowrap gap-8 items-center will-change-transform">
           {[...COMPANIES, ...COMPANIES].map((comp, idx) => (
             <div
               key={`${comp.name}-${idx}`}

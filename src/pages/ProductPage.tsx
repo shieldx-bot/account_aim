@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MOCK_PRODUCTS } from '@/data/mockProducts';
 import { useApp } from '@/context/AppContext';
 import { useCart } from '@/context/CartContext';
-import { ProvisioningType, DurationOption } from '@/types';
+import { ProvisioningType, DurationOption, ProductPlan } from '@/types';
 import { trackEvent } from '@/utils/telemetry';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import {
@@ -30,18 +29,50 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export const ProductPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
-  const { formatPrice, currency, updateConfig, products } = useApp();
-  const { addItem } = useCart();
+  const { products, isLoadingProducts, productsError } = useApp();
 
+  // Strict DB-catalog lookup: no mock fallback in production.
   const product = useMemo(() => {
-    return (
-      products.find((p) => p.slug === slug) ||
-      MOCK_PRODUCTS.find((p) => p.slug === slug) ||
-      products[0] ||
-      MOCK_PRODUCTS[0]
-    );
+    return products.find((p) => p.slug === slug) || null;
   }, [slug, products]);
+
+  if (isLoadingProducts) {
+    return (
+      <div className="w-full max-w-[1200px] mx-auto px-4 py-20 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-text-muted">
+          <div className="w-10 h-10 rounded-full border-2 border-border-subtle border-t-accent-cyan animate-spin" />
+          <span className="text-xs font-medium uppercase tracking-wider">Đang tải danh mục từ server...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="w-full max-w-[1200px] mx-auto px-4 py-20 flex items-center justify-center">
+        <div className="p-8 rounded-2xl bg-surface border border-border-subtle text-center max-w-md space-y-4">
+          <AlertCircle className="w-10 h-10 mx-auto text-status-warning" />
+          <h1 className="text-lg font-bold text-text-primary">Không tìm thấy sản phẩm</h1>
+          <p className="text-xs text-text-secondary">
+            {productsError
+              ? `Không thể tải dữ liệu sản phẩm từ server: ${productsError}. Vui lòng thử lại sau.`
+              : 'Sản phẩm này không tồn tại hoặc đã ngừng kinh doanh.'}
+          </p>
+          <Link to="/" className="inline-flex items-center gap-1 text-xs font-bold text-accent-cyan hover:underline">
+            <ArrowLeft className="w-3.5 h-3.5" /> Về trang chủ
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return <ProductDetail product={product} />;
+};
+
+const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
+  const navigate = useNavigate();
+  const { formatPrice, currency, updateConfig } = useApp();
+  const { addItem } = useCart();
 
   const [provisioningType, setProvisioningType] = useState<ProvisioningType>('invite_email');
   const [targetEmail, setTargetEmail] = useState('');

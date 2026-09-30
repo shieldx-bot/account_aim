@@ -339,6 +339,54 @@ export const ordersApi = {
     }
     return body.data;
   },
+
+  /**
+   * Public lookup (Warranty page): find order + subscription by email or orderId
+   */
+  async lookup(params: { email?: string; orderId?: string }): Promise<{ order: any; subscription: any }> {
+    const query = new URLSearchParams();
+    if (params.email) query.append('email', params.email);
+    if (params.orderId) query.append('orderId', params.orderId);
+    const res = await fetch(`${API_BASE_URL}/orders/lookup?${query}`);
+    const body = await res.json();
+    if (!res.ok) {
+      throw new Error(body.message || 'Không tìm thấy đơn hàng khớp với thông tin tra cứu.');
+    }
+    return body.data;
+  },
+
+  /**
+   * Request a server-issued OTP for the warranty self-service lookup.
+   * Returns devCode only when backend runs outside NODE_ENV=production.
+   */
+  async requestLookupOtp(email: string, orderId: string): Promise<{ message: string; devCode?: string }> {
+    const res = await fetch(`${API_BASE_URL}/orders/lookup/otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, orderId }),
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      throw new Error(body.message || 'Không thể gửi mã OTP.');
+    }
+    return { message: body.message, devCode: body.devCode };
+  },
+
+  /**
+   * Verify the OTP server-side; on success returns full order + subscription.
+   */
+  async verifyLookupOtp(email: string, orderId: string, code: string): Promise<{ order: any; subscription: any }> {
+    const res = await fetch(`${API_BASE_URL}/orders/lookup/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, orderId, code }),
+    });
+    const body = await res.json();
+    if (!res.ok) {
+      throw new Error(body.message || 'Mã OTP không hợp lệ hoặc đã hết hạn.');
+    }
+    return body.data;
+  },
 };
 
 export const subscriptionsApi = {
@@ -354,6 +402,137 @@ export const subscriptionsApi = {
       throw new Error(body.message || 'Không thể tải danh sách đăng ký.');
     }
     return body.data || [];
+  },
+
+  /**
+   * Toggle auto-renew on a subscription (PostgreSQL persisted)
+   */
+  async updateAutoRenew(token: string, subscriptionId: string, autoRenew: boolean): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/subscriptions/${subscriptionId}/auto-renew`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ autoRenew }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể cập nhật tự động gia hạn.');
+    return body.data;
+  },
+};
+
+export const warrantyApi = {
+  /**
+   * Customer: file a warranty/dispute ticket against an order
+   */
+  async createTicket(data: { orderId: string; customerEmail: string; tool: string; reason: string }): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/warranty`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể ghi nhận khiếu nại bảo hành.');
+    return body.data;
+  },
+
+  /**
+   * Customer: daily replacement quota derived from warranty_tickets (DB source of truth)
+   */
+  async getQuota(email: string): Promise<{ usedToday: number; maxPerDay: number; remaining: number }> {
+    const res = await fetch(`${API_BASE_URL}/warranty/quota?email=${encodeURIComponent(email)}`);
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể tải hạn mức bảo hành.');
+    return body.data;
+  },
+
+  /**
+   * Admin: list dispute tickets from PostgreSQL
+   */
+  async getTickets(token: string, status?: string): Promise<any[]> {
+    const query = status ? `?status=${status}` : '';
+    const res = await fetch(`${API_BASE_URL}/admin/warranty${query}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể tải danh sách khiếu nại.');
+    return body.data || [];
+  },
+
+  /**
+   * Admin: approve override — issue replacement account from buffer pool
+   */
+  async resolveTicket(token: string, ticketId: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/admin/warranty/${ticketId}/resolve`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể duyệt khiếu nại.');
+    return body;
+  },
+};
+
+export const inventoryApi = {
+  /**
+   * Admin: list warehouse accounts + per-tool stock summary
+   */
+  async getAccounts(token: string, params?: { pool?: string; status?: string }): Promise<{ accounts: any[]; stockSummary: any[] }> {
+    const query = new URLSearchParams();
+    if (params?.pool) query.append('pool', params.pool);
+    if (params?.status) query.append('status', params.status);
+    const res = await fetch(`${API_BASE_URL}/admin/inventory?${query}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể tải kho tài khoản.');
+    return { accounts: body.data || [], stockSummary: body.stockSummary || [] };
+  },
+
+  /**
+   * Admin: bulk import accounts into a pool
+   */
+  async bulkImport(token: string, items: { tool: string; email: string; pass: string }[], pool: 'active' | 'buffer'): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/admin/inventory/bulk`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ items, pool }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Nhập kho thất bại.');
+    return body;
+  },
+
+  /**
+   * Admin: toggle account pool (Kho bán <-> Kho dự phòng)
+   */
+  async movePool(token: string, accountId: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/admin/inventory/${accountId}/pool`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể chuyển kho.');
+    return body.data;
+  },
+
+  /**
+   * Admin: delete an account from the warehouse
+   */
+  async deleteAccount(token: string, accountId: string): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/admin/inventory/${accountId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể xóa tài khoản.');
   },
 };
 
@@ -434,6 +613,23 @@ export const adminApi = {
     });
     const body = await res.json();
     if (!res.ok) throw new Error(body.message || 'Không thể cập nhật role.');
+    return body;
+  },
+
+  /**
+   * Lock / unlock a user account (admin)
+   */
+  async updateUserStatus(token: string, userId: string, status: 'active' | 'banned'): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Không thể cập nhật trạng thái người dùng.');
     return body;
   },
 

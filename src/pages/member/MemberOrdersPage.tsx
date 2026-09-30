@@ -1,40 +1,75 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
-import { MOCK_MEMBER_ORDERS } from '@/data/mockMemberData';
+import { ordersApi } from '@/services/api';
+import type { OrderItem } from '@/types';
 import {
   Search,
   Download,
   ExternalLink,
   CheckCircle2,
-  Clock,
-  FileText,
-  Filter,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-export const MemberOrdersPage: React.FC = () => {
-  const { user } = useAuth();
-  const { formatPrice } = useApp();
-  const isDemoUser = user?.email === 'alex.dev@gmail.com';
-  const initialOrders = isDemoUser ? MOCK_MEMBER_ORDERS : [];
+const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
+  dispatched: { label: 'Đã bàn giao', cls: 'bg-status-success/15 text-status-success' },
+  paid: { label: 'Đã thanh toán', cls: 'bg-primary-blue/15 text-primary-blue' },
+  pending: { label: 'Chờ thanh toán', cls: 'bg-status-warning/15 text-status-warning' },
+  cancelled: { label: 'Đã hủy', cls: 'bg-status-error/15 text-status-error' },
+  refunded: { label: 'Hoàn tiền', cls: 'bg-text-muted/15 text-text-muted' },
+};
 
+export const MemberOrdersPage: React.FC = () => {
+  const { token } = useAuth();
+  const { formatPrice } = useApp();
+
+  const [orders, setOrders] = useState<OrderItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'dispatched' | 'pending'>('all');
 
+  // Production: load the real order history from PostgreSQL via API
+  useEffect(() => {
+    if (!token) {
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    ordersApi
+      .getMyOrders(token)
+      .then((data) => {
+        if (!cancelled) setOrders(data as OrderItem[]);
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setError(err.message || 'Không thể tải lịch sử đơn hàng từ máy chủ.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   const filteredOrders = useMemo(() => {
-    return initialOrders.filter((ord) => {
+    return orders.filter((ord) => {
       const matchSearch =
         ord.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ord.productName.toLowerCase().includes(searchTerm.toLowerCase());
       const matchFilter = selectedFilter === 'all' || ord.status === selectedFilter;
       return matchSearch && matchFilter;
     });
-  }, [searchTerm, selectedFilter]);
+  }, [orders, searchTerm, selectedFilter]);
 
   const handleDownloadInvoice = (orderId: string) => {
     const json = JSON.stringify(
-      initialOrders.find((o) => o.orderId === orderId),
+      orders.find((o) => o.orderId === orderId),
       null,
       2
     );
@@ -104,8 +139,24 @@ export const MemberOrdersPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
-              {filteredOrders.length > 0 ? (
-                filteredOrders.map((ord) => (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-10 text-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary-blue inline mr-2" />
+                    <span className="text-xs text-text-muted">Đang tải lịch sử đơn hàng từ máy chủ…</span>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={7} className="py-10 text-center">
+                    <AlertCircle className="w-5 h-5 text-status-error inline mr-2" />
+                    <span className="text-xs text-status-error">{error}</span>
+                  </td>
+                </tr>
+              ) : filteredOrders.length > 0 ? (
+                filteredOrders.map((ord) => {
+                  const st = STATUS_LABEL[ord.status] ?? { label: ord.status, cls: 'bg-surface-subtle text-text-secondary' };
+                  return (
                   <tr key={ord.orderId} className="hover:bg-canvas/40 transition-colors">
                     <td className="py-4 px-4 font-bold text-accent-cyan">{ord.orderId}</td>
                     <td className="py-4 px-4 font-sans">
@@ -115,15 +166,15 @@ export const MemberOrdersPage: React.FC = () => {
                         {ord.provisioningType === 'invite_email' ? 'Email chính chủ' : 'Tài khoản cấp sẵn'}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-text-muted">{ord.createdAt}</td>
+                    <td className="py-4 px-4 text-text-muted">{new Date(ord.createdAt).toLocaleString('vi-VN')}</td>
                     <td className="py-4 px-4 uppercase text-text-secondary">{ord.paymentMethod}</td>
                     <td className="py-4 px-4 font-bold text-text-primary">
-                      {formatPrice(ord.totalAmount, ord.totalAmount / 25000)}
+                      {formatPrice(ord.totalAmount, ord.totalUSD ?? ord.totalAmount / 25000)}
                     </td>
                     <td className="py-4 px-4">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-status-success/15 text-status-success text-[10px] font-bold">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${st.cls}`}>
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Thành công</span>
+                        <span>{st.label}</span>
                       </span>
                     </td>
                     <td className="py-4 px-4 text-right">
@@ -145,7 +196,8 @@ export const MemberOrdersPage: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-xs text-text-muted">Không tìm thấy đơn hàng nào.</td>

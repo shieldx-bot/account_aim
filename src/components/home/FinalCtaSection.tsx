@@ -6,10 +6,20 @@ export const FinalCtaSection: React.FC = () => {
   return (
     <section className="py-20 max-w-[1240px] mx-auto px-4 sm:px-6">
       <div className="relative overflow-hidden p-8 sm:p-14 rounded-3xl bg-gradient-to-r from-primary-blue/20 via-surface to-accent-cyan/15 border border-primary-blue/40 shadow-2xl text-center">
+        {/* Real photography backdrop (downloaded locally from Unsplash) */}
+        <img
+          src="/images/cta-team.jpg"
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover opacity-[0.12] saturate-[0.6]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/70 via-transparent to-background/70 pointer-events-none" />
         {/* Ambient glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-primary-blue/25 rounded-full blur-[140px] pointer-events-none" />
 
-        <div className="relative z-10 max-w-3xl mx-auto space-y-6">
+        <div data-section-header className="relative z-10 max-w-3xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface border border-accent-cyan/30 text-accent-cyan text-xs font-mono font-semibold shadow-lg">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Activate Your Account Today</span>

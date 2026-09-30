@@ -78,6 +78,7 @@ export interface OrderItem {
   provisioningType: ProvisioningType;
   guestEmail: string;
   targetEmail?: string;
+  totalUSD?: number;
   totalAmount: number;
   currency: Currency;
   paymentMethod: PaymentMethod;

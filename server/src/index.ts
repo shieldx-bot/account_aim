@@ -10,6 +10,7 @@ import { ensureSeedUsers } from './controllers/auth.controller.js';
 import { productRouter } from './routes/product.routes.js';
 import { statusRouter } from './routes/status.routes.js';
 import { ordersRouter, subscriptionsRouter, adminRouter } from './routes/orders.routes.js';
+import { inventoryAdminRouter, warrantyAdminRouter, warrantyPublicRouter } from './routes/inventory-warranty.routes.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { ensureSeedProducts } from './controllers/product.controller.js';
 import { pool } from './config/db.js';
@@ -25,7 +26,7 @@ const PORT = env.PORT;
 app.use(helmet());
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: env.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -70,7 +71,10 @@ app.use('/api/products', productRouter);
 app.use('/api/status', statusRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/subscriptions', subscriptionsRouter);
+app.use('/api/warranty', warrantyPublicRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/admin/inventory', inventoryAdminRouter);
+app.use('/api/admin/warranty', warrantyAdminRouter);
 
 // Error handling middleware (must be last)
 app.use(errorMiddleware);
@@ -83,6 +87,21 @@ const runMigrations = async () => {
     const sqlPath = path.join(__dirname, 'db', 'init.sql');
     const sql = fs.readFileSync(sqlPath, 'utf-8');
     await pool.query(sql);
+
+    // Production tables: inventory_accounts & warranty_tickets (migration 002)
+    const prodSqlPath = path.join(__dirname, 'db', 'migrations', '002_production_tables.sql');
+    if (fs.existsSync(prodSqlPath)) {
+      const prodSql = fs.readFileSync(prodSqlPath, 'utf-8');
+      await pool.query(prodSql);
+    }
+
+    // Server-issued lookup OTPs (migration 003)
+    const otpSqlPath = path.join(__dirname, 'db', 'migrations', '003_lookup_otp.sql');
+    if (fs.existsSync(otpSqlPath)) {
+      const otpSql = fs.readFileSync(otpSqlPath, 'utf-8');
+      await pool.query(otpSql);
+    }
+
     console.log('[DB] Schema migrations applied successfully.');
   } catch (err) {
     console.error('[DB] Migration warning (tables may already exist):', (err as any).message);
@@ -91,12 +110,14 @@ const runMigrations = async () => {
 
 // Start server
 app.listen(PORT, async () => {
-  console.log(`🚀 [AIPro Backend] Server running on http://localhost:${PORT}`);
+  console.log(`🚀 [AIPro Backend] Server running on http://localhost:${PORT} (${env.NODE_ENV})`);
   console.log(`📖 [AIPro Backend] Swagger docs at http://localhost:${PORT}/api/docs`);
   // Run DB schema migrations (creates orders, subscriptions tables if not exist)
   await runMigrations();
-  // Seed demo accounts
-  await ensureSeedUsers();
-  // Seed initial AI products catalog
+  // Seed demo accounts only outside production — real signups own the DB in prod
+  if (env.NODE_ENV !== 'production') {
+    await ensureSeedUsers();
+  }
+  // Seed initial AI products catalog (idempotent upsert)
   await ensureSeedProducts();
 });

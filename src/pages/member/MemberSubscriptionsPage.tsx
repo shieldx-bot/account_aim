@@ -1,28 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MOCK_MEMBER_SUBSCRIPTIONS } from '@/data/mockMemberData';
+import { subscriptionsApi } from '@/services/api';
+import type { MemberSubscription } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import {
   KeyRound,
-  ShieldCheck,
   RefreshCw,
   Copy,
   Check,
   Eye,
   EyeOff,
-  Clock,
-  ExternalLink,
-  Code2,
-  Lock,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 
 export const MemberSubscriptionsPage: React.FC = () => {
-  const { user } = useAuth();
-  const isDemoUser = user?.email === 'alex.dev@gmail.com';
-  const initialSubscriptions = isDemoUser ? MOCK_MEMBER_SUBSCRIPTIONS : [];
-  const [subscriptions, setSubscriptions] = useState(initialSubscriptions);
+  const { token } = useAuth();
+  const [subscriptions, setSubscriptions] = useState<MemberSubscription[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [revealedIds, setRevealedIds] = useState<Record<string, boolean>>({});
+
+  // Production: vault data comes from PostgreSQL subscriptions table
+  useEffect(() => {
+    if (!token) {
+      setSubscriptions([]);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    subscriptionsApi
+      .getMySubscriptions(token)
+      .then((data) => {
+        if (!cancelled) setSubscriptions(data as MemberSubscription[]);
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setError(err.message || 'Không thể tải danh sách tài khoản từ máy chủ.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const toggleReveal = (id: string) => {
     setRevealedIds((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -34,10 +58,17 @@ export const MemberSubscriptionsPage: React.FC = () => {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const toggleAutoRenew = (id: string) => {
-    setSubscriptions((prev) =>
-      prev.map((sub) => (sub.id === id ? { ...sub, autoRenew: !sub.autoRenew } : sub))
-    );
+  const toggleAutoRenew = async (id: string, nextValue: boolean) => {
+    if (!token) return;
+    // Optimistic UI update, then persist to DB
+    setSubscriptions((prev) => prev.map((sub) => (sub.id === id ? { ...sub, autoRenew: nextValue } : sub)));
+    try {
+      await subscriptionsApi.updateAutoRenew(token, id, nextValue);
+    } catch (err) {
+      // Rollback on failure
+      setSubscriptions((prev) => prev.map((sub) => (sub.id === id ? { ...sub, autoRenew: !nextValue } : sub)));
+      setError((err as Error).message || 'Không thể lưu thiết lập tự động gia hạn.');
+    }
   };
 
   return (
@@ -60,6 +91,18 @@ export const MemberSubscriptionsPage: React.FC = () => {
       </div>
 
       {/* Subscriptions Cards */}
+      {error && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-status-error/10 border border-status-error/30 text-status-error text-xs font-semibold">
+          <AlertCircle className="w-4 h-4" />
+          <span>{error}</span>
+        </div>
+      )}
+      {loading ? (
+        <div className="text-center py-12 bg-surface rounded-2xl border border-border-subtle">
+          <Loader2 className="w-6 h-6 animate-spin text-primary-blue mx-auto mb-3" />
+          <p className="text-xs text-text-muted">Đang tải vault tài khoản từ máy chủ…</p>
+        </div>
+      ) : (
       <div className="space-y-4">
         {subscriptions.length > 0 ? (
           subscriptions.map((sub) => {
@@ -94,7 +137,9 @@ export const MemberSubscriptionsPage: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <span className="text-[11px] text-text-muted block">Hạn sử dụng đến:</span>
-                      <span className="font-mono text-xs font-bold text-text-primary">{sub.expiresAt}</span>
+                      <span className="font-mono text-xs font-bold text-text-primary">
+                        {new Date(sub.expiresAt).toLocaleDateString('vi-VN')}
+                      </span>
                     </div>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold font-mono ${
@@ -187,7 +232,7 @@ export const MemberSubscriptionsPage: React.FC = () => {
                     <input
                       type="checkbox"
                       checked={sub.autoRenew}
-                      onChange={() => toggleAutoRenew(sub.id)}
+                      onChange={() => toggleAutoRenew(sub.id, !sub.autoRenew)}
                       className="w-4 h-4 rounded border-border-subtle bg-canvas text-primary-blue focus:ring-primary-blue/20"
                     />
                     <span className="text-text-secondary">
@@ -228,6 +273,7 @@ export const MemberSubscriptionsPage: React.FC = () => {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };

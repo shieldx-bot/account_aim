@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
+import { ordersApi, subscriptionsApi } from '@/services/api';
 import { trackEvent } from '@/utils/telemetry';
 import { openTelegramSupport } from '@/utils/diagnostics';
 import {
@@ -17,25 +19,74 @@ import {
   Key,
   Lock,
   ArrowRight,
+  Loader2,
 } from 'lucide-react';
 
 export const DeliveryPage: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const { activeConfig } = useApp();
+  const { token } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [healthStatus, setHealthStatus] = useState<'idle' | 'testing' | 'active'>('idle');
+  const [healthStatus, setHealthStatus] = useState<'idle' | 'testing' | 'active' | 'error'>('idle');
   const [mgmtPassword, setMgmtPassword] = useState('');
   const [passwordSaved, setPasswordSaved] = useState(false);
 
-  // Deterministic mock credentials based on product
+  // Real credentials fetched from PostgreSQL via API (order + subscription records)
+  const [order, setOrder] = useState<any | null>(null);
+  const [subscription, setSubscription] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!token || !orderId) {
+        setLoadError('Vui lòng đăng nhập để xem thông tin bàn giao đơn hàng.');
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const orderData = await ordersApi.getById(token, orderId);
+        const subs = await subscriptionsApi.getMySubscriptions(token);
+        if (cancelled) return;
+        setOrder(orderData);
+        // Prefer the subscription tied to this exact order
+        const linked = (subs || []).find((s: any) => s.orderId === orderData.orderId);
+        setSubscription(linked ?? null);
+      } catch (err: any) {
+        if (!cancelled) setLoadError(err.message || 'Không tải được dữ liệu bàn giao từ server.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, orderId]);
+
+  const productName = order?.productName ?? activeConfig?.product.name ?? 'Đơn hàng AIPro';
+  const durationLabel = activeConfig?.duration.label ?? `${order?.planDurationMonths ?? '?'} tháng`;
+
   const credentials = {
-    email: activeConfig.targetEmail || 'cursor.dev.pro92@gmail.com',
-    password: 'pX!9#vK2_devSec2026',
-    token2FA: 'JBSWY3DPEHPK3PXP',
-    warrantyDays: 90,
-    expiresAt: '22/06/2026',
+    email: subscription?.accountEmail ?? order?.targetEmail ?? order?.guestEmail ?? '',
+    password: subscription?.accountPassword ?? '',
+    token2FA: subscription?.accessToken ?? '',
+    warrantyDays: order?.warrantyExpireDate
+      ? Math.max(
+          0,
+          Math.ceil((new Date(order.warrantyExpireDate).getTime() - Date.now()) / 86400000)
+        )
+      : null,
+    expiresAt: subscription?.expiresAt
+      ? new Date(subscription.expiresAt).toLocaleDateString('vi-VN')
+      : order?.warrantyExpireDate
+        ? new Date(order.warrantyExpireDate).toLocaleDateString('vi-VN')
+        : '—',
   };
 
   useEffect(() => {
@@ -70,7 +121,7 @@ export const DeliveryPage: React.FC = () => {
       content = JSON.stringify(
         {
           orderId,
-          product: activeConfig.product.name,
+          product: productName,
           accountEmail: credentials.email,
           password: credentials.password,
           twoFactorSecret: credentials.token2FA,
@@ -85,7 +136,7 @@ export const DeliveryPage: React.FC = () => {
     } else {
       content = [
         `# AIPRO.DEV LICENSE VAULT - ORDER ${orderId}`,
-        `AIPRO_PRODUCT="${activeConfig.product.name}"`,
+        `AIPRO_PRODUCT="${productName}"`,
         `AIPRO_ACCOUNT_EMAIL="${credentials.email}"`,
         `AIPRO_ACCOUNT_PASSWORD="${credentials.password}"`,
         `AIPRO_2FA_SECRET="${credentials.token2FA}"`,
@@ -108,7 +159,7 @@ export const DeliveryPage: React.FC = () => {
 
   // Copy full markdown block for Notion / Password Managers
   const handleCopyMarkdown = () => {
-    const md = `### AIPro.dev License Vault - ${activeConfig.product.name}
+    const md = `### AIPro.dev License Vault - ${productName}
 - **Order ID**: \`${orderId}\`
 - **Email**: \`${credentials.email}\`
 - **Password**: \`${credentials.password}\`
@@ -119,18 +170,51 @@ export const DeliveryPage: React.FC = () => {
     handleCopy(md, 'markdown');
   };
 
-  // Self-test Account Health
-  const handleVerifyStatus = () => {
+  // Self-test Account Health — real HEAD request to the backend health endpoint (PostgreSQL check)
+  const handleVerifyStatus = async () => {
     setHealthStatus('testing');
     trackEvent('self_test_initiated', { order_id: orderId });
 
-    setTimeout(() => {
-      setHealthStatus('active');
-    }, 2000);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/health`);
+      const body = await res.json();
+      if (res.ok && body.status === 'healthy' && body.postgres === 'connected') {
+        setHealthStatus('active');
+      } else {
+        setHealthStatus('error');
+      }
+    } catch {
+      setHealthStatus('error');
+    }
   };
 
   return (
     <div className="w-full max-w-[840px] mx-auto px-4 sm:px-6 py-10 pb-24">
+      {/* Loading state while fetching real order/credentials from DB */}
+      {loading && (
+        <div className="flex flex-col items-center justify-center py-24 text-text-secondary gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-accent-cyan" />
+          <span className="text-xs font-medium">Đang tải thông tin bàn giao từ hệ thống...</span>
+        </div>
+      )}
+
+      {/* Error state (auth required / order not found / server down) */}
+      {!loading && loadError && (
+        <div className="p-6 rounded-2xl bg-surface border border-status-warning/40 text-center space-y-3">
+          <p className="text-sm font-semibold text-text-primary">{loadError}</p>
+          <div className="flex items-center justify-center gap-3">
+            <Link to="/login" className="text-xs text-primary-blue hover:underline font-semibold">
+              Đăng nhập ngay
+            </Link>
+            <Link to="/member/orders" className="text-xs text-primary-blue hover:underline font-semibold">
+              Xem đơn hàng của tôi
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {!loading && !loadError && (
+      <>
       {/* 1. SUCCESS BANNER */}
       <div className="text-center mb-10 animate-fadeIn">
         <div className="w-16 h-16 rounded-full bg-status-success/20 text-status-success mx-auto mb-4 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.3)]">
@@ -156,11 +240,11 @@ export const DeliveryPage: React.FC = () => {
               The Credentials Vault
             </span>
             <h2 className="text-lg font-bold text-text-primary mt-0.5">
-              {activeConfig.product.name} ({activeConfig.duration.label})
+              {productName} ({durationLabel})
             </h2>
           </div>
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-status-success/15 text-status-success border border-status-success/30">
-            🟢 Bảo hành: Còn {credentials.warrantyDays} ngày
+            🟢 Bảo hành: {credentials.warrantyDays !== null ? `Còn ${credentials.warrantyDays} ngày` : 'Đang đồng bộ'}
           </span>
         </div>
 
@@ -351,7 +435,7 @@ export const DeliveryPage: React.FC = () => {
               onClick={() => {
                 if (mgmtPassword.length >= 8) {
                   setPasswordSaved(true);
-                  localStorage.setItem(`aipro_pwd_${activeConfig.guestEmail}`, mgmtPassword);
+                  localStorage.setItem(`aipro_pwd_${credentials.email || orderId}`, mgmtPassword);
                 }
               }}
               className="h-11 px-5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-semibold shrink-0"
@@ -385,6 +469,8 @@ export const DeliveryPage: React.FC = () => {
           </button>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 };

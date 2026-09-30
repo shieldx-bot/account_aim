@@ -1,7 +1,24 @@
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import { pool } from '../config/db.js';
+import { env } from '../config/env.js';
 import { catchAsync } from '../utils/catch-async.js';
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/app-error.js';
+
+/**
+ * In-memory cache for the last issued OTP per order (plaintext code is only
+ * ever held here transiently so the development channel can echo it back —
+ * in production this is where an email/SMS provider hook would deliver it).
+ */
+const otpCodeCache = new Map<string, { code: string; expiresAt: number }>();
+
+const constantTimeEquals = (a: string, b: string): boolean => {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+};
 
 /**
  * Format an order row from DB (snake_case → camelCase)
@@ -167,10 +184,265 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
 
   const newOrder = result.rows[0];
 
+  // ── Auto-provisioning: allocate a real account from the warehouse (PostgreSQL) ──
+  let allocatedAccount: { email: string; password: string } | null = null;
+  try {
+    const accRes = await pool.query(
+      `SELECT * FROM inventory_accounts
+       WHERE product_id = $1 AND pool = 'active' AND status = 'available'
+       ORDER BY created_at ASC LIMIT 1 FOR UPDATE SKIP LOCKED`,
+      [productId]
+    );
+    let acc = accRes.rows[0] ?? null;
+    if (!acc) {
+      // Fallback: match by tool name against product name/slug
+      const byTool = await pool.query(
+        `SELECT * FROM inventory_accounts
+         WHERE LOWER(tool) = LOWER($1) AND pool = 'active' AND status = 'available'
+         ORDER BY created_at ASC LIMIT 1`,
+        [productCheck.rows[0].name]
+      );
+      acc = byTool.rows[0] ?? null;
+    }
+    if (acc) {
+      await pool.query(
+        `UPDATE inventory_accounts
+         SET status = 'assigned', assigned_order_id = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [newOrder.id, acc.id]
+      );
+      allocatedAccount = { email: acc.email, password: acc.password };
+
+      // Create subscription record bound to the allocated account
+      await pool.query(
+        `INSERT INTO subscriptions (
+          order_id, user_id, product_id, product_name, product_slug, brand,
+          provisioning_type, account_email, account_password_encrypted,
+          start_date, expires_at, days_remaining, status
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CURRENT_DATE,$10,
+                  GREATEST(0, ($10::date - CURRENT_DATE)), 'active')`,
+        [
+          newOrder.id,
+          userId,
+          productId,
+          productName,
+          productSlug,
+          productSlug.split('-')[0] || 'aipro',
+          provisioningType || 'pre_created',
+          acc.email,
+          acc.password,
+          warrantyDate.toISOString().split('T')[0],
+        ]
+      );
+    }
+  } catch (provErr) {
+    // Provisioning failure must not break the paid order — admin can fulfill manually
+    console.error('[Provisioning] Auto-allocation failed for order', newOrder.id, provErr);
+  }
+
   res.status(201).json({
     success: true,
-    message: 'Đơn hàng đã được tạo thành công!',
-    data: formatOrderRow(newOrder),
+    message: allocatedAccount
+      ? 'Đơn hàng đã được tạo và tự động bàn giao tài khoản từ kho.'
+      : 'Đơn hàng đã được tạo! Hệ thống sẽ bàn giao tài khoản trong thời gian sớm nhất.',
+    data: { ...formatOrderRow(newOrder), provisioned: Boolean(allocatedAccount) },
+  });
+});
+
+/**
+ * Strip credential material from a subscription payload. The unauthenticated
+ * lookup gate must never expose account passwords / 2FA tokens — those are
+ * only released after server-side OTP verification (verifyLookupOtp).
+ */
+export const redactSubscriptionCredentials = (sub: any) => {
+  if (!sub) return sub;
+  return { ...sub, accountPassword: '', accessToken: '' };
+};
+
+/**
+ * GET /api/orders/lookup?email=&orderId=
+ * Public lookup gate: find an order by Order ID alone, or by Email + guestEmail.
+ * Returns only non-sensitive metadata (credentials require OTP verification client-side
+ * and are served through the owner's session / delivery page).
+ */
+export const lookupOrderByEmailOrId = catchAsync(async (req: Request, res: Response) => {
+  const email = String(req.query.email || '').trim().toLowerCase();
+  const orderId = String(req.query.orderId || '').trim().toUpperCase();
+
+  if (!email && !orderId) {
+    throw new BadRequestError('Thiếu email hoặc mã đơn hàng để tra cứu.');
+  }
+
+  const result = orderId
+    ? await pool.query('SELECT * FROM orders WHERE UPPER(id) = $1', [orderId])
+    : await pool.query(
+        `SELECT * FROM orders WHERE LOWER(guest_email) = $1 OR LOWER(target_email) = $1
+         ORDER BY created_at DESC LIMIT 1`,
+        [email]
+      );
+
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy đơn hàng khớp với thông tin tra cứu.');
+  }
+
+  const order = result.rows[0];
+
+  // Attach active subscription credentials for the matched order
+  const subRes = await pool.query(
+    `SELECT s.*, p.brand AS prod_brand FROM subscriptions s
+     LEFT JOIN products p ON p.id = s.product_id
+     WHERE s.order_id = $1 ORDER BY s.created_at DESC LIMIT 1`,
+    [order.id]
+  );
+
+  res.status(200).json({
+    success: true,
+    data: {
+      order: formatOrderRow(order),
+      // Credentials stay redacted until the customer passes OTP verification
+      subscription: subRes.rows[0] ? redactSubscriptionCredentials(formatSubscriptionRow(subRes.rows[0])) : null,
+    },
+  });
+});
+
+/**
+ * POST /api/orders/lookup/otp
+ * Issue a real, server-side OTP for the warranty self-service lookup.
+ * The code is hashed into lookup_otps (5-min expiry); plaintext is only
+ * echoed back in development so QA can complete the flow without an email
+ * provider. In production the echo disappears and a mailer hook delivers it.
+ */
+export const requestLookupOtp = catchAsync(async (req: Request, res: Response) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const orderId = String(req.body?.orderId || '').trim().toUpperCase();
+
+  if (!email || !orderId) {
+    throw new BadRequestError('Thiếu email hoặc mã đơn hàng để gửi OTP.');
+  }
+
+  // Order must exist AND the claimed email must own it
+  const orderRes = await pool.query(
+    `SELECT id, guest_email, target_email FROM orders WHERE UPPER(id) = $1`,
+    [orderId]
+  );
+  if (orderRes.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy đơn hàng.');
+  }
+  const owner = orderRes.rows[0];
+  const ownsEmail =
+    String(owner.guest_email || '').toLowerCase() === email ||
+    String(owner.target_email || '').toLowerCase() === email;
+  if (!ownsEmail) {
+    throw new UnauthorizedError('Email không sở hữu đơn hàng này.');
+  }
+
+  // Throttle: refuse to re-issue while a live (unconsumed) OTP is < 60s old
+  const recentRes = await pool.query(
+    `SELECT created_at FROM lookup_otps
+     WHERE order_id = $1 AND LOWER(email) = $2 AND consumed_at IS NULL
+     ORDER BY created_at DESC LIMIT 1`,
+    [owner.id, email]
+  );
+  if (recentRes.rows.length > 0) {
+    const ageMs = Date.now() - new Date(recentRes.rows[0].created_at).getTime();
+    if (ageMs < 60_000) {
+      throw new BadRequestError('OTP đã được gửi cách đây chưa lâu. Vui lòng chờ hoặc nhập mã.');
+    }
+  }
+
+  const code = String(crypto.randomInt(100000, 999999));
+  const codeHash = await bcrypt.hash(code, 10);
+
+  await pool.query(
+    `INSERT INTO lookup_otps (order_id, email, code_hash, expires_at)
+     VALUES ($1, $2, $3, NOW() + INTERVAL '5 minutes')`,
+    [owner.id, email, codeHash]
+  );
+
+  otpCodeCache.set(`${owner.id}:${email}`, {
+    code,
+    expiresAt: Date.now() + 5 * 60_000,
+  });
+
+  const payload: Record<string, unknown> = {
+    success: true,
+    message: 'Mã OTP đã được gửi (hiệu lực 5 phút).',
+    data: { orderId: owner.id, expiresInSec: 300 },
+  };
+  if (env.NODE_ENV !== 'production') {
+    // Dev-only delivery channel — replace with SendGrid/SES hook in production.
+    (payload as any).devCode = code;
+  }
+  res.status(201).json(payload);
+});
+
+/**
+ * POST /api/orders/lookup/verify-otp
+ * Validate the OTP against PostgreSQL (bcrypt compare, expiry, attempt cap).
+ * On success returns the FULL order + subscription record including
+ * credentials, which are never exposed by the unauthenticated lookup gate.
+ */
+export const verifyLookupOtp = catchAsync(async (req: Request, res: Response) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const orderId = String(req.body?.orderId || '').trim().toUpperCase();
+  const code = String(req.body?.code || '').trim();
+
+  if (!email || !orderId || !/^\d{6}$/.test(code)) {
+    throw new BadRequestError('Mã OTP không hợp lệ (cần 6 chữ số).');
+  }
+
+  const otpRes = await pool.query(
+    `SELECT * FROM lookup_otps
+     WHERE order_id = $1 AND LOWER(email) = $2 AND consumed_at IS NULL
+       AND expires_at > NOW()
+     ORDER BY created_at DESC LIMIT 1`,
+    [orderId, email]
+  );
+  if (otpRes.rows.length === 0) {
+    throw new UnauthorizedError('OTP hết hạn hoặc chưa được gửi. Hãy yêu cầu mã mới.');
+  }
+  const otp = otpRes.rows[0];
+
+  if (Number(otp.attempts) >= 5) {
+    await pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
+    throw new UnauthorizedError('Nhập sai quá 5 lần. OTP đã bị vô hiệu hóa.');
+  }
+
+  const cached = otpCodeCache.get(`${orderId}:${email}`);
+  const devMatch =
+    env.NODE_ENV !== 'production' &&
+    cached &&
+    cached.expiresAt > Date.now() &&
+    constantTimeEquals(cached.code, code);
+
+  const ok = devMatch || (await bcrypt.compare(code, otp.code_hash));
+
+  if (!ok) {
+    await pool.query(`UPDATE lookup_otps SET attempts = attempts + 1 WHERE id = $1`, [otp.id]);
+    throw new UnauthorizedError('Mã OTP không đúng.');
+  }
+
+  await pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
+  otpCodeCache.delete(`${orderId}:${email}`);
+
+  const orderRes = await pool.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
+  if (orderRes.rows.length === 0) {
+    throw new NotFoundError('Đơn hàng tương ứng không còn tồn tại.');
+  }
+  const subRes = await pool.query(
+    `SELECT s.*, p.brand AS prod_brand FROM subscriptions s
+     LEFT JOIN products p ON p.id = s.product_id
+     WHERE s.order_id = $1 ORDER BY s.created_at DESC LIMIT 1`,
+    [orderId]
+  );
+
+  res.status(200).json({
+    success: true,
+    message: 'Xác minh OTP thành công.',
+    data: {
+      order: formatOrderRow(orderRes.rows[0]),
+      subscription: subRes.rows[0] ? formatSubscriptionRow(subRes.rows[0]) : null,
+    },
   });
 });
 
@@ -249,6 +521,39 @@ export const getMySubscriptions = catchAsync(async (req: Request, res: Response)
     success: true,
     data: result.rows.map(formatSubscriptionRow),
     count: result.rows.length,
+  });
+});
+
+/**
+ * PATCH /api/subscriptions/:id/auto-renew
+ * Toggle auto-renew flag on a subscription (owner only)
+ */
+export const updateSubscriptionAutoRenew = catchAsync(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  if (!userId) throw new UnauthorizedError('Bạn cần đăng nhập.');
+
+  const { id } = req.params;
+  const { autoRenew } = req.body;
+
+  if (typeof autoRenew !== 'boolean') {
+    throw new BadRequestError('Giá trị autoRenew phải là true/false.');
+  }
+
+  const result = await pool.query(
+    `UPDATE subscriptions SET auto_renew = $1, updated_at = CURRENT_TIMESTAMP
+     WHERE id = $2 AND user_id = $3
+     RETURNING *`,
+    [autoRenew, id, userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy đăng ký hoặc bạn không có quyền chỉnh sửa.');
+  }
+
+  res.status(200).json({
+    success: true,
+    message: `Đã ${autoRenew ? 'bật' : 'tắt'} tự động gia hạn.`,
+    data: formatSubscriptionRow(result.rows[0]),
   });
 });
 
@@ -395,8 +700,36 @@ export const getAllUsersAdmin = catchAsync(async (req: Request, res: Response) =
       createdAt: row.created_at,
       ordersCount: Number(row.orders_count),
       totalSpentVND: Number(row.total_spent_vnd),
-      status: 'active', // TODO: add status column to users table
+      status: row.status || 'active',
     })),
+  });
+});
+
+/**
+ * PATCH /api/admin/users/:userId/status
+ * Admin: Lock (ban) or unlock (activate) a user account
+ */
+export const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const { status } = req.body;
+
+  if (!['active', 'banned'].includes(status)) {
+    throw new BadRequestError(`Trạng thái không hợp lệ. Chỉ chấp nhận: active, banned`);
+  }
+
+  const result = await pool.query(
+    `UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, email, name, role, status`,
+    [status, userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Không tìm thấy người dùng.');
+  }
+
+  res.status(200).json({
+    success: true,
+    message: `Đã ${status === 'banned' ? 'khóa' : 'mở khóa'} tài khoản ${result.rows[0].email}.`,
+    data: result.rows[0],
   });
 });
 
