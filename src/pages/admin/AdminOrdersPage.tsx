@@ -205,7 +205,7 @@ export const AdminOrdersPage: React.FC = () => {
         <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
           <span className="text-xs text-text-muted font-medium">Doanh Thu Hôm Nay</span>
           <div className="text-2xl font-extrabold font-mono text-text-primary mt-1">
-            {stats ? `${stats.revenueToday.toLocaleString('vi-VN')} ₫` : '…'}
+            {stats ? `$${(stats.revenueToday / 25000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '…'}
           </div>
           <span className="text-[11px] text-text-muted mt-1 inline-block">Đơn paid/dispatched trong ngày</span>
         </div>
@@ -343,7 +343,7 @@ export const AdminOrdersPage: React.FC = () => {
                         </span>
                       </td>
                       <td className="p-4 font-mono">
-                        <span className="text-text-primary font-bold">{order.totalVND.toLocaleString('vi-VN')} ₫</span>
+                        <span className="text-text-primary font-bold">${(order.totalVND / 25000).toFixed(2)}</span>
                       </td>
                       <td className="p-4">
                         {order.status === 'dispatched' && (
@@ -448,7 +448,7 @@ export const AdminOrdersPage: React.FC = () => {
               <div className="p-3 rounded-lg bg-canvas border border-border-subtle">
                 <span className="text-text-muted block text-[11px]">Sản phẩm &amp; kỳ hạn:</span>
                 <span className="font-mono text-accent-cyan font-bold">
-                  {selectedOrder.productName} — {selectedOrder.planDurationMonths} tháng — {selectedOrder.totalVND.toLocaleString('vi-VN')} ₫
+                  {selectedOrder.productName} — {selectedOrder.planDurationMonths} tháng — ${(selectedOrder.totalVND / 25000).toFixed(2)}
                 </span>
               </div>
 

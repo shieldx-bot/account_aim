@@ -692,14 +692,14 @@ export const adminApi = {
   /**
    * Add balance to user (admin)
    */
-  async addUserBalance(token: string, userId: string, amountVND: number): Promise<any> {
+  async addUserBalance(token: string, userId: string, amountUSD: number): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/balance`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ amountVND }),
+      body: JSON.stringify({ amountUSD }),
     });
     const body = await res.json();
     if (!res.ok) throw new Error(body.message || 'Không thể nạp tiền.');

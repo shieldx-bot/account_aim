@@ -174,7 +174,7 @@ export const CheckoutPage: React.FC = () => {
           discountUSD: discountUSD,
           totalVND: finalTotalVND,
           totalUSD: finalTotalUSD,
-          currency: 'VND',
+          currency: 'USD',
           paymentMethod: methodType === 'card_visa' ? 'paypal_card' : methodType === 'paypal_wallet' ? 'paypal_wallet' : 'paypal_credit',
           paymentGatewayRef: `PAYPAL-${Date.now()}`,
           couponCode: couponCode || undefined,
@@ -201,7 +201,7 @@ export const CheckoutPage: React.FC = () => {
           discountUSD: 0,
           totalVND: totalAmountVND,
           totalUSD: totalAmountUSD,
-          currency: 'VND',
+          currency: 'USD',
           paymentMethod: methodType === 'card_visa' ? 'paypal_card' : methodType === 'paypal_wallet' ? 'paypal_wallet' : 'paypal_credit',
           paymentGatewayRef: `PAYPAL-${Date.now()}`,
           referralCode: consumePendingReferral() ?? referralCode ?? undefined,
@@ -357,9 +357,7 @@ export const CheckoutPage: React.FC = () => {
                   <span className="text-2xl font-extrabold font-mono text-[#FFC439]">
                     ${totalAmountUSD.toFixed(2)} USD
                   </span>
-                  <span className="text-xs text-text-muted font-mono">
-                    (~{new Intl.NumberFormat('vi-VN').format(totalAmountVND)} ₫)
-                  </span>
+
                 </div>
               </div>
               <div className="text-[11px] text-text-muted space-y-0.5 text-left sm:text-right">
@@ -367,7 +365,7 @@ export const CheckoutPage: React.FC = () => {
                   <Shield className="w-3.5 h-3.5" />
                   <span>Miễn phí giao dịch &amp; bảo hiểm 180 ngày</span>
                 </div>
-                <div>Tỷ giá quy đổi cố định: 1 USD ≈ 25,000 VNĐ</div>
+                <div>Billing currency: US Dollars (USD)</div>
               </div>
             </div>
 
@@ -705,9 +703,7 @@ export const CheckoutPage: React.FC = () => {
                 <span className="text-2xl font-extrabold font-mono text-[#FFC439] block">
                   ${totalAmountUSD.toFixed(2)} USD
                 </span>
-                <span className="text-[11px] text-text-muted font-mono">
-                  (~{new Intl.NumberFormat('vi-VN').format(totalAmountVND)} VNĐ)
-                </span>
+
               </div>
             </div>
 

@@ -57,11 +57,11 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currency, setCurrencyState] = useState<Currency>(() => {
+    // Single-currency app: always USD. Any legacy persisted value is ignored.
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('aipro_currency');
-      if (saved === 'USD' || saved === 'VND') return saved;
+      localStorage.setItem('aipro_currency', 'USD');
     }
-    return 'VND';
+    return 'USD';
   });
 
   const [isOnline, setIsOnline] = useState<boolean>(() => {
@@ -138,10 +138,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     trackEvent('currency_toggled', { currency: c });
   };
 
-  const formatPrice = (vnd: number, usd: number): string => {
-    if (currency === 'VND') {
-      return `${vnd.toLocaleString('vi-VN')} ₫`;
-    }
+  const formatPrice = (_vnd: number, usd: number): string => {
+    // All prices are displayed in US Dollars.
     return `$${usd.toFixed(2)}`;
   };
 

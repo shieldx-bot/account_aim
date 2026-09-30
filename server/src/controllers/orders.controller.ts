@@ -792,11 +792,19 @@ export const updateUserRole = catchAsync(async (req: Request, res: Response) => 
  */
 export const addUserBalance = catchAsync(async (req: Request, res: Response) => {
   const { userId } = req.params;
-  const { amountVND } = req.body;
+  const { amountUSD, amountVND } = req.body;
 
-  if (!amountVND || Number(amountVND) <= 0) {
+  // Single-currency app: admins top up in USD. Legacy amountVND payloads are
+  // converted at the fixed rate (25,000 VND = 1 USD) for backward compatibility.
+  const amountUsd = Number(
+    amountUSD ?? (Number(amountVND) > 0 ? Number(amountVND) / 25000 : NaN)
+  );
+
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
     throw new BadRequestError('Số tiền nạp không hợp lệ.');
   }
+
+  const amountVndDerived = Math.round(amountUsd * 25000);
 
   const result = await pool.query(
     `UPDATE users SET 
@@ -804,7 +812,7 @@ export const addUserBalance = catchAsync(async (req: Request, res: Response) => 
       balance_usd = balance_usd + $2,
       updated_at = CURRENT_TIMESTAMP
      WHERE id = $3 RETURNING id, email, balance_vnd, balance_usd`,
-    [Number(amountVND), Number(amountVND) / 25000, userId]
+    [amountVndDerived, amountUsd, userId]
   );
 
   if (result.rows.length === 0) {
@@ -813,7 +821,7 @@ export const addUserBalance = catchAsync(async (req: Request, res: Response) => 
 
   res.status(200).json({
     success: true,
-    message: `Đã nạp ${Number(amountVND).toLocaleString('vi-VN')} ₫ vào ví người dùng.`,
+    message: `Đã nạp $${amountUsd.toFixed(2)} USD vào ví người dùng.`,
     data: {
       balanceVND: Number(result.rows[0].balance_vnd),
       balanceUSD: Number(result.rows[0].balance_usd),
@@ -834,7 +842,7 @@ export const getAdminStats = catchAsync(async (req: Request, res: Response) => {
     usersTotal,
     activeSubscriptions,
   ] = await Promise.all([
-    pool.query(`SELECT COALESCE(SUM(total_vnd), 0) as total FROM orders WHERE DATE(created_at) = CURRENT_DATE AND status IN ('paid','dispatched')`),
+    pool.query(`SELECT COALESCE(SUM(total_usd), 0) as total FROM orders WHERE DATE(created_at) = CURRENT_DATE AND status IN ('paid','dispatched')`),
     pool.query(`SELECT COUNT(*) as count FROM orders WHERE DATE(created_at) = CURRENT_DATE`),
     pool.query(`SELECT COUNT(*) as count FROM orders`),
     pool.query(`SELECT COUNT(*) as count FROM orders WHERE status = 'pending'`),

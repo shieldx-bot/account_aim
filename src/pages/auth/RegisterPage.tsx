@@ -102,7 +102,7 @@ export const RegisterPage: React.FC = () => {
           Tạo tài khoản mới
         </h2>
         <p className="mt-2 text-sm text-text-secondary">
-          Tặng ngay <span className="text-status-success font-semibold">50.000 ₫</span> vào số dư ví cho thành viên mới!
+          Tặng ngay <span className="text-status-success font-semibold">$2</span> vào số dư ví cho thành viên mới!
         </p>
       </div>
 
@@ -254,7 +254,7 @@ export const RegisterPage: React.FC = () => {
 
             <div className="p-3 rounded-xl bg-status-success/10 border border-status-success/20 flex items-center gap-2 text-xs text-status-success">
               <Gift className="w-4 h-4 flex-shrink-0" />
-              <span>Nhận ngay 50.000 ₫ nạp sẵn vào số dư tài khoản khi đăng ký thành công.</span>
+              <span>Nhận ngay $2 nạp sẵn vào số dư tài khoản khi đăng ký thành công.</span>
             </div>
 
             <button

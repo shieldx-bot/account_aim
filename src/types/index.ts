@@ -1,4 +1,13 @@
-export type Currency = 'VND' | 'USD';
+// Single-currency app: all monetary values are US Dollars.
+// 'VND' is kept in the union only for backward compatibility with previously
+// persisted localStorage values / legacy API payloads — it always renders as USD.
+export type Currency = 'USD' | 'VND';
+
+/** Fixed conversion rate used to derive legacy VND fields from USD prices. */
+export const VND_PER_USD = 25000;
+
+/** Derive a legacy *_VND value from a USD amount. */
+export const usdToVnd = (usd: number): number => Math.round(usd * VND_PER_USD);
 
 export type ProductCategory = 'all' | 'coding' | 'llm' | 'search' | 'design' | 'creative' | 'enterprise';
 

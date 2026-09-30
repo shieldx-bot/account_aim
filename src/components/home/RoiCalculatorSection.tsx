@@ -5,16 +5,19 @@ import { useApp } from '@/context/AppContext';
 export const RoiCalculatorSection: React.FC = () => {
   const { formatPrice } = useApp();
   const [dailyHours, setDailyHours] = useState(6);
-  const [hourlyRateVND, setHourlyRateVND] = useState(250000); // 250,000 VND/h (~$10/h)
+  const [hourlyRateUSD, setHourlyRateUSD] = useState(10); // $10/h
 
   // Productivity math
   // Developer saves ~35% coding time on boilerplate, refactoring, debug & tests
   const workingDaysPerMonth = 22;
   const hoursSavedPerMonth = Math.round(dailyHours * workingDaysPerMonth * 0.35);
-  const monthlyValueVND = hoursSavedPerMonth * hourlyRateVND;
-  const proCostVND = 249000;
-  const netProfitVND = monthlyValueVND - proCostVND;
-  const roiMultiplier = Math.round(monthlyValueVND / proCostVND);
+  const monthlyValueUSD = hoursSavedPerMonth * hourlyRateUSD;
+  const proCostUSD = 7.47;
+  const netProfitUSD = monthlyValueUSD - proCostUSD;
+  const roiMultiplier = Math.round(monthlyValueUSD / proCostUSD);
+
+  const fmtUsd = (n: number) =>
+    '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <section className="py-20 max-w-[1240px] mx-auto px-4 sm:px-6">
@@ -65,22 +68,22 @@ export const RoiCalculatorSection: React.FC = () => {
               <div className="flex justify-between items-center text-xs">
                 <span className="font-semibold text-text-secondary">Income / Hourly value:</span>
                 <span className="font-mono text-sm font-bold text-status-success">
-                  {hourlyRateVND.toLocaleString('vi-VN')} ₫/hr (~${(hourlyRateVND / 25000).toFixed(0)}/hr)
+                  ${hourlyRateUSD.toFixed(0)}/hr
                 </span>
               </div>
               <input
                 type="range"
-                min={100000}
-                max={800000}
-                step={25000}
-                value={hourlyRateVND}
-                onChange={(e) => setHourlyRateVND(Number(e.target.value))}
+                min={4}
+                max={32}
+                step={1}
+                value={hourlyRateUSD}
+                onChange={(e) => setHourlyRateUSD(Number(e.target.value))}
                 className="w-full accent-status-success h-2 bg-surface rounded-lg cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-text-muted font-mono">
-                <span>100K ₫ (~$4)</span>
-                <span>300K ₫ (~$12)</span>
-                <span>800K ₫ (~$32)</span>
+                <span>$4/hr</span>
+                <span>$12/hr</span>
+                <span>$32/hr</span>
               </div>
             </div>
           </div>
@@ -101,7 +104,7 @@ export const RoiCalculatorSection: React.FC = () => {
               <div className="flex justify-between items-center">
                 <span className="text-text-secondary">Economic value gained:</span>
                 <span className="font-bold text-status-success">
-                  +{monthlyValueVND.toLocaleString('vi-VN')} ₫
+                  +{fmtUsd(monthlyValueUSD)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -112,7 +115,7 @@ export const RoiCalculatorSection: React.FC = () => {
               <div className="flex justify-between items-center pt-2 border-t border-border-subtle">
                 <span className="text-text-primary font-bold">Net time profit:</span>
                 <span className="font-extrabold text-accent-cyan text-sm">
-                  +{netProfitVND.toLocaleString('vi-VN')} ₫
+                  +{fmtUsd(netProfitUSD)}
                 </span>
               </div>
             </div>

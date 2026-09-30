@@ -120,7 +120,7 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
 
   res.status(201).json({
     success: true,
-    message: 'Đăng ký tài khoản thành công! Tặng bạn 50.000 ₫ vào số dư ví.',
+    message: 'Đăng ký tài khoản thành công! Tặng bạn $2.00 vào số dư ví.',
     token,
     user: formatUserResponse(newUser),
   });
