@@ -54,10 +54,10 @@ export const MemberProfilePage: React.FC = () => {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
         <h1 className="text-xl sm:text-2xl font-extrabold text-text-primary">
-          Cài đặt Tài khoản &amp; Ví tiền
+          Account &amp; Wallet Settings
         </h1>
         <p className="text-xs sm:text-sm text-text-secondary mt-1">
-          Quản lý hồ sơ cá nhân, số dư ví nạp tiền tự động và bảo mật 2 lớp.
+          Manage your profile, auto top-up wallet balance, and two-factor security.
         </p>
       </div>
 
@@ -69,11 +69,11 @@ export const MemberProfilePage: React.FC = () => {
               <div className="w-8 h-8 rounded-lg bg-status-success/15 text-status-success flex items-center justify-center">
                 <Wallet className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-text-primary">Số dư ví trả trước</h3>
+              <h3 className="text-sm font-bold text-text-primary">Prepaid wallet balance</h3>
             </div>
 
             <div className="p-4 rounded-xl bg-canvas border border-border-subtle mb-4">
-              <span className="text-[10px] text-text-muted block uppercase">Số dư hiện tại</span>
+              <span className="text-[10px] text-text-muted block uppercase">Current balance</span>
               <div className="font-mono text-2xl font-extrabold text-status-success mt-1">
                 {formatPrice(user?.balanceVND || 0, user?.balanceUSD || 0)}
               </div>
@@ -82,19 +82,19 @@ export const MemberProfilePage: React.FC = () => {
             {topupSuccess && (
               <div className="mb-4 p-3 rounded-xl bg-status-success/15 border border-status-success/30 text-status-success text-xs font-semibold flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Nạp tiền thành công vào ví!</span>
+                <span>Wallet top-up successful!</span>
               </div>
             )}
 
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-text-secondary block">Nạp nhanh qua VietQR:</span>
+              <span className="text-xs font-semibold text-text-secondary block">Quick top-up via VietQR:</span>
               <div className="grid grid-cols-2 gap-2">
                 {[4, 8, 20, 50].map((amt) => (
                   <button
                     key={amt}
                     type="button"
                     onClick={() => handleTopup(amt)}
-                    className="p-2.5 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle hover:border-primary-blue text-xs font-mono text-center transition-all"
+                    className="p-2.5 rounded-xl bg-canvas hover:bg-surface-subtle border border-border-subtle hover:border-primary-blue text-xs font-mono text-center transition-all"
                   >
                     +${amt.toFixed(2)}
                   </button>
@@ -107,10 +107,10 @@ export const MemberProfilePage: React.FC = () => {
           <div className="bg-surface border border-border-subtle rounded-2xl p-5 shadow-lg font-mono text-xs">
             <div className="flex items-center gap-2 mb-2">
               <Key className="w-4 h-4 text-accent-cyan" />
-              <h3 className="text-xs font-bold text-text-primary uppercase font-sans">API Key Tự Động Hóa</h3>
+              <h3 className="text-xs font-bold text-text-primary uppercase font-sans">Automation API Key</h3>
             </div>
             <p className="text-[11px] text-text-muted font-sans mb-3">
-              Dùng để tự động gia hạn hoặc kích hoạt tài khoản qua CLI / CI-CD pipeline.
+              Used for automatic renewal or account activation via CLI / CI-CD pipelines.
             </p>
             <div className="p-2.5 rounded-lg bg-canvas border border-border-subtle flex items-center justify-between">
               <span className="text-text-muted truncate mr-2">aipro_live_•••••••009</span>
@@ -131,13 +131,13 @@ export const MemberProfilePage: React.FC = () => {
           <div className="bg-surface border border-border-subtle rounded-2xl p-6 shadow-lg">
             <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
               <User className="w-4 h-4 text-primary-blue" />
-              <span>Hồ sơ cá nhân</span>
+              <span>Personal profile</span>
             </h3>
 
             {isSaved && (
               <div className="mb-4 p-3 rounded-xl bg-status-success/15 border border-status-success/30 text-status-success text-xs font-semibold flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Đã lưu cập nhật thông tin thành công!</span>
+                <span>Profile updated successfully!</span>
               </div>
             )}
 
@@ -145,7 +145,7 @@ export const MemberProfilePage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary uppercase mb-1.5">
-                    Họ và Tên
+                    Full name
                   </label>
                   <input
                     type="text"
@@ -157,7 +157,7 @@ export const MemberProfilePage: React.FC = () => {
 
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary uppercase mb-1.5">
-                    Số điện thoại (Nhận OTP)
+                    Phone number (OTP)
                   </label>
                   <input
                     type="text"
@@ -171,7 +171,7 @@ export const MemberProfilePage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-text-secondary uppercase mb-1.5">
-                  Email đăng ký (Cố định)
+                  Registration email (locked)
                 </label>
                 <input
                   type="email"
@@ -186,7 +186,7 @@ export const MemberProfilePage: React.FC = () => {
                   type="submit"
                   className="px-5 py-2.5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold transition-all shadow-md shadow-primary-blue/20"
                 >
-                  Lưu thay đổi hồ sơ
+                  Save profile changes
                 </button>
               </div>
             </form>
@@ -196,14 +196,14 @@ export const MemberProfilePage: React.FC = () => {
           <div className="bg-surface border border-border-subtle rounded-2xl p-6 shadow-lg">
             <h3 className="text-base font-bold text-text-primary mb-4 flex items-center gap-2">
               <Shield className="w-4 h-4 text-accent-cyan" />
-              <span>Bảo mật &amp; Xác thực 2 lớp</span>
+              <span>Security &amp; Two-Factor Authentication</span>
             </h3>
 
             <div className="divide-y divide-border-subtle">
               <div className="py-3.5 flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-text-primary">Xác thực 2 yếu tố (2FA OTP)</h4>
-                  <p className="text-[11px] text-text-secondary">Yêu cầu OTP khi lấy mật khẩu tài khoản trong Vault.</p>
+                  <h4 className="text-xs font-bold text-text-primary">Two-factor authentication (2FA OTP)</h4>
+                  <p className="text-[11px] text-text-secondary">Require an OTP when retrieving account passwords from the Vault.</p>
                 </div>
                 <button
                   type="button"
@@ -222,15 +222,15 @@ export const MemberProfilePage: React.FC = () => {
 
               <div className="py-3.5 flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-text-primary">Đổi mật khẩu tài khoản</h4>
-                  <p className="text-[11px] text-text-secondary">Cập nhật mật khẩu định kỳ để bảo vệ quyền lợi.</p>
+                  <h4 className="text-xs font-bold text-text-primary">Change account password</h4>
+                  <p className="text-[11px] text-text-secondary">Update your password regularly to protect your benefits.</p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => alert('Liên kết đổi mật khẩu đã được gửi về email của bạn.')}
-                  className="px-3 py-1.5 rounded-lg border border-border-subtle text-xs font-semibold hover:bg-canvas-subtle"
+                  onClick={() => alert('A password change link has been sent to your email.')}
+                  className="px-3 py-1.5 rounded-lg border border-border-subtle text-xs font-semibold hover:bg-surface-subtle"
                 >
-                  Đổi mật khẩu
+                  Change password
                 </button>
               </div>
             </div>

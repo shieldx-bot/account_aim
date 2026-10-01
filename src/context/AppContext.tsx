@@ -5,7 +5,6 @@ import { trackEvent } from '@/utils/telemetry';
 
 export interface FeatureFlags {
   isVietQREnabled: boolean;
-  isStripeEnabled: boolean;
   isCryptoEnabled: boolean;
   isPayPalEnabled: boolean;
   announcementBanner: string | null;
@@ -30,7 +29,7 @@ interface AppContextType {
 
 const DEFAULT_DURATION: DurationOption = {
   months: 1,
-  label: '1 Tháng',
+  label: '1 Month',
   discountPercent: 0,
   monthlyEquivalentVND: 249000,
   monthlyEquivalentUSD: 9.99,
@@ -59,7 +58,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [currency, setCurrencyState] = useState<Currency>(() => {
     // Single-currency app: always USD. Any legacy persisted value is ignored.
     if (typeof window !== 'undefined') {
-      localStorage.setItem('aipro_currency', 'USD');
+      localStorage.setItem('agentlab_currency', 'USD');
     }
     return 'USD';
   });
@@ -70,7 +69,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [featureFlags, setFeatureFlags] = useState<FeatureFlags>({
     isVietQREnabled: true,
-    isStripeEnabled: true,
     isCryptoEnabled: true,
     isPayPalEnabled: true,
     announcementBanner: null,
@@ -79,7 +77,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [activeConfig, setActiveConfig] = useState<ConfigurationState | null>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = sessionStorage.getItem('aipro_active_config');
+        const saved = sessionStorage.getItem('agentlab_active_config');
         if (saved) return JSON.parse(saved);
       } catch {
         // Ignore corrupted session config
@@ -99,14 +97,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setProductsError(null);
       const data = await productsApi.getAll();
       if (!Array.isArray(data)) {
-        throw new Error('Dữ liệu trả về không hợp lệ.');
+        throw new Error('Invalid data returned from the server.');
       }
       setProducts(data);
     } catch (err) {
       console.error('[AppContext] Failed to load products from PostgreSQL:', err);
       setProducts([]);
       setProductsError(
-        err instanceof Error ? err.message : 'Không thể tải danh mục sản phẩm từ máy chủ.'
+        err instanceof Error ? err.message : 'Could not load the product catalog from the server.'
       );
     } finally {
       setIsLoadingProducts(false);
@@ -134,7 +132,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const setCurrency = (c: Currency) => {
     setCurrencyState(c);
-    localStorage.setItem('aipro_currency', c);
+    localStorage.setItem('agentlab_currency', c);
     trackEvent('currency_toggled', { currency: c });
   };
 
@@ -145,22 +143,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateConfig = (patch: Partial<ConfigurationState>) => {
     setActiveConfig((prev) => {
-      if (!prev) return prev;
-      const next = { ...prev, ...patch };
-      sessionStorage.setItem('aipro_active_config', JSON.stringify(next));
+      // Quick-buy entry points (e.g. "Buy Now" on the landing page) land here
+      // with no prior config — seed one from the product in the patch instead
+      // of silently no-op'ing (which made CheckoutPage bounce back home).
+      const base = prev ?? (patch.product ? buildConfigForProduct(patch.product) : null);
+      if (!base) return prev;
+      const next = { ...base, ...patch };
+      sessionStorage.setItem('agentlab_active_config', JSON.stringify(next));
       return next;
     });
   };
 
   const initConfigForProduct = (product: ProductPlan) => {
     const next = buildConfigForProduct(product);
-    sessionStorage.setItem('aipro_active_config', JSON.stringify(next));
+    sessionStorage.setItem('agentlab_active_config', JSON.stringify(next));
     setActiveConfig(next);
   };
 
   const clearConfig = () => {
     setActiveConfig(null);
-    sessionStorage.removeItem('aipro_active_config');
+    sessionStorage.removeItem('agentlab_active_config');
   };
 
   return (

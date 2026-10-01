@@ -36,3 +36,9 @@ export class NotFoundError extends AppError {
     super(message, 404);
   }
 }
+
+export class ServiceUnavailableError extends AppError {
+  constructor(message: string = 'Service Unavailable') {
+    super(message, 503);
+  }
+}

@@ -3,35 +3,35 @@ import { Star, CheckCircle2, Quote, Sparkles } from 'lucide-react';
 
 const TESTIMONIALS = [
   {
-    name: 'Trần Đức Minh',
+    name: 'Tran Duc Minh',
     role: 'Tech Lead @ Fintech Solution',
     company: 'Fintech HN',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-    product: 'Cursor Pro AI IDE (1 Năm)',
+    product: 'Cursor Pro AI IDE (1 Year)',
     content:
-      'Cả team 15 lập trình viên của mình đều đang dùng Cursor Pro qua AIPro. Tiết kiệm hơn 50% chi phí so với tự cà thẻ cá nhân, gán trực tiếp vào email công ty nên không lo leak code hay bị ban session.',
+      'My whole team of 15 developers uses Cursor Pro through AgentLab. It cuts costs by over 50% compared to putting charges on personal cards, and since it\'s assigned directly to our company email, there\'s no risk of code leaks or banned sessions.',
     rating: 5,
     verified: true,
   },
   {
-    name: 'Nguyễn Hoàng Long',
+    name: 'Nguyen Hoang Long',
     role: 'Senior Full-stack Developer',
     company: 'Remote US Team',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
     product: 'Claude 3.7 Sonnet Pro',
     content:
-      'Ấn tượng nhất là tốc độ bàn giao: vừa quét VietQR xong là thông tin account đã hiện sẵn trong Vault. Từng bị mất Pro 1 lần lúc nửa đêm, bấm Bot RMA tự động cấp acc mới sau 15 giây mà không cần gọi support.',
+      'The most impressive thing is the delivery speed: the moment I finished scanning VietQR, my account details were already sitting in the Vault. I once lost Pro access at midnight — I clicked the automated RMA bot and a new account was issued 15 seconds later, no support call needed.',
     rating: 5,
     verified: true,
   },
   {
-    name: 'Lê Thảo My',
+    name: 'Le Thao My',
     role: 'AI Engineer & Researcher',
     company: 'AI Lab Saigon',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
     product: 'ChatGPT Plus & o3-mini',
     content:
-      'Claude Sonnet và OpenAI o3-mini giúp mình đẩy nhanh tốc độ nghiên cứu thuật toán gấp 3 lần. Dịch vụ ở đây cực kỳ chuyên nghiệp và uy tín, support kỹ thuật am hiểu về tool dev.',
+      'Claude Sonnet and OpenAI o3-mini helped me speed up my algorithm research threefold. The service here is extremely professional and trustworthy, with technical support that actually understands developer tools.',
     rating: 5,
     verified: true,
   },
@@ -49,7 +49,7 @@ export const TestimonialsSection: React.FC = () => {
           12,400+ Engineers & Tech Teams Trust
         </h2>
         <p className="mt-3 text-sm sm:text-base text-text-secondary">
-          Điểm đánh giá trung bình 4.9/5 trên toàn bộ hệ thống đơn hàng đã hoàn tất.
+          Average rating of 4.9/5 across all completed orders.
         </p>
       </div>
 
@@ -81,7 +81,7 @@ export const TestimonialsSection: React.FC = () => {
                 className="w-10 h-10 rounded-full object-cover border border-primary-blue/40"
                 onError={(e) => {
                   const el = e.currentTarget;
-                  el.src = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(el.alt)}&backgroundColor=0066FF,00F0FF&fontFamily=Arial,Helvetica`;
+                  el.src = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(el.alt)}&backgroundColor=635BFF,00D4FF&fontFamily=Arial,Helvetica`;
                 }}
               />
               <div className="overflow-hidden">
@@ -92,7 +92,7 @@ export const TestimonialsSection: React.FC = () => {
                   )}
                 </div>
                 <span className="text-[11px] text-text-muted block truncate">{t.role}</span>
-                <span>Đã mua: {t.product}</span>
+                <span className="text-[11px] text-text-muted block truncate">Purchased: {t.product}</span>
               </div>
             </div>
           </div>

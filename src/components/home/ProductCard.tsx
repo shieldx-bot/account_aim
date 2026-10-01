@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ProductPlan } from '@/types';
 import { useApp } from '@/context/AppContext';
@@ -99,7 +100,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
             />
             <div>
               <div className="flex items-center gap-1.5">
-                <h4 className="font-bold text-sm text-text-primary group-hover:text-white transition-colors">
+                <h4 className="font-bold text-sm text-text-primary group-hover:text-primary-blue transition-colors">
                   {product.name}
                 </h4>
                 {product.badge && (
@@ -144,7 +145,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
             <button
               type="button"
               onClick={handleOpenQuickView}
-              className="p-2 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-canvas hover:bg-surface-subtle border border-border-subtle text-text-muted hover:text-text-primary transition-colors cursor-pointer"
               title="Quick view specs"
             >
               <Eye className="w-4 h-4" />
@@ -152,7 +153,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
             <button
               type="button"
               onClick={handleAddToCart}
-              className="p-2 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle text-text-secondary hover:text-accent-cyan transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-canvas hover:bg-surface-subtle border border-border-subtle text-text-secondary hover:text-accent-cyan transition-colors cursor-pointer"
               title="Add to cart"
             >
               <ShoppingBag className="w-4 h-4" />
@@ -191,7 +192,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
         <div>
           <div className="flex items-start justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 p-2 rounded-xl bg-canvas border border-border-subtle flex items-center justify-center group-hover:border-border-focus group-hover:shadow-[0_0_12px_rgba(0,102,255,0.2)] transition-all shrink-0">
+              <div className="w-12 h-12 p-2 rounded-xl bg-canvas border border-border-subtle flex items-center justify-center group-hover:border-border-focus group-hover:shadow-[0_0_12px_rgba(99,91,255,0.2)] transition-all shrink-0">
                 <img
                   src={product.brandLogo}
                   alt={product.name}
@@ -202,7 +203,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
                 />
               </div>
               <div>
-                <h3 className="font-bold text-lg text-text-primary group-hover:text-white transition-colors">
+                <h3 className="font-bold text-lg text-text-primary group-hover:text-primary-blue transition-colors">
                   {product.name}
                 </h3>
                 <p className="text-xs text-text-muted mt-0.5 line-clamp-1">{product.platformSubtext}</p>
@@ -329,10 +330,13 @@ const QuickViewModal: React.FC<{ product: ProductPlan; onClose: () => void }> = 
   const { formatPrice } = useApp();
   const navigate = useNavigate();
 
-  return (
+  // Portal to <body>: product cards carry GSAP reveal transforms + will-change-transform,
+  // which become the containing block for position:fixed descendants — without the
+  // portal the modal would be clipped to the card bounds instead of the viewport.
+  return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+      className="fixed inset-0 z-[70] bg-[#0A2540]/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -387,8 +391,8 @@ const QuickViewModal: React.FC<{ product: ProductPlan; onClose: () => void }> = 
               <span className="font-bold text-text-primary">{product.specs?.contextWindow || 'Standard'}</span>
             </div>
             <div className="p-2.5 rounded-lg bg-canvas border border-border-subtle col-span-2">
-              <span className="text-text-muted text-[10px] block">Mô hình AI:</span>
-              <span className="font-bold text-text-primary">{product.specs?.models || 'Toàn bộ'}</span>
+              <span className="text-text-muted text-[10px] block">AI models:</span>
+              <span className="font-bold text-text-primary">{product.specs?.models || 'All models'}</span>
             </div>
           </div>
         </div>
@@ -396,7 +400,7 @@ const QuickViewModal: React.FC<{ product: ProductPlan; onClose: () => void }> = 
         {/* Features Checklist */}
         <div className="space-y-2 text-xs">
           <span className="font-semibold text-text-muted uppercase text-[10px] tracking-wider block">
-            Đặc quyền gói:
+            Plan perks:
           </span>
           <ul className="space-y-1.5 text-text-secondary">
             {product.quotaFeatures.map((f, i) => (
@@ -415,13 +419,14 @@ const QuickViewModal: React.FC<{ product: ProductPlan; onClose: () => void }> = 
               onClose();
               navigate(`/product/${product.slug}`);
             }}
-            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+            className="flex-1 py-3 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-button transition-colors"
           >
-            <span>Đến trang cấu hình gói</span>
+            <span>Configure this plan</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

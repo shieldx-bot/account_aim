@@ -8,8 +8,8 @@
  * ============================================================
  */
 
-const VISITOR_ID_KEY = 'aipro_visitor_id';
-const PENDING_REF_KEY = 'aipro_pending_referral';
+const VISITOR_ID_KEY = 'agentlab_visitor_id';
+const PENDING_REF_KEY = 'agentlab_pending_referral';
 const ATTRIBUTION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 interface PendingReferral {

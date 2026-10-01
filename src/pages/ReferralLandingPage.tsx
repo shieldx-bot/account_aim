@@ -74,28 +74,28 @@ export const ReferralLandingPage: React.FC = () => {
         {status === 'validating' ? (
           <>
             <Loader2 className="w-10 h-10 text-accent-cyan mx-auto mb-4 animate-spin" />
-            <h1 className="text-xl font-bold text-text-primary mb-2">Đang xác thực lời mời…</h1>
+            <h1 className="text-xl font-bold text-text-primary mb-2">Validating invitation…</h1>
             <p className="text-sm text-text-secondary">
-              Chúng tôi đang kiểm tra mã mời <span className="font-mono text-accent-cyan">{code}</span> và
-              chuẩn bị ưu đãi dành riêng cho bạn.
+              We are verifying invite code <span className="font-mono text-accent-cyan">{code}</span> and
+              preparing your exclusive offer.
             </p>
           </>
         ) : (
           <>
             <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center">
-              <UserX className="w-6 h-6 text-red-400" />
+              <UserX className="w-6 h-6 text-status-error" />
             </div>
-            <h1 className="text-xl font-bold text-text-primary mb-2">Link mời không hợp lệ</h1>
+            <h1 className="text-xl font-bold text-text-primary mb-2">Invalid invite link</h1>
             <p className="text-sm text-text-secondary mb-6">
-              Mã <span className="font-mono">{code}</span> không tồn tại hoặc đã hết hạn. Hãy yêu cầu bạn của bạn
-              gửi lại link mới, hoặc tiếp tục mua hàng với mức giá tiêu chuẩn.
+              Code <span className="font-mono">{code}</span> does not exist or has expired. Ask your friend
+              to send a new link, or continue shopping at the standard price.
             </p>
             <button
               onClick={() => navigate('/products')}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan text-white text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-sm font-bold hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <Sparkles className="w-4 h-4" />
-              Khám phá gói tài khoản AI
+              Explore AI account plans
               <ArrowRight className="w-4 h-4" />
             </button>
           </>

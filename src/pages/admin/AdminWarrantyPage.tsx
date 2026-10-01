@@ -27,7 +27,7 @@ interface WarrantyTicketRow {
 
 const formatDateTime = (iso: string) => {
   const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso : d.toLocaleString('vi-VN');
+  return isNaN(d.getTime()) ? iso : d.toLocaleString('en-US');
 };
 
 export const AdminWarrantyPage: React.FC = () => {
@@ -45,7 +45,7 @@ export const AdminWarrantyPage: React.FC = () => {
       const data = await warrantyApi.getTickets(token);
       setTickets(data);
     } catch (err: any) {
-      setError(err.message || 'Không thể tải phiếu khiếu nại từ database.');
+      setError(err.message || 'Unable to load warranty tickets from the database.');
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export const AdminWarrantyPage: React.FC = () => {
     fetchTickets();
   }, [fetchTickets]);
 
-  // PATCH /api/admin/warranty/:id/resolve → UPDATE PostgreSQL (trích buffer pool đổi mới)
+  // PATCH /api/admin/warranty/:id/resolve → UPDATE PostgreSQL (pull replacement from buffer pool)
   const handleApproveOverride = async (ticketId: string) => {
     if (!token) return;
     setBusyId(ticketId);
@@ -63,7 +63,7 @@ export const AdminWarrantyPage: React.FC = () => {
       await warrantyApi.resolveTicket(token, ticketId);
       setTickets((prev) => prev.map((t) => (t.id === ticketId ? { ...t, status: 'resolved' } : t)));
     } catch (err: any) {
-      alert(err.message || 'Không thể duyệt phiếu. Kiểm tra buffer pool còn tài khoản khả dụng không.');
+      alert(err.message || 'Unable to approve the ticket. Check whether the buffer pool still has available accounts.');
     } finally {
       setBusyId(null);
     }
@@ -88,7 +88,7 @@ export const AdminWarrantyPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-extrabold text-text-primary mt-1 flex items-center gap-2.5">
             <ShieldAlert className="w-6 h-6 text-status-warning" />
-            Trung Tâm Xử Lý Bảo Hành &amp; Giám Sát Khiếu Nại SLA
+            Warranty Handling Center &amp; SLA Escalation Monitoring
           </h1>
         </div>
 
@@ -96,7 +96,7 @@ export const AdminWarrantyPage: React.FC = () => {
           <button
             onClick={fetchTickets}
             className="p-2 rounded-lg bg-surface border border-border-subtle text-text-muted hover:text-text-primary"
-            title="Tải lại từ Database"
+            title="Reload from database"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -104,13 +104,13 @@ export const AdminWarrantyPage: React.FC = () => {
             to="/admin/orders"
             className="px-3 py-1.5 rounded-lg bg-surface border border-border-subtle text-xs font-medium text-text-secondary hover:text-text-primary"
           >
-            Đơn Hàng
+            Orders
           </Link>
           <Link
             to="/admin/inventory"
             className="px-3 py-1.5 rounded-lg bg-surface border border-border-subtle text-xs font-medium text-text-secondary hover:text-text-primary"
           >
-            Kho Tài Khoản
+            Account Inventory
           </Link>
         </div>
       </div>
@@ -118,7 +118,7 @@ export const AdminWarrantyPage: React.FC = () => {
       {/* Error banner */}
       {error && (
         <div className="p-4 rounded-xl bg-status-error/10 border border-status-error/30 text-status-error text-xs font-semibold my-6">
-          ⚠️ {error} — kiểm tra kết nối backend PostgreSQL.
+          ⚠️ {error} — check the PostgreSQL backend connection.
         </div>
       )}
 
@@ -129,10 +129,10 @@ export const AdminWarrantyPage: React.FC = () => {
             <Clock className="w-5 h-5 text-status-warning shrink-0" />
             <div>
               <h4 className="text-xs font-bold text-text-primary">
-                Có {urgentCount} khiếu nại sắp chạm mốc cam kết SLA (&lt; 10 phút)
+                {urgentCount} complaints are about to breach the SLA commitment (&lt; 10 minutes)
               </h4>
               <p className="text-[11px] text-text-secondary">
-                Đơn #{nearestUrgent?.orderId?.slice(0, 8).toUpperCase()} đang chờ nhân viên duyệt cấp đặc cách.
+                Order #{nearestUrgent?.orderId?.slice(0, 8).toUpperCase()} is awaiting agent approval for an expedited replacement.
               </p>
             </div>
           </div>
@@ -144,11 +144,11 @@ export const AdminWarrantyPage: React.FC = () => {
         {loading ? (
           <div className="p-10 rounded-2xl bg-surface border border-border-subtle text-center text-text-muted text-xs">
             <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-            Đang tải phiếu khiếu nại từ database...
+            Loading warranty tickets from the database...
           </div>
         ) : tickets.length === 0 ? (
           <div className="p-10 rounded-2xl bg-surface border border-border-subtle text-center text-text-muted text-xs">
-            🎉 Không có khiếu nại nào đang mở. Hệ thống bảo hành hoạt động bình thường.
+            🎉 No open complaints. The warranty system is operating normally.
           </div>
         ) : (
           tickets.map((t) => (
@@ -161,33 +161,33 @@ export const AdminWarrantyPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-subtle/50 mb-3 text-xs">
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="font-mono font-bold text-text-primary text-sm">{t.id.slice(0, 8).toUpperCase()}</span>
-                  <span className="font-mono text-accent-cyan">Đơn: {t.orderId.slice(0, 8).toUpperCase()}</span>
+                  <span className="font-mono text-accent-cyan">Order: {t.orderId.slice(0, 8).toUpperCase()}</span>
                   <span className="text-text-muted">• {t.tool}</span>
                   <span className="text-text-muted">• {formatDateTime(t.createdAt)}</span>
                 </div>
                 <div>
                   {t.status === 'agent_pending' && (
-                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-status-warning text-black flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> Cần xử lý gấp ({t.slaLeftMinutes}m left)
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-status-warning text-white flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> Needs urgent handling ({t.slaLeftMinutes}m left)
                     </span>
                   )}
                   {t.status === 'resolved' && (
                     <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-status-success/15 text-status-success flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Đã duyệt đổi mới
+                      <CheckCircle2 className="w-3 h-3" /> Replacement approved
                     </span>
                   )}
                   {t.status === 'bot_handled' && (
                     <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-canvas text-text-muted flex items-center gap-1">
-                      Bot xử lý tự động
+                      Handled automatically by bot
                     </span>
                   )}
                 </div>
               </div>
 
               <div className="text-xs text-text-secondary mb-4">
-                <p><strong className="text-text-primary">Khách hàng:</strong> {t.customerEmail}</p>
-                <p className="mt-1"><strong className="text-text-primary">Mô tả sự cố:</strong> {t.reason}</p>
-                <p className="mt-1"><strong className="text-text-primary">Số lần đổi:</strong> {t.attempts}</p>
+                <p><strong className="text-text-primary">Customer:</strong> {t.customerEmail}</p>
+                <p className="mt-1"><strong className="text-text-primary">Issue description:</strong> {t.reason}</p>
+                <p className="mt-1"><strong className="text-text-primary">Replacements used:</strong> {t.attempts}</p>
               </div>
 
               {t.status === 'agent_pending' && (
@@ -199,14 +199,14 @@ export const AdminWarrantyPage: React.FC = () => {
                     className="px-4 py-2 rounded-xl bg-primary-blue hover:bg-primary-hover disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5"
                   >
                     {busyId === t.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                    <span>⚡ Duyệt Cấp 1 Tài Khoản Mới Từ Buffer Pool</span>
+                    <span>⚡ Approve 1 New Account from Buffer Pool</span>
                   </button>
                   <a
                     href={`mailto:${t.customerEmail}`}
                     className="px-4 py-2 rounded-xl bg-canvas hover:bg-elevated border border-border-subtle text-xs font-semibold text-text-primary flex items-center gap-1.5"
                   >
                     <MessageSquare className="w-3.5 h-3.5 text-[#229ED9]" />
-                    <span>Phản hồi qua Email</span>
+                    <span>Reply via Email</span>
                   </a>
                 </div>
               )}

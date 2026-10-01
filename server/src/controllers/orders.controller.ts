@@ -5,6 +5,9 @@ import { pool } from '../config/db.js';
 import { env } from '../config/env.js';
 import { catchAsync } from '../utils/catch-async.js';
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/app-error.js';
+import { computeOrderPrice, TIER_DISCOUNTS } from '../utils/pricing.js';
+import { decryptSecret, encryptSecret } from '../services/crypto.service.js';
+import { sendLookupOtpEmail, sendOrderConfirmationEmail } from '../services/email.service.js';
 import { processOrderReferral } from './referral.controller.js';
 
 /**
@@ -66,7 +69,7 @@ export const formatSubscriptionRow = (row: any) => ({
   brand: row.brand,
   provisioningType: row.provisioning_type,
   accountEmail: row.account_email,
-  accountPassword: row.account_password_encrypted, // Note: should be decrypted in real system
+  accountPassword: decryptSecret(row.account_password_encrypted),
   accessToken: row.access_token,
   startDate: row.start_date,
   expiresAt: row.expires_at,
@@ -81,57 +84,84 @@ export const formatSubscriptionRow = (row: any) => ({
  */
 const generateOrderId = () => {
   const num = Math.floor(10000 + Math.random() * 90000);
-  return `AIPRO-${num}`;
+  return `AGTLAB-${num}`;
 };
 
 /**
  * POST /api/orders
- * Create a new order (authenticated users only)
+ * Create a new order (authenticated users only).
+ *
+ * SECURITY: the order is repriced entirely server-side. Client-supplied price
+ * fields are ignored — the amount charged comes from the product catalog,
+ * the duration discount table, the user's tier and a server-validated coupon.
+ * The order starts as 'pending'; money moves only after the payment gateway
+ * webhook confirms (markOrderPaid).
  */
 export const createOrder = catchAsync(async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
   if (!userId) {
-    throw new UnauthorizedError('Bạn cần đăng nhập để đặt hàng.');
+    throw new UnauthorizedError('You must be logged in to place an order.');
   }
 
   const {
     productId,
-    productName,
-    productSlug,
     planDurationMonths,
     provisioningType,
     targetEmail,
     guestEmail,
     quantity,
-    unitPriceVND,
-    unitPriceUSD,
-    discountVND,
-    discountUSD,
-    totalVND,
-    totalUSD,
-    currency,
-    paymentMethod,
-    paymentGatewayRef,
     couponCode,
     referralCode,
   } = req.body;
 
-  // Validate required fields
-  if (!productId || !productName || !productSlug || !guestEmail) {
-    throw new BadRequestError('Thiếu thông tin đơn hàng bắt buộc.');
+  // Validate required fields — product identity, not pricing
+  if (!productId || !guestEmail) {
+    throw new BadRequestError('Missing required order information.');
   }
 
-  if (!totalVND || totalVND <= 0) {
-    throw new BadRequestError('Số tiền thanh toán không hợp lệ.');
-  }
+  const months = [1, 3, 6, 12].includes(Number(planDurationMonths)) ? Number(planDurationMonths) : 1;
+  const qty = Math.min(Math.max(Number(quantity) || 1, 1), 10);
 
-  // Verify product exists and is active
+  // Verify product exists and is active — and take the price from HERE
   const productCheck = await pool.query(
-    'SELECT id, name, current_price_vnd, current_price_usd FROM products WHERE id = $1 AND is_active = true',
+    'SELECT id, name, slug, current_price_vnd, current_price_usd FROM products WHERE id = $1 AND is_active = true',
     [productId]
   );
   if (productCheck.rows.length === 0) {
-    throw new NotFoundError('Sản phẩm không tồn tại hoặc đã ngừng bán.');
+    throw new NotFoundError('Product not found or no longer sold.');
+  }
+  const product = productCheck.rows[0];
+
+  // Tier discount comes from the DB user record, never from the request
+  const userRes = await pool.query('SELECT tier FROM users WHERE id = $1', [userId]);
+  const tierDiscount = TIER_DISCOUNTS[userRes.rows[0]?.tier] ?? 0;
+
+  // Coupon discount is validated against the coupons table
+  let couponDiscount = 0;
+  let appliedCoupon: string | null = null;
+  if (couponCode) {
+    const couponRes = await pool.query(
+      `SELECT code, discount_percent FROM coupons
+       WHERE UPPER(code) = $1 AND active = true AND (expires_at IS NULL OR expires_at > NOW())`,
+      [String(couponCode).trim().toUpperCase()]
+    );
+    if (couponRes.rows.length === 0) {
+      throw new BadRequestError('Discount code is invalid or has expired.');
+    }
+    couponDiscount = Number(couponRes.rows[0].discount_percent);
+    appliedCoupon = couponRes.rows[0].code;
+  }
+
+  const price = computeOrderPrice(
+    Number(product.current_price_vnd),
+    Number(product.current_price_usd),
+    months,
+    qty,
+    tierDiscount + couponDiscount
+  );
+
+  if (price.totalVND <= 0) {
+    throw new BadRequestError('Payment amount is invalid.');
   }
 
   // Ensure orderId is unique
@@ -145,94 +175,116 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
   }
 
   // Calculate warranty expiry date
-  const warrantyMonths = planDurationMonths <= 1 ? 1 : planDurationMonths;
+  const warrantyMonths = months <= 1 ? 1 : months;
   const warrantyDate = new Date();
   warrantyDate.setMonth(warrantyDate.getMonth() + warrantyMonths);
 
-  // Insert order into DB
+  // Insert order into DB — 'pending' until the payment webhook confirms
   const result = await pool.query(
     `INSERT INTO orders (
       id, user_id, guest_email, product_id, product_name, product_slug,
       plan_duration_months, provisioning_type, target_email, quantity,
       unit_price_vnd, unit_price_usd, discount_vnd, discount_usd,
-      total_vnd, total_usd, currency, payment_method, payment_gateway_ref,
+      total_vnd, total_usd, currency, payment_method,
       status, coupon_code, warranty_expire_date, referral_code
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
     RETURNING *`,
     [
       orderId,
       userId,
       guestEmail.trim().toLowerCase(),
       productId,
-      productName,
-      productSlug,
-      Number(planDurationMonths) || 1,
+      product.name,
+      product.slug,
+      months,
       provisioningType || 'pre_created',
       targetEmail || null,
-      Number(quantity) || 1,
-      Number(unitPriceVND) || 0,
-      Number(unitPriceUSD) || 0,
-      Number(discountVND) || 0,
-      Number(discountUSD) || 0,
-      Number(totalVND),
-      Number(totalUSD) || 0,
-      currency || 'VND',
-      paymentMethod || 'paypal',
-      paymentGatewayRef || null,
-      'paid', // PayPal confirms payment before we create order
-      couponCode || null,
+      qty,
+      price.unitPriceVND,
+      price.unitPriceUSD,
+      price.discountVND,
+      price.discountUSD,
+      price.totalVND,
+      price.totalUSD,
+      'USD',
+      'paypal',
+      'pending',
+      appliedCoupon,
       warrantyDate.toISOString().split('T')[0],
       String(referralCode || '').trim().toUpperCase() || null,
     ]
   );
 
-  const newOrder = result.rows[0];
+  res.status(201).json({
+    success: true,
+    message: 'Order created. Please complete the payment.',
+    data: {
+      ...formatOrderRow(result.rows[0]),
+      provisioned: false,
+    },
+  });
+});
 
-  // ── Referral attribution & reward (FAB validation happens server-side) ──
-  // Never blocks a paid order: failures are logged, admin can reconcile later.
-  let referralOutcome: { attributed: boolean; rewardGranted: boolean; reason?: string } | null = null;
-  if (newOrder.referral_code) {
+/**
+ * Mark a pending order as paid and fulfil it: referral attribution, inventory
+ * allocation, subscription creation and the confirmation email.
+ *
+ * Idempotent — safe to call from repeated capture retries. The WHERE clause on
+ * status='pending' acts as the concurrency guard: whichever caller flips the
+ * status first owns fulfilment; everyone else gets the already-paid order back.
+ */
+export const markOrderPaid = async (
+  orderId: string,
+  provider: string,
+  providerRef: string | null
+): Promise<{ fulfilled: boolean; order?: any }> => {
+  const paidRes = await pool.query(
+    `UPDATE orders SET status = 'paid', payment_method = $2, payment_gateway_ref = $3,
+       updated_at = CURRENT_TIMESTAMP
+     WHERE id = $1 AND status = 'pending'
+     RETURNING *`,
+    [orderId, provider, providerRef]
+  );
+
+  const order = paidRes.rows[0];
+  if (!order) {
+    // Already paid (or cancelled) — nothing left to do
+    return { fulfilled: false };
+  }
+
+  // ── Referral attribution & reward (only once, on real payment) ──
+  if (order.referral_code) {
     try {
-      referralOutcome = await processOrderReferral({
-        referralCode: newOrder.referral_code,
-        orderId: newOrder.id,
-        buyerUserId: userId,
-        buyerEmail: guestEmail.trim().toLowerCase(),
-        orderTotalVND: Number(totalVND),
+      await processOrderReferral({
+        referralCode: order.referral_code,
+        orderId: order.id,
+        buyerUserId: order.user_id,
+        buyerEmail: order.guest_email,
+        orderTotalVND: Number(order.total_vnd),
       });
     } catch (refErr) {
-      console.error('[Referral] Processing failed for order', newOrder.id, refErr);
+      console.error('[Referral] Processing failed for order', order.id, refErr);
     }
   }
 
-  // ── Auto-provisioning: allocate a real account from the warehouse (PostgreSQL) ──
-  let allocatedAccount: { email: string; password: string } | null = null;
+  // ── Auto-provisioning: allocate a real account from the warehouse ──
   try {
     const accRes = await pool.query(
       `SELECT * FROM inventory_accounts
-       WHERE product_id = $1 AND pool = 'active' AND status = 'available'
-       ORDER BY created_at ASC LIMIT 1 FOR UPDATE SKIP LOCKED`,
-      [productId]
+       WHERE (product_id = $1 OR LOWER(tool) = LOWER($2)) AND pool = 'active' AND status = 'available'
+       ORDER BY CASE WHEN product_id = $1 THEN 0 ELSE 1 END, created_at ASC
+       LIMIT 1 FOR UPDATE SKIP LOCKED`,
+      [order.product_id, order.product_name]
     );
-    let acc = accRes.rows[0] ?? null;
-    if (!acc) {
-      // Fallback: match by tool name against product name/slug
-      const byTool = await pool.query(
-        `SELECT * FROM inventory_accounts
-         WHERE LOWER(tool) = LOWER($1) AND pool = 'active' AND status = 'available'
-         ORDER BY created_at ASC LIMIT 1`,
-        [productCheck.rows[0].name]
-      );
-      acc = byTool.rows[0] ?? null;
-    }
+    const acc = accRes.rows[0] ?? null;
     if (acc) {
       await pool.query(
         `UPDATE inventory_accounts
          SET status = 'assigned', assigned_order_id = $1, updated_at = CURRENT_TIMESTAMP
          WHERE id = $2`,
-        [newOrder.id, acc.id]
+        [order.id, acc.id]
       );
-      allocatedAccount = { email: acc.email, password: acc.password };
+      const encPassword = encryptSecret(acc.password);
 
       // Create subscription record bound to the allocated account
       await pool.query(
@@ -243,37 +295,39 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CURRENT_DATE,$10,
                   GREATEST(0, ($10::date - CURRENT_DATE)), 'active')`,
         [
-          newOrder.id,
-          userId,
-          productId,
-          productName,
-          productSlug,
-          productSlug.split('-')[0] || 'aipro',
-          provisioningType || 'pre_created',
+          order.id,
+          order.user_id,
+          order.product_id,
+          order.product_name,
+          order.product_slug,
+          order.product_slug.split('-')[0] || 'aipro',
+          order.provisioning_type || 'pre_created',
           acc.email,
-          acc.password,
-          warrantyDate.toISOString().split('T')[0],
+          encPassword,
+          order.warranty_expire_date,
         ]
       );
+
+      await sendOrderConfirmationEmail(order.guest_email, {
+        orderId: order.id,
+        productName: order.product_name,
+        planDurationMonths: Number(order.plan_duration_months),
+        quantity: Number(order.quantity),
+        totalUSD: Number(order.total_usd),
+        accountEmail: acc.email,
+        accountPassword: acc.password,
+      });
+    } else {
+      // No stock — order is paid but unfulfilled; admin fulfils manually
+      console.warn(`[Provisioning] No available account for paid order ${order.id}`);
     }
   } catch (provErr) {
-    // Provisioning failure must not break the paid order — admin can fulfill manually
-    console.error('[Provisioning] Auto-allocation failed for order', newOrder.id, provErr);
+    // Provisioning failure must not fail the webhook — admin can fulfil manually
+    console.error('[Provisioning] Auto-allocation failed for order', order.id, provErr);
   }
 
-  res.status(201).json({
-    success: true,
-    message: allocatedAccount
-      ? 'Đơn hàng đã được tạo và tự động bàn giao tài khoản từ kho.'
-      : 'Đơn hàng đã được tạo! Hệ thống sẽ bàn giao tài khoản trong thời gian sớm nhất.',
-    data: {
-      ...formatOrderRow(newOrder),
-      provisioned: Boolean(allocatedAccount),
-      referral: referralOutcome,
-      referralRewardGranted: Boolean(referralOutcome?.rewardGranted),
-    },
-  });
-});
+  return { fulfilled: true, order };
+};
 
 /**
  * Strip credential material from a subscription payload. The unauthenticated
@@ -296,7 +350,7 @@ export const lookupOrderByEmailOrId = catchAsync(async (req: Request, res: Respo
   const orderId = String(req.query.orderId || '').trim().toUpperCase();
 
   if (!email && !orderId) {
-    throw new BadRequestError('Thiếu email hoặc mã đơn hàng để tra cứu.');
+    throw new BadRequestError('Email or order ID is required for lookup.');
   }
 
   const result = orderId
@@ -308,7 +362,7 @@ export const lookupOrderByEmailOrId = catchAsync(async (req: Request, res: Respo
       );
 
   if (result.rows.length === 0) {
-    throw new NotFoundError('Không tìm thấy đơn hàng khớp với thông tin tra cứu.');
+    throw new NotFoundError('No order matches the lookup information.');
   }
 
   const order = result.rows[0];
@@ -343,7 +397,7 @@ export const requestLookupOtp = catchAsync(async (req: Request, res: Response) =
   const orderId = String(req.body?.orderId || '').trim().toUpperCase();
 
   if (!email || !orderId) {
-    throw new BadRequestError('Thiếu email hoặc mã đơn hàng để gửi OTP.');
+    throw new BadRequestError('Email or order ID is required to send an OTP.');
   }
 
   // Order must exist AND the claimed email must own it
@@ -352,14 +406,14 @@ export const requestLookupOtp = catchAsync(async (req: Request, res: Response) =
     [orderId]
   );
   if (orderRes.rows.length === 0) {
-    throw new NotFoundError('Không tìm thấy đơn hàng.');
+    throw new NotFoundError('Order not found.');
   }
   const owner = orderRes.rows[0];
   const ownsEmail =
     String(owner.guest_email || '').toLowerCase() === email ||
     String(owner.target_email || '').toLowerCase() === email;
   if (!ownsEmail) {
-    throw new UnauthorizedError('Email không sở hữu đơn hàng này.');
+    throw new UnauthorizedError('This email does not own this order.');
   }
 
   // Throttle: refuse to re-issue while a live (unconsumed) OTP is < 60s old
@@ -372,7 +426,7 @@ export const requestLookupOtp = catchAsync(async (req: Request, res: Response) =
   if (recentRes.rows.length > 0) {
     const ageMs = Date.now() - new Date(recentRes.rows[0].created_at).getTime();
     if (ageMs < 60_000) {
-      throw new BadRequestError('OTP đã được gửi cách đây chưa lâu. Vui lòng chờ hoặc nhập mã.');
+      throw new BadRequestError('An OTP was sent recently. Please wait or enter the code you received.');
     }
   }
 
@@ -390,14 +444,21 @@ export const requestLookupOtp = catchAsync(async (req: Request, res: Response) =
     expiresAt: Date.now() + 5 * 60_000,
   });
 
+  // Production delivery channel: Resend transactional email (best-effort —
+  // the API response never depends on the mail provider being reachable).
+  const emailResult = await sendLookupOtpEmail(email, code, owner.id);
+
   const payload: Record<string, unknown> = {
     success: true,
-    message: 'Mã OTP đã được gửi (hiệu lực 5 phút).',
-    data: { orderId: owner.id, expiresInSec: 300 },
+    message: emailResult.delivered
+      ? 'Your OTP code has been sent to your email (valid for 5 minutes).'
+      : 'Could not send the OTP email. Please try again later or contact support.',
+    data: { orderId: owner.id, expiresInSec: 300, emailDelivered: emailResult.delivered },
   };
-  if (env.NODE_ENV !== 'production') {
-    // Dev-only delivery channel — replace with SendGrid/SES hook in production.
+  if (!env.isProd) {
+    // Dev-only delivery channel so QA can complete the flow without a mailbox.
     (payload as any).devCode = code;
+    (payload as any).message = 'OTP code generated (valid for 5 minutes).';
   }
   res.status(201).json(payload);
 });
@@ -414,7 +475,7 @@ export const verifyLookupOtp = catchAsync(async (req: Request, res: Response) =>
   const code = String(req.body?.code || '').trim();
 
   if (!email || !orderId || !/^\d{6}$/.test(code)) {
-    throw new BadRequestError('Mã OTP không hợp lệ (cần 6 chữ số).');
+    throw new BadRequestError('Invalid OTP code (6 digits required).');
   }
 
   const otpRes = await pool.query(
@@ -425,13 +486,13 @@ export const verifyLookupOtp = catchAsync(async (req: Request, res: Response) =>
     [orderId, email]
   );
   if (otpRes.rows.length === 0) {
-    throw new UnauthorizedError('OTP hết hạn hoặc chưa được gửi. Hãy yêu cầu mã mới.');
+    throw new UnauthorizedError('OTP has expired or was never sent. Please request a new code.');
   }
   const otp = otpRes.rows[0];
 
   if (Number(otp.attempts) >= 5) {
     await pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
-    throw new UnauthorizedError('Nhập sai quá 5 lần. OTP đã bị vô hiệu hóa.');
+    throw new UnauthorizedError('Too many incorrect attempts (more than 5). The OTP has been deactivated.');
   }
 
   const cached = otpCodeCache.get(`${orderId}:${email}`);
@@ -445,7 +506,7 @@ export const verifyLookupOtp = catchAsync(async (req: Request, res: Response) =>
 
   if (!ok) {
     await pool.query(`UPDATE lookup_otps SET attempts = attempts + 1 WHERE id = $1`, [otp.id]);
-    throw new UnauthorizedError('Mã OTP không đúng.');
+    throw new UnauthorizedError('Incorrect OTP code.');
   }
 
   await pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
@@ -453,7 +514,7 @@ export const verifyLookupOtp = catchAsync(async (req: Request, res: Response) =>
 
   const orderRes = await pool.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
   if (orderRes.rows.length === 0) {
-    throw new NotFoundError('Đơn hàng tương ứng không còn tồn tại.');
+    throw new NotFoundError('The corresponding order no longer exists.');
   }
   const subRes = await pool.query(
     `SELECT s.*, p.brand AS prod_brand FROM subscriptions s
@@ -464,7 +525,7 @@ export const verifyLookupOtp = catchAsync(async (req: Request, res: Response) =>
 
   res.status(200).json({
     success: true,
-    message: 'Xác minh OTP thành công.',
+    message: 'OTP verified successfully.',
     data: {
       order: formatOrderRow(orderRes.rows[0]),
       subscription: subRes.rows[0] ? formatSubscriptionRow(subRes.rows[0]) : null,
@@ -479,7 +540,7 @@ export const verifyLookupOtp = catchAsync(async (req: Request, res: Response) =>
 export const getMyOrders = catchAsync(async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
   if (!userId) {
-    throw new UnauthorizedError('Bạn cần đăng nhập.');
+    throw new UnauthorizedError('You must be logged in.')
   }
 
   const limit = Math.min(Number(req.query.limit) || 50, 100);
@@ -507,19 +568,19 @@ export const getOrderById = catchAsync(async (req: Request, res: Response) => {
   const { orderId } = req.params;
 
   if (!userId) {
-    throw new UnauthorizedError('Bạn cần đăng nhập.');
+    throw new UnauthorizedError('You must be logged in.')
   }
 
   const result = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
   if (result.rows.length === 0) {
-    throw new NotFoundError('Không tìm thấy đơn hàng.');
+    throw new NotFoundError('Order not found.');
   }
 
   const order = result.rows[0];
 
   // Only the order owner or admin can view
   if (order.user_id !== userId && userRole !== 'admin') {
-    throw new UnauthorizedError('Bạn không có quyền xem đơn hàng này.');
+    throw new UnauthorizedError('You are not allowed to view this order.');
   }
 
   res.status(200).json({
@@ -535,7 +596,7 @@ export const getOrderById = catchAsync(async (req: Request, res: Response) => {
 export const getMySubscriptions = catchAsync(async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
   if (!userId) {
-    throw new UnauthorizedError('Bạn cần đăng nhập.');
+    throw new UnauthorizedError('You must be logged in.')
   }
 
   const result = await pool.query(
@@ -556,13 +617,13 @@ export const getMySubscriptions = catchAsync(async (req: Request, res: Response)
  */
 export const updateSubscriptionAutoRenew = catchAsync(async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
-  if (!userId) throw new UnauthorizedError('Bạn cần đăng nhập.');
+  if (!userId) throw new UnauthorizedError('You must be logged in.')
 
   const { id } = req.params;
   const { autoRenew } = req.body;
 
   if (typeof autoRenew !== 'boolean') {
-    throw new BadRequestError('Giá trị autoRenew phải là true/false.');
+    throw new BadRequestError('The autoRenew value must be true/false.');
   }
 
   const result = await pool.query(
@@ -573,12 +634,12 @@ export const updateSubscriptionAutoRenew = catchAsync(async (req: Request, res: 
   );
 
   if (result.rows.length === 0) {
-    throw new NotFoundError('Không tìm thấy đăng ký hoặc bạn không có quyền chỉnh sửa.');
+    throw new NotFoundError('Subscription not found, or you are not allowed to modify it.');
   }
 
   res.status(200).json({
     success: true,
-    message: `Đã ${autoRenew ? 'bật' : 'tắt'} tự động gia hạn.`,
+    message: `Auto-renew has been ${autoRenew ? 'enabled' : 'disabled'}.`,
     data: formatSubscriptionRow(result.rows[0]),
   });
 });
@@ -656,7 +717,7 @@ export const updateOrderStatus = catchAsync(async (req: Request, res: Response) 
 
   const validStatuses = ['pending', 'paid', 'dispatched', 'cancelled', 'refunded'];
   if (!validStatuses.includes(status)) {
-    throw new BadRequestError(`Trạng thái không hợp lệ. Chỉ chấp nhận: ${validStatuses.join(', ')}`);
+    throw new BadRequestError(`Invalid status. Only the following are accepted: ${validStatuses.join(', ')}`);
   }
 
   const result = await pool.query(
@@ -666,12 +727,18 @@ export const updateOrderStatus = catchAsync(async (req: Request, res: Response) 
   );
 
   if (result.rows.length === 0) {
-    throw new NotFoundError('Không tìm thấy đơn hàng.');
+    throw new NotFoundError('Order not found.');
+  }
+
+  // Manual fulfilment path: admin marking a pending order paid triggers the
+  // same idempotent fulfilment as the PayPal capture endpoint.
+  if (status === 'paid') {
+    await markOrderPaid(String(orderId), 'admin', null);
   }
 
   res.status(200).json({
     success: true,
-    message: `Đã cập nhật trạng thái đơn hàng ${orderId} thành "${status}".`,
+    message: `Order ${orderId} status updated to "${status}".`,
     data: formatOrderRow(result.rows[0]),
   });
 });
@@ -740,7 +807,7 @@ export const updateUserStatus = catchAsync(async (req: Request, res: Response) =
   const { status } = req.body;
 
   if (!['active', 'banned'].includes(status)) {
-    throw new BadRequestError(`Trạng thái không hợp lệ. Chỉ chấp nhận: active, banned`);
+    throw new BadRequestError(`Invalid status. Only the following are accepted: active, banned`);
   }
 
   const result = await pool.query(
@@ -749,12 +816,12 @@ export const updateUserStatus = catchAsync(async (req: Request, res: Response) =
   );
 
   if (result.rows.length === 0) {
-    throw new NotFoundError('Không tìm thấy người dùng.');
+    throw new NotFoundError('User not found.');
   }
 
   res.status(200).json({
     success: true,
-    message: `Đã ${status === 'banned' ? 'khóa' : 'mở khóa'} tài khoản ${result.rows[0].email}.`,
+    message: `Account ${result.rows[0].email} has been ${status === 'banned' ? 'banned' : 'unbanned'}.`,
     data: result.rows[0],
   });
 });
@@ -768,7 +835,7 @@ export const updateUserRole = catchAsync(async (req: Request, res: Response) => 
   const { role } = req.body;
 
   if (!['member', 'admin'].includes(role)) {
-    throw new BadRequestError('Role không hợp lệ.');
+    throw new BadRequestError('Invalid role.');
   }
 
   const result = await pool.query(
@@ -777,12 +844,12 @@ export const updateUserRole = catchAsync(async (req: Request, res: Response) => 
   );
 
   if (result.rows.length === 0) {
-    throw new NotFoundError('Không tìm thấy người dùng.');
+    throw new NotFoundError('User not found.');
   }
 
   res.status(200).json({
     success: true,
-    message: `Đã cập nhật role thành "${role}" cho ${result.rows[0].email}.`,
+    message: `Role for ${result.rows[0].email} updated to "${role}".`,
   });
 });
 
@@ -801,7 +868,7 @@ export const addUserBalance = catchAsync(async (req: Request, res: Response) => 
   );
 
   if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
-    throw new BadRequestError('Số tiền nạp không hợp lệ.');
+    throw new BadRequestError('Top-up amount is invalid.');
   }
 
   const amountVndDerived = Math.round(amountUsd * 25000);
@@ -816,12 +883,12 @@ export const addUserBalance = catchAsync(async (req: Request, res: Response) => 
   );
 
   if (result.rows.length === 0) {
-    throw new NotFoundError('Không tìm thấy người dùng.');
+    throw new NotFoundError('User not found.');
   }
 
   res.status(200).json({
     success: true,
-    message: `Đã nạp $${amountUsd.toFixed(2)} USD vào ví người dùng.`,
+    message: `Credited $${amountUsd.toFixed(2)} USD to the user's wallet.`,
     data: {
       balanceVND: Number(result.rows[0].balance_vnd),
       balanceUSD: Number(result.rows[0].balance_usd),

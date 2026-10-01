@@ -31,52 +31,52 @@ export const AdminLayout: React.FC = () => {
   const navItems = [
     {
       to: '/admin/dashboard',
-      label: 'Tổng quan & Doanh thu',
+      label: 'Overview & Revenue',
       icon: LayoutDashboard,
     },
     {
       to: '/admin/products',
-      label: 'Quản lý sản phẩm',
+      label: 'Product management',
       icon: Package,
     },
     {
       to: '/admin/orders',
-      label: 'Đối soát giao dịch',
+      label: 'Transaction reconciliation',
       icon: Zap,
       alert: '2',
     },
     {
       to: '/admin/inventory',
-      label: 'Quản lý kho hàng',
+      label: 'Inventory management',
       icon: Boxes,
     },
     {
       to: '/admin/warranty',
-      label: 'Giám sát SLA & Bot',
+      label: 'SLA & Bot Monitoring',
       icon: ShieldAlert,
     },
     {
       to: '/admin/users',
-      label: 'Quản lý thành viên',
+      label: 'Member management',
       icon: Users,
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#060709] text-text-primary flex">
+    <div className="min-h-screen bg-surface text-text-primary flex">
       {/* Desktop Operator Sidebar */}
-      <aside className="hidden lg:flex w-64 flex-col bg-[#0d0f14] border-r border-border-subtle z-20">
+      <aside className="hidden lg:flex w-64 flex-col bg-white border-r border-border-subtle z-20">
         {/* Brand */}
-        <div className="h-16 px-6 flex items-center justify-between border-b border-border-subtle bg-[#08090C]">
+        <div className="h-16 px-6 flex items-center justify-between border-b border-border-subtle bg-white">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-8 h-8 rounded-lg bg-status-error/20 border border-status-error/40 flex items-center justify-center text-status-error">
               <Terminal className="w-4 h-4" />
             </div>
             <div className="flex flex-col">
-              <span className="font-mono text-xs font-black tracking-widest uppercase text-white">
+              <span className="font-mono text-xs font-black tracking-widest uppercase text-text-primary">
                 OPERATOR<span className="text-status-error">_OS</span>
               </span>
-              <span className="text-[9px] text-text-muted font-mono tracking-tight">AIPro Root Console</span>
+              <span className="text-[9px] text-text-muted font-mono tracking-tight">AgentLab Root Console</span>
             </div>
           </Link>
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-status-error/15 text-status-error text-[10px] font-mono font-bold">
@@ -111,8 +111,8 @@ export const AdminLayout: React.FC = () => {
                 className={({ isActive }) =>
                   `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold font-mono transition-all ${
                     isActive
-                      ? 'bg-status-error text-white shadow-lg shadow-status-error/20 font-bold'
-                      : 'text-text-secondary hover:bg-surface hover:text-text-primary'
+                      ? 'bg-primary-blue/10 text-primary-blue font-bold'
+                      : 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
                   }`
                 }
               >
@@ -137,14 +137,14 @@ export const AdminLayout: React.FC = () => {
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-accent-cyan hover:bg-surface transition-colors"
           >
             <Store className="w-4 h-4" />
-            <span>Xem Storefront</span>
+            <span>View Storefront</span>
           </Link>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-status-error/80 hover:text-status-error hover:bg-status-error/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            <span>Thoát Root Session</span>
+            <span>End Root Session</span>
           </button>
         </div>
       </aside>
@@ -152,7 +152,7 @@ export const AdminLayout: React.FC = () => {
       {/* Main Content View */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navbar */}
-        <header className="h-16 bg-[#0d0f14]/90 backdrop-blur-md border-b border-border-subtle px-4 sm:px-6 flex items-center justify-between sticky top-0 z-10">
+        <header className="h-16 bg-white/90 backdrop-blur-md border-b border-border-subtle px-4 sm:px-6 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -161,7 +161,7 @@ export const AdminLayout: React.FC = () => {
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <div className="hidden sm:flex items-center gap-2 font-mono text-xs text-text-muted">
-              <span className="text-text-primary font-bold">AIPro Administration</span>
+              <span className="text-text-primary font-bold">AgentLab Administration</span>
               <span>/</span>
               <span className="text-accent-cyan">Cluster-VN-01</span>
             </div>
@@ -178,15 +178,15 @@ export const AdminLayout: React.FC = () => {
               to="/"
               className="px-3 py-1.5 rounded-lg bg-surface border border-border-subtle text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors"
             >
-              Ra Cửa Hàng
+              Go to Storefront
             </Link>
           </div>
         </header>
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="lg:hidden fixed inset-0 z-40 bg-black/80 backdrop-blur-sm pt-16">
-            <div className="bg-[#0d0f14] border-b border-border-subtle p-4 space-y-2 font-mono">
+          <div className="lg:hidden fixed inset-0 z-40 bg-text-primary/40 backdrop-blur-sm pt-16">
+            <div className="bg-white border-b border-border-subtle p-4 space-y-2 font-mono">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -196,7 +196,7 @@ export const AdminLayout: React.FC = () => {
                     onClick={() => setMobileOpen(false)}
                     className={({ isActive }) =>
                       `flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold ${
-                        isActive ? 'bg-status-error text-white' : 'text-text-secondary hover:bg-surface'
+                        isActive ? 'bg-primary-blue/10 text-primary-blue' : 'text-text-secondary hover:bg-surface-subtle'
                       }`
                     }
                   >
@@ -219,7 +219,7 @@ export const AdminLayout: React.FC = () => {
                   onClick={handleLogout}
                   className="flex-1 py-2 rounded-xl bg-status-error/15 text-status-error text-center text-xs font-semibold"
                 >
-                  Đăng xuất
+                  Sign out
                 </button>
               </div>
             </div>

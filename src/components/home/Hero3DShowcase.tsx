@@ -72,7 +72,7 @@ export const Hero3DShowcase: React.FC = () => {
   const cards = [
     { label: 'CURSOR PRO', grad: 'from-[#0EA5E9]/25 to-[#0066FF]/10', rot: -14, tx: '-34%', ty: '-18%', z: 0, delay: '0s' },
     { label: 'CLAUDE 3.7', grad: 'from-[#D97757]/25 to-[#F59E0B]/10', rot: -4, tx: '-11%', ty: '-30%', z: 60, delay: '0.6s' },
-    { label: 'CHATGPT PLUS', grad: 'from-[#10B981]/25 to-[#00F0FF]/10', rot: 7, tx: '14%', ty: '-22%', z: 30, delay: '1.2s' },
+    { label: 'CHATGPT PLUS', grad: 'from-[#10B981]/25 to-[#00D4FF]/14', rot: 7, tx: '14%', ty: '-22%', z: 30, delay: '1.2s' },
     { label: 'COPILOT', grad: 'from-[#8B5CF6]/25 to-[#0066FF]/10', rot: 16, tx: '36%', ty: '-10%', z: 10, delay: '1.8s' },
   ];
 
@@ -90,21 +90,21 @@ export const Hero3DShowcase: React.FC = () => {
         {cards.map((c) => (
           <div
             key={c.label}
-            className="absolute left-1/2 top-1/2 w-[190px] h-[118px] rounded-2xl border border-white/10 bg-gradient-to-br backdrop-blur-sm shadow-[0_18px_50px_rgba(0,0,0,0.55)] will-change-transform"
+            className="absolute left-1/2 top-1/2 w-[190px] h-[118px] rounded-2xl border border-border-subtle bg-gradient-to-br backdrop-blur-sm shadow-[0_13px_27px_-5px_rgba(50,50,93,0.2),0_8px_16px_-8px_rgba(0,0,0,0.14)] will-change-transform"
             style={{
               transform: `translate(${c.tx}, ${c.ty}) translateZ(${c.z}px) rotate(${c.rot}deg)`,
-              backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.04), transparent)`,
+              backgroundImage: `linear-gradient(135deg, rgba(255,255,255,0.9), rgba(246,249,252,0.7))`,
             }}
           >
             <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${c.grad} opacity-70`} />
             <div className="relative p-3.5 flex flex-col justify-between h-full">
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-mono tracking-widest text-white/60 uppercase">{c.label}</span>
-                <span className="w-6 h-4 rounded bg-gradient-to-br from-accent-cyan/40 to-primary-blue/40 border border-white/20" />
+                <span className="text-[9px] font-mono tracking-widest text-text-muted uppercase">{c.label}</span>
+                <span className="w-6 h-4 rounded bg-gradient-to-br from-[#00D4FF]/50 to-[#635BFF]/50 border border-white/60" />
               </div>
               <div>
-                <div className="font-mono text-[10px] text-white/40 tracking-wider">•••• •••• •••• 4290</div>
-                <div className="mt-1 text-[9px] font-semibold text-accent-cyan/80">PRO · AUTO-RENEW ON</div>
+                <div className="font-mono text-[10px] text-text-muted/70 tracking-wider">•••• •••• •••• 4290</div>
+                <div className="mt-1 text-[9px] font-semibold text-[#0E7490]">PRO · AUTO-RENEW ON</div>
               </div>
             </div>
           </div>

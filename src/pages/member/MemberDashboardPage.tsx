@@ -32,9 +32,12 @@ interface ReferralStats {
   conversions: Array<{
     order_id: string;
     amount_vnd: number;
+    reward_type: string;
+    product_id: string;
+    product_name: string;
+    brand: string;
     status: string;
     created_at: string;
-    product_name?: string;
   }>;
 }
 
@@ -109,13 +112,13 @@ export const MemberDashboardPage: React.FC = () => {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-blue/10 border border-primary-blue/30 text-accent-cyan text-xs font-bold font-mono mb-3">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Cấp bậc {user?.tier || 'Standard'} • Giảm 5% mọi đơn hàng</span>
+              <span>{user?.tier || 'Standard'} tier • 5% off every order</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-text-primary">
-              Chào mừng trở lại, {user?.name || 'Developer'}! 👋
+              Welcome back, {user?.name || 'Developer'}! 👋
             </h1>
             <p className="text-xs sm:text-sm text-text-secondary mt-1">
-              Bạn có {activeCount} tài khoản AI Pro đang hoạt động với cam kết bảo hành 1-đổi-1 tự động 24/7.
+              You have {activeCount} active AgentLab accounts with automatic 24/7 1-for-1 warranty coverage.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -124,13 +127,13 @@ export const MemberDashboardPage: React.FC = () => {
               className="px-4 py-2.5 rounded-xl bg-status-error/10 hover:bg-status-error/20 border border-status-error/30 text-status-error text-xs font-bold transition-all flex items-center gap-2"
             >
               <Zap className="w-4 h-4" />
-              <span>Bot Đổi Trả Tự Động</span>
+              <span>Auto Replacement Bot</span>
             </Link>
             <Link
               to="/"
               className="px-4 py-2.5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold shadow-lg shadow-primary-blue/25 transition-all flex items-center gap-2"
             >
-              <span>Mua thêm tài khoản</span>
+              <span>Buy more accounts</span>
               <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
@@ -141,7 +144,7 @@ export const MemberDashboardPage: React.FC = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
           <div className="flex items-center justify-between text-text-muted mb-2">
-            <span className="text-xs font-semibold uppercase">Tài khoản Active</span>
+            <span className="text-xs font-semibold uppercase">Active accounts</span>
             <div className="w-8 h-8 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
               <KeyRound className="w-4 h-4" />
             </div>
@@ -149,26 +152,26 @@ export const MemberDashboardPage: React.FC = () => {
           <div className="font-mono text-2xl font-extrabold text-text-primary">{activeCount}</div>
           <span className="text-[11px] text-status-success font-medium flex items-center gap-1 mt-1">
             <ShieldCheck className="w-3 h-3" />
-            <span>100% Hoạt động bình thường</span>
+            <span>100% Running normally</span>
           </span>
         </div>
 
         <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
           <div className="flex items-center justify-between text-text-muted mb-2">
-            <span className="text-xs font-semibold uppercase">Sắp hết hạn</span>
+            <span className="text-xs font-semibold uppercase">Expiring soon</span>
             <div className="w-8 h-8 rounded-lg bg-status-warning/10 text-status-warning flex items-center justify-center">
               <Clock className="w-4 h-4" />
             </div>
           </div>
           <div className="font-mono text-2xl font-extrabold text-status-warning">{expiringCount}</div>
           <span className="text-[11px] text-text-muted mt-1 block">
-            {expiringSub ? `${expiringSub.productName} (còn ${expiringSub.daysRemaining} ngày)` : 'Không có tài khoản sắp hết hạn'}
+            {expiringSub ? `${expiringSub.productName} (${expiringSub.daysRemaining} days left)` : 'No accounts expiring soon'}
           </span>
         </div>
 
         <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
           <div className="flex items-center justify-between text-text-muted mb-2">
-            <span className="text-xs font-semibold uppercase">Tổng chi tiêu</span>
+            <span className="text-xs font-semibold uppercase">Total spent</span>
             <div className="w-8 h-8 rounded-lg bg-primary-blue/10 text-primary-blue flex items-center justify-center">
               <ShoppingBag className="w-4 h-4" />
             </div>
@@ -177,13 +180,13 @@ export const MemberDashboardPage: React.FC = () => {
             {formatPrice(totalSpentVND, totalSpentUSD)}
           </div>
           <span className="text-[11px] text-accent-cyan font-medium mt-1 block">
-            Đã tích lũy {points} điểm thưởng
+            Earned {points} reward points
           </span>
         </div>
 
         <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
           <div className="flex items-center justify-between text-text-muted mb-2">
-            <span className="text-xs font-semibold uppercase">Số dư ví khả dụng</span>
+            <span className="text-xs font-semibold uppercase">Available wallet balance</span>
             <div className="w-8 h-8 rounded-lg bg-accent-cyan/10 text-accent-cyan flex items-center justify-center">
               <Zap className="w-4 h-4" />
             </div>
@@ -192,7 +195,7 @@ export const MemberDashboardPage: React.FC = () => {
             {formatPrice(user?.balanceVND || 0, user?.balanceUSD || 0)}
           </div>
           <span className="text-[11px] text-status-success font-medium mt-1 block">
-            Sẵn sàng gia hạn tức thì
+            Ready for instant renewal
           </span>
         </div>
       </div>
@@ -201,14 +204,14 @@ export const MemberDashboardPage: React.FC = () => {
       <div className="bg-surface border border-border-subtle rounded-2xl p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-base font-bold text-text-primary">Tài khoản AI đang sở hữu</h2>
-            <p className="text-xs text-text-secondary">Thông tin truy cập bảo mật và thời hạn sử dụng.</p>
+            <h2 className="text-base font-bold text-text-primary">Your AI accounts</h2>
+            <p className="text-xs text-text-secondary">Secure access details and subscription periods.</p>
           </div>
           <Link
             to="/member/subscriptions"
             className="text-xs font-semibold text-primary-blue hover:text-accent-cyan flex items-center gap-1 transition-colors"
           >
-            <span>Xem tất cả chi tiết</span>
+            <span>View all details</span>
             <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -216,7 +219,7 @@ export const MemberDashboardPage: React.FC = () => {
         {loading ? (
           <div className="text-center py-8 bg-canvas rounded-xl border border-border-subtle">
             <Loader2 className="w-5 h-5 animate-spin text-primary-blue inline mr-2" />
-            <span className="text-xs text-text-muted">Đang tải vault tài khoản…</span>
+            <span className="text-xs text-text-muted">Loading account vault…</span>
           </div>
         ) : userSubscriptions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -240,11 +243,11 @@ export const MemberDashboardPage: React.FC = () => {
                     </div>
                     {sub.status === 'expiring_soon' ? (
                       <span className="px-2 py-0.5 rounded-full bg-status-warning/20 text-status-warning text-[10px] font-bold font-mono">
-                        Hết hạn sau {sub.daysRemaining} ngày
+                        Expires in {sub.daysRemaining} days
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 rounded-full bg-status-success/20 text-status-success text-[10px] font-bold font-mono">
-                        Active • {sub.daysRemaining} ngày
+                        Active • {sub.daysRemaining} days
                       </span>
                     )}
                   </div>
@@ -277,7 +280,7 @@ export const MemberDashboardPage: React.FC = () => {
                             type="button"
                             onClick={() => setRevealedPassId(isRevealed ? null : sub.id)}
                             className="text-text-muted hover:text-text-primary p-1"
-                            title="Ẩn/hiện mật khẩu"
+                            title="Show/hide password"
                           >
                             {isRevealed ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                           </button>
@@ -285,7 +288,7 @@ export const MemberDashboardPage: React.FC = () => {
                             type="button"
                             onClick={() => handleCopy(sub.accountPassword!, `pass-${sub.id}`)}
                             className="text-text-muted hover:text-text-primary p-1"
-                            title="Copy mật khẩu"
+                            title="Copy password"
                           >
                             {copiedId === `pass-${sub.id}` ? (
                               <Check className="w-3.5 h-3.5 text-status-success" />
@@ -304,12 +307,12 @@ export const MemberDashboardPage: React.FC = () => {
                       to={`/product/${sub.productSlug}`}
                       className="flex-1 py-1.5 rounded-lg bg-primary-blue/15 hover:bg-primary-blue/25 text-primary-blue text-xs font-bold text-center transition-colors"
                     >
-                      Gia hạn ngay
+                      Renew now
                     </Link>
                     <Link
                       to="/lookup"
                       className="p-1.5 rounded-lg bg-surface hover:bg-surface-subtle border border-border-subtle text-text-muted hover:text-text-primary transition-colors"
-                      title="Báo lỗi / Bảo hành"
+                      title="Report issue / Warranty"
                     >
                       <RefreshCw className="w-4 h-4" />
                     </Link>
@@ -320,8 +323,8 @@ export const MemberDashboardPage: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-8 bg-canvas rounded-xl border border-border-subtle">
-            <p className="text-xs text-text-muted">Bạn chưa có tài khoản AI nào. Khám phá cửa hàng ngay!</p>
-            <Link to="/" className="inline-block mt-3 px-4 py-2 rounded-lg bg-primary-blue text-white text-xs font-bold hover:bg-primary-hover transition-colors">Mua ngay</Link>
+            <p className="text-xs text-text-muted">You don't have any AI accounts yet. Explore the store now!</p>
+            <Link to="/" className="inline-block mt-3 px-4 py-2 rounded-lg bg-primary-blue text-white text-xs font-bold hover:bg-primary-hover transition-colors">Buy now</Link>
           </div>
         )}
       </div>
@@ -332,10 +335,10 @@ export const MemberDashboardPage: React.FC = () => {
           <div>
             <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
               <Gift className="w-4 h-4 text-accent-cyan" />
-              Chương trình mời bạn nhận thưởng
+              Invite & Earn Program
             </h2>
             <p className="text-xs text-text-secondary">
-              Mỗi bạn bè mua hàng hợp lệ (FAB) — quà tự động cộng vào ví của bạn.
+              For each friend who makes a valid purchase (FAB) — you get 1 free month of that account.
             </p>
           </div>
           <Link
@@ -343,7 +346,7 @@ export const MemberDashboardPage: React.FC = () => {
             className="text-xs font-semibold text-primary-blue hover:text-accent-cyan flex items-center gap-1 transition-colors"
           >
             <Users className="w-4 h-4" />
-            <span>Lấy link mời</span>
+            <span>Get invite link</span>
             <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -353,7 +356,7 @@ export const MemberDashboardPage: React.FC = () => {
             {/* Invite code + shareable link */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-canvas border border-border-subtle">
               <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-mono uppercase text-text-muted block mb-1">Mã mời của bạn</span>
+                <span className="text-[10px] font-mono uppercase text-text-muted block mb-1">Your invite code</span>
                 <div className="font-mono text-lg font-extrabold text-accent-cyan truncate">
                   {referral.codes[0]}
                 </div>
@@ -369,9 +372,9 @@ export const MemberDashboardPage: React.FC = () => {
                 className="px-4 py-2 rounded-lg bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold transition-colors flex items-center gap-2 shrink-0"
               >
                 {copiedId === 'invite-link' ? (
-                  <><Check className="w-4 h-4" /> Đã copy link</>
+                  <><Check className="w-4 h-4" /> Link copied</>
                 ) : (
-                  <><Copy className="w-4 h-4" /> Copy link mời</>
+                  <><Copy className="w-4 h-4" /> Copy invite link</>
                 )}
               </button>
             </div>
@@ -379,23 +382,23 @@ export const MemberDashboardPage: React.FC = () => {
             {/* Referral KPIs */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="p-4 rounded-xl bg-canvas border border-border-subtle">
-                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Lượt nhấp link</span>
+                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Link clicks</span>
                 <div className="font-mono text-xl font-extrabold text-text-primary">{referral.totalClicks}</div>
               </div>
               <div className="p-4 rounded-xl bg-canvas border border-border-subtle">
-                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Quy đổi FAB</span>
+                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">FAB conversions</span>
                 <div className="font-mono text-xl font-extrabold text-text-primary">
                   {referral.conversions.filter((c) => c.status !== 'rejected').length}
                 </div>
               </div>
               <div className="p-4 rounded-xl bg-canvas border border-border-subtle">
-                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Thưởng đã nhận</span>
+                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Accounts earned</span>
                 <div className="font-mono text-xl font-extrabold text-status-success">
-                  {formatPrice(referral.totalRewards, referral.totalRewards / 25000)}
+                  {referral.totalRewards}
                 </div>
               </div>
               <div className="p-4 rounded-xl bg-canvas border border-border-subtle">
-                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Thưởng đang treo</span>
+                <span className="text-[10px] font-semibold uppercase text-text-muted block mb-1">Pending rewards</span>
                 <div className="font-mono text-xl font-extrabold text-status-warning">{referral.pendingRewards}</div>
               </div>
             </div>
@@ -406,21 +409,25 @@ export const MemberDashboardPage: React.FC = () => {
                 <table className="w-full text-left text-xs font-mono">
                   <thead className="bg-canvas border-b border-border-subtle text-text-muted uppercase text-[10px]">
                     <tr>
-                      <th className="py-2.5 px-4">Đơn của bạn</th>
-                      <th className="py-2.5 px-4">Sản phẩm</th>
-                      <th className="py-2.5 px-4">Thời gian</th>
-                      <th className="py-2.5 px-4">Phần thưởng</th>
-                      <th className="py-2.5 px-4 text-right">Trạng thái</th>
+                      <th className="py-2.5 px-4">Your order</th>
+                      <th className="py-2.5 px-4">Product</th>
+                      <th className="py-2.5 px-4">Date</th>
+                      <th className="py-2.5 px-4">Reward</th>
+                      <th className="py-2.5 px-4 text-right">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-subtle">
                     {referral.conversions.slice(0, 5).map((c) => (
                       <tr key={c.order_id}>
                         <td className="py-2.5 px-4 text-accent-cyan font-bold">{c.order_id}</td>
-                        <td className="py-2.5 px-4 font-sans text-text-primary">{c.product_name || '—'}</td>
-                        <td className="py-2.5 px-4 text-text-muted">{new Date(c.created_at).toLocaleDateString('vi-VN')}</td>
+                        <td className="py-2.5 px-4 font-sans text-text-primary">{c.product_name || c.brand || '—'}</td>
+                        <td className="py-2.5 px-4 text-text-muted">{new Date(c.created_at).toLocaleDateString('en-US')}</td>
                         <td className="py-2.5 px-4 font-bold text-text-primary">
-                          {formatPrice(Number(c.amount_vnd), Number(c.amount_vnd) / 25000)}
+                          {c.reward_type === 'subscription_1month' ? (
+                            <span className="text-accent-cyan">1 month of {c.product_name || c.brand || 'account'}</span>
+                          ) : (
+                            formatPrice(Number(c.amount_vnd), Number(c.amount_vnd) / 25000)
+                          )}
                         </td>
                         <td className="py-2.5 px-4 text-right">
                           <span
@@ -432,7 +439,7 @@ export const MemberDashboardPage: React.FC = () => {
                                   : 'bg-text-muted/15 text-text-muted'
                             }`}
                           >
-                            {c.status === 'granted' ? 'Đã cộng ví' : c.status === 'pending' ? 'Chờ xác thực FAB' : 'Bị từ chối'}
+                            {c.status === 'granted' ? 'Account received' : c.status === 'pending' ? 'Awaiting FAB verification' : 'Rejected'}
                           </span>
                         </td>
                       </tr>
@@ -445,14 +452,14 @@ export const MemberDashboardPage: React.FC = () => {
         ) : (
           <div className="text-center py-8 bg-canvas rounded-xl border border-border-subtle">
             <p className="text-xs text-text-muted mb-3">
-              Bạn chưa có mã mời nào. Hãy tạo link mời đầu tiên để bắt đầu nhận thưởng!
+              You don't have an invite code yet. Create your first invite link to start earning free accounts!
             </p>
             <Link
               to="/#referral-event"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-blue text-white text-xs font-bold hover:bg-primary-hover transition-colors"
             >
               <Sparkles className="w-4 h-4" />
-              Mời bạn bè ngay
+              Invite friends now
             </Link>
           </div>
         )}
@@ -462,14 +469,14 @@ export const MemberDashboardPage: React.FC = () => {
       <div className="bg-surface border border-border-subtle rounded-2xl p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-base font-bold text-text-primary">Đơn hàng gần đây</h2>
-            <p className="text-xs text-text-secondary">Lịch sử giao dịch và hóa đơn điện tử.</p>
+            <h2 className="text-base font-bold text-text-primary">Recent orders</h2>
+            <p className="text-xs text-text-secondary">Transaction history and electronic invoices.</p>
           </div>
           <Link
             to="/member/orders"
             className="text-xs font-semibold text-primary-blue hover:text-accent-cyan flex items-center gap-1 transition-colors"
           >
-            <span>Tất cả đơn hàng</span>
+            <span>All orders</span>
             <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -478,12 +485,12 @@ export const MemberDashboardPage: React.FC = () => {
           <table className="w-full text-left text-xs font-mono">
             <thead className="bg-canvas border-b border-border-subtle text-text-muted uppercase text-[10px]">
               <tr>
-                <th className="py-3 px-4">Mã Đơn</th>
-                <th className="py-3 px-4">Sản Phẩm</th>
-                <th className="py-3 px-4">Thời Gian</th>
-                <th className="py-3 px-4">Số Tiền</th>
-                <th className="py-3 px-4">Trạng Thái</th>
-                <th className="py-3 px-4 text-right">Thao Tác</th>
+                <th className="py-3 px-4">Order ID</th>
+                <th className="py-3 px-4">Product</th>
+                <th className="py-3 px-4">Date</th>
+                <th className="py-3 px-4">Amount</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
@@ -491,7 +498,7 @@ export const MemberDashboardPage: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="py-8 text-center">
                     <Loader2 className="w-4 h-4 animate-spin text-primary-blue inline mr-2" />
-                    <span className="text-xs text-text-muted">Đang tải dữ liệu từ máy chủ…</span>
+                    <span className="text-xs text-text-muted">Loading data from the server…</span>
                   </td>
                 </tr>
               ) : userOrders.length > 0 ? (
@@ -499,9 +506,9 @@ export const MemberDashboardPage: React.FC = () => {
                   <tr key={ord.orderId} className="hover:bg-canvas/50 transition-colors">
                     <td className="py-3 px-4 font-bold text-accent-cyan">{ord.orderId}</td>
                     <td className="py-3 px-4 font-sans font-medium text-text-primary">
-                      {ord.productName} ({ord.planDurationMonths} tháng)
+                      {ord.productName} ({ord.planDurationMonths} months)
                     </td>
-                    <td className="py-3 px-4 text-text-muted">{new Date(ord.createdAt).toLocaleString('vi-VN')}</td>
+                    <td className="py-3 px-4 text-text-muted">{new Date(ord.createdAt).toLocaleString('en-US')}</td>
                     <td className="py-3 px-4 font-bold text-text-primary">
                       {formatPrice(ord.totalAmount, ord.totalUSD ?? ord.totalAmount / 25000)}
                     </td>
@@ -518,11 +525,11 @@ export const MemberDashboardPage: React.FC = () => {
                         <Check className="w-3 h-3" />
                         <span>
                           {ord.status === 'dispatched'
-                            ? 'Đã bàn giao'
+                            ? 'Delivered'
                             : ord.status === 'paid'
-                              ? 'Đã thanh toán'
+                              ? 'Paid'
                               : ord.status === 'pending'
-                                ? 'Chờ xử lý'
+                                ? 'Pending'
                                 : ord.status}
                         </span>
                       </span>
@@ -532,7 +539,7 @@ export const MemberDashboardPage: React.FC = () => {
                         to={`/order/success/${ord.orderId}`}
                         className="inline-flex items-center gap-1 text-primary-blue hover:text-accent-cyan font-semibold text-xs"
                       >
-                        <span>Xem Vault</span>
+                        <span>View Vault</span>
                         <ExternalLink className="w-3 h-3" />
                       </Link>
                     </td>
@@ -540,7 +547,7 @@ export const MemberDashboardPage: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-xs text-text-muted">Chưa có đơn hàng nào</td>
+                  <td colSpan={6} className="py-8 text-center text-xs text-text-muted">No orders yet</td>
                 </tr>
               )}
             </tbody>

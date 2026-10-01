@@ -26,9 +26,12 @@ export const getStatusPage = catchAsync(async (req: Request, res: Response, next
     ORDER BY c.category, c.name
   `);
 
-  // Normalize component rows for frontend typing
+  // Normalize component rows for the frontend: ServiceHealthComponent expects
+  // camelCase uptimePercent (used as svc.uptimePercent.toFixed(2)) plus the
+  // raw snake_case metric fields it renders conditionally.
   const components = componentsResult.rows.map((row) => ({
     ...row,
+    uptimePercent: Number(row.uptime_percent),
     uptime_percent: Number(row.uptime_percent),
     error_rate: row.error_rate !== null ? Number(row.error_rate) : null,
     requests_per_second: row.requests_per_second !== null ? Number(row.requests_per_second) : null,

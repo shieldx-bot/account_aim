@@ -16,13 +16,13 @@ import {
 
 export const AdminDashboardPage: React.FC = () => {
   const weeklyRevenue = [
-    { day: 'T2', amount: 340, height: '45%' },
-    { day: 'T3', amount: 488, height: '65%' },
-    { day: 'T4', amount: 600, height: '80%' },
-    { day: 'T5', amount: 456, height: '60%' },
-    { day: 'T6', amount: 756, height: '95%' },
-    { day: 'T7', amount: 840, height: '100%' },
-    { day: 'CN', amount: 592, height: '78%' },
+    { day: 'Mon', amount: 340, height: '45%' },
+    { day: 'Tue', amount: 488, height: '65%' },
+    { day: 'Wed', amount: 600, height: '80%' },
+    { day: 'Thu', amount: 456, height: '60%' },
+    { day: 'Fri', amount: 756, height: '95%' },
+    { day: 'Sat', amount: 840, height: '100%' },
+    { day: 'Sun', amount: 592, height: '78%' },
   ];
 
   return (
@@ -33,7 +33,7 @@ export const AdminDashboardPage: React.FC = () => {
             Executive Command Dashboard
           </h1>
           <p className="text-xs text-text-secondary mt-1">
-            Tổng quan tài chính, đối soát tự động VietQR và trạng thái cung ứng kho.
+            Financial overview, automated VietQR reconciliation, and warehouse supply status.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -42,16 +42,16 @@ export const AdminDashboardPage: React.FC = () => {
             className="px-4 py-2.5 rounded-xl bg-status-error hover:bg-status-error/90 text-white text-xs font-bold transition-all shadow-lg shadow-status-error/20 flex items-center gap-2"
           >
             <Zap className="w-4 h-4" />
-            <span>Xử lý 2 đơn treo</span>
+            <span>Resolve 2 pending orders</span>
           </Link>
         </div>
       </div>
 
       {/* Primary KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-[#0d0f14] border border-border-subtle">
+        <div className="p-5 rounded-2xl bg-white border border-border-subtle">
           <div className="flex items-center justify-between text-text-muted mb-2 font-sans">
-            <span className="text-[11px] font-bold uppercase">Doanh thu hôm nay</span>
+            <span className="text-[11px] font-bold uppercase">Revenue today</span>
             <div className="w-8 h-8 rounded-lg bg-status-success/15 text-status-success flex items-center justify-center">
               <DollarSign className="w-4 h-4" />
             </div>
@@ -59,46 +59,46 @@ export const AdminDashboardPage: React.FC = () => {
           <div className="text-xl sm:text-2xl font-black text-text-primary">$594.00</div>
           <span className="text-[11px] text-status-success font-semibold flex items-center gap-1 mt-1">
             <TrendingUp className="w-3.5 h-3.5" />
-            <span>+24.8% so với hôm qua</span>
+            <span>+24.8% vs yesterday</span>
           </span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#0d0f14] border border-border-subtle">
+        <div className="p-5 rounded-2xl bg-white border border-border-subtle">
           <div className="flex items-center justify-between text-text-muted mb-2 font-sans">
-            <span className="text-[11px] font-bold uppercase">Đơn hàng trong ngày</span>
+            <span className="text-[11px] font-bold uppercase">Orders today</span>
             <div className="w-8 h-8 rounded-lg bg-primary-blue/15 text-primary-blue flex items-center justify-center">
               <ShoppingBag className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-text-primary">34 đơn</div>
+          <div className="text-xl sm:text-2xl font-black text-text-primary">34 orders</div>
           <span className="text-[11px] text-accent-cyan mt-1 block">
-            32 tự động • 2 cần khớp lệnh
+            32 automated • 2 need manual matching
           </span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#0d0f14] border border-border-subtle">
+        <div className="p-5 rounded-2xl bg-white border border-border-subtle">
           <div className="flex items-center justify-between text-text-muted mb-2 font-sans">
-            <span className="text-[11px] font-bold uppercase">Tồn kho khả dụng</span>
+            <span className="text-[11px] font-bold uppercase">Available stock</span>
             <div className="w-8 h-8 rounded-lg bg-accent-cyan/15 text-accent-cyan flex items-center justify-center">
               <Boxes className="w-4 h-4" />
             </div>
           </div>
           <div className="text-xl sm:text-2xl font-black text-accent-cyan">485 slots</div>
           <span className="text-[11px] text-status-success mt-1 block">
-            Đủ đáp ứng 14 ngày tới
+            Enough to cover the next 14 days
           </span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#0d0f14] border border-status-error/30 bg-status-error/5">
+        <div className="p-5 rounded-2xl bg-white border border-status-error/30 bg-status-error/5">
           <div className="flex items-center justify-between text-text-muted mb-2 font-sans">
-            <span className="text-[11px] font-bold uppercase text-status-error">Lệnh treo chờ khớp</span>
+            <span className="text-[11px] font-bold uppercase text-status-error">Pending orders awaiting match</span>
             <div className="w-8 h-8 rounded-lg bg-status-error/20 text-status-error flex items-center justify-center">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-status-error">2 đơn</div>
+          <div className="text-xl sm:text-2xl font-black text-status-error">2 orders</div>
           <span className="text-[11px] text-status-error/90 mt-1 block">
-            1 sai số tiền • 1 sai memo
+            1 amount mismatch • 1 memo mismatch
           </span>
         </div>
       </div>
@@ -106,13 +106,13 @@ export const AdminDashboardPage: React.FC = () => {
       {/* Grid: 7-Day Revenue & Urgent Reconciliation Queue */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: 7-Day Revenue Bar Chart */}
-        <div className="lg:col-span-2 bg-[#0d0f14] border border-border-subtle rounded-2xl p-6">
+        <div className="lg:col-span-2 bg-white border border-border-subtle rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6 font-sans">
             <div>
-              <h3 className="text-sm font-bold text-text-primary uppercase">Biểu đồ Doanh thu tuần (USD)</h3>
-              <p className="text-[11px] text-text-secondary">Chu kỳ 7 ngày gần nhất qua VietQR, Stripe và Crypto.</p>
+              <h3 className="text-sm font-bold text-text-primary uppercase">Weekly Revenue Chart (USD)</h3>
+              <p className="text-[11px] text-text-secondary">Last 7 days via VietQR, PayPal, and Crypto.</p>
             </div>
-            <span className="text-xs font-mono font-bold text-status-success">Tổng: $4,072</span>
+            <span className="text-xs font-mono font-bold text-status-success">Total: $4,072</span>
           </div>
 
           {/* Bar Chart Container */}
@@ -135,15 +135,15 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
 
         {/* Right: Urgent Orders Queue */}
-        <div className="bg-[#0d0f14] border border-border-subtle rounded-2xl p-6 flex flex-col justify-between">
+        <div className="bg-white border border-border-subtle rounded-2xl p-6 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4 font-sans">
               <h3 className="text-sm font-bold text-status-error uppercase flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
-                <span>Cảnh báo khớp lệnh</span>
+                <span>Order Matching Alerts</span>
               </h3>
               <Link to="/admin/orders" className="text-xs text-primary-blue hover:underline">
-                Xem tất cả
+                View all
               </Link>
             </div>
 
@@ -151,17 +151,17 @@ export const AdminDashboardPage: React.FC = () => {
               <div className="p-3 rounded-xl bg-status-error/10 border border-status-error/30">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold text-status-error">ORD-AI-1094</span>
-                  <span className="text-[10px] text-text-muted">3 phút trước</span>
+                  <span className="text-[10px] text-text-muted">3 minutes ago</span>
                 </div>
                 <p className="text-text-primary text-[11px] font-sans">
-                  Chuyển thiếu tiền: Nhận <strong>$8.00</strong> (Cần $9.96)
+                  Underpaid transfer: received <strong>$8.00</strong> (expected $9.96)
                 </p>
                 <div className="mt-2 flex justify-end">
                   <Link
                     to="/admin/orders"
                     className="px-2.5 py-1 rounded bg-status-error text-white font-bold text-[10px] uppercase font-sans"
                   >
-                    Xử lý ngay →
+                    Resolve now →
                   </Link>
                 </div>
               </div>
@@ -169,17 +169,17 @@ export const AdminDashboardPage: React.FC = () => {
               <div className="p-3 rounded-xl bg-status-warning/10 border border-status-warning/30">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-bold text-status-warning">ORD-AI-1092</span>
-                  <span className="text-[10px] text-text-muted">15 phút trước</span>
+                  <span className="text-[10px] text-text-muted">15 minutes ago</span>
                 </div>
                 <p className="text-text-primary text-[11px] font-sans">
-                  Sai cú pháp: Khách ghi <em>&quot;Nguyen Van A chuyen tien&quot;</em>
+                  Invalid syntax: customer wrote <em>&quot;Nguyen Van A chuyen tien&quot;</em>
                 </p>
                 <div className="mt-2 flex justify-end">
                   <Link
                     to="/admin/orders"
                     className="px-2.5 py-1 rounded bg-primary-blue text-white font-bold text-[10px] uppercase font-sans"
                   >
-                    Gán mã đơn →
+                    Assign order ID →
                   </Link>
                 </div>
               </div>
@@ -187,7 +187,7 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
 
           <div className="pt-4 border-t border-border-subtle text-text-muted text-[11px]">
-            Hệ thống Bot đang tự động quét webhook MBBank mỗi 1.5s.
+            The bot system is automatically scanning the MBBank webhook every 1.5s.
           </div>
         </div>
       </div>

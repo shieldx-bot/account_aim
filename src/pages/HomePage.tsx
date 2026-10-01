@@ -12,6 +12,7 @@ import { ProductCard } from '@/components/home/ProductCard';
 import { FilterPillsBar, SortOption } from '@/components/home/FilterPillsBar';
 import { LiveStockBanner } from '@/components/home/LiveStockBanner';
 import { CompanyTrustMarquee } from '@/components/home/CompanyTrustMarquee';
+import { SponsorBadge } from '@/components/home/SponsorBadge';
 import { LiveActivityTicker } from '@/components/home/LiveActivityTicker';
 import { BentoFeaturesSection } from '@/components/home/BentoFeaturesSection';
 import { RoiCalculatorSection } from '@/components/home/RoiCalculatorSection';
@@ -41,7 +42,7 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     trackEvent('view_item_list', {
-      item_list_name: 'AI Pro Global Catalog',
+      item_list_name: 'AgentLab Global Catalog',
       items_count: products.length,
     });
   }, [products.length]);
@@ -122,10 +123,10 @@ export const HomePage: React.FC = () => {
           aria-hidden="true"
           fetchPriority="low"
           data-parallax="0.12"
-          className="absolute inset-0 w-full h-full object-cover opacity-[0.14] saturate-[0.7]"
+          className="absolute inset-0 w-full h-full object-cover opacity-[0.10] saturate-[0.7]"
         />
         {/* Fade the photo into page background so it never looks pasted-on */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-canvas/60 via-canvas/80 to-canvas" />
         <div data-parallax="0.35" className="aurora-blob animate-aurora w-[560px] h-[420px] bg-primary-blue/20 -top-32 left-[8%]" />
         <div data-parallax="0.25" className="aurora-blob animate-aurora w-[480px] h-[380px] bg-accent-cyan/10 -top-20 right-[6%]" style={{ animationDelay: '-9s' }} />
         <div data-parallax="0.45" className="aurora-blob animate-aurora w-[420px] h-[320px] bg-[#8B5CF6]/10 top-[320px] left-[38%]" style={{ animationDelay: '-4s' }} />
@@ -141,7 +142,7 @@ export const HomePage: React.FC = () => {
         <Hero3DShowcase />
 
 {/* Announcement Pill with Live Badge */}
-        <div data-hero="pill" className="inline-flex items-center gap-2 p-1 pr-4 rounded-full bg-surface border border-accent-cyan/30 text-xs text-text-secondary hover:border-accent-cyan transition-all shadow-[0_0_20px_rgba(0,240,255,0.15)] mb-6 group cursor-default">
+        <div data-hero="pill" className="inline-flex items-center gap-2 p-1 pr-4 rounded-full bg-surface border border-accent-cyan/30 text-xs text-text-secondary hover:border-accent-cyan transition-all shadow-[0_0_20px_rgba(0,212,255,0.15)] mb-6 group cursor-default">
           <span className="px-2.5 py-0.5 rounded-full bg-primary-blue text-white font-mono font-bold text-[10px] tracking-wide uppercase">
             NEW
           </span>
@@ -154,21 +155,21 @@ export const HomePage: React.FC = () => {
         {/* Hero Title — each line is a stagger target for the GSAP timeline */}
         <h1 data-hero="headline" className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-text-primary tracking-tight max-w-4xl mx-auto leading-[1.12]">
           <span className="hero-line block">Super Programming Power for Tech Engineers.</span>
-          <span className="hero-line block bg-gradient-to-r from-accent-cyan via-primary-blue to-[#60A5FA] bg-clip-text text-transparent">
+          <span className="hero-line block bg-gradient-to-r from-primary-blue via-[#0EA5E9] to-[#0EA5E9] bg-clip-text text-transparent">
             Activate &lt; 30 Seconds.
           </span>
         </h1>
 
         {/* Subtitle */}
         <p data-hero="subtitle" className="mt-5 text-sm sm:text-base text-text-secondary max-w-2xl mx-auto leading-relaxed">
-          Official AI Pro account distribution platform (Cursor Pro, Claude 3.7 Sonnet, ChatGPT Plus, GitHub Copilot). Save up to <span className="text-status-success font-semibold">65% cost</span>, assign 100% secure official email, auto 1-exchange warranty via 24/7 Bot.
+          Official AgentLab account distribution platform (Cursor Pro, Claude 3.7 Sonnet, ChatGPT Plus, GitHub Copilot). Save up to <span className="text-status-success font-semibold">65% cost</span>, assign 100% secure official email, auto 1-exchange warranty via 24/7 Bot.
         </p>
 
         {/* Hero Action CTA Buttons */}
         <div data-hero="cta" className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5">
           <a
             href="#catalog"
-            className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan text-white text-xs sm:text-sm font-bold shadow-lg shadow-primary-blue/30 hover:shadow-primary-blue/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-primary-blue text-white text-xs sm:text-sm font-bold shadow-[0_4px_14px_rgba(99,91,255,0.35)] hover:bg-primary-hover hover:shadow-[0_8px_24px_rgba(99,91,255,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
           >
             <Zap className="w-4 h-4 fill-white" />
             <span>Explore Pro Plans</span>
@@ -215,6 +216,9 @@ export const HomePage: React.FC = () => {
       {/* 2. PROMO BANNER CAROUSEL (Flash sale / Combo / Referral) */}
       <PromoCarousel />
 
+      {/* 2b. OFFICIAL YOUTUBE SPONSOR — AI LABS (prominent trust feature) */}
+      <SponsorBadge />
+
       {/* 3. REAL-TIME TELEMETRY LIVE FEED */}
       <LiveActivityTicker />
 
@@ -233,7 +237,7 @@ export const HomePage: React.FC = () => {
         </Reveal>
       </div>
 
-      {/* 7. COMPARISON MATRIX (AIPro vs. Chợ Đen) */}
+      {/* 7. COMPARISON MATRIX (AgentLab vs. Black Market) */}
       <Reveal>
         <ComparisonTableSection />
       </Reveal>
@@ -243,7 +247,7 @@ export const HomePage: React.FC = () => {
         <div data-section-header className="text-center max-w-3xl mx-auto mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-blue/10 border border-primary-blue/30 text-accent-cyan text-xs font-mono font-semibold mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>AI Pro License Catalog</span>
+            <span>AgentLab License Catalog</span>
           </div>
           <span>Choose the best AI tool for your workflow</span>
 <p className="mt-2 text-xs sm:text-sm text-text-secondary">
@@ -270,7 +274,7 @@ export const HomePage: React.FC = () => {
         {/* Product Cards Grid with Error Boundary */}
         <ErrorBoundary contextName="HomePage_ProductGrid">
           {isLoadingProducts && products.length === 0 ? (
-            /* Skeleton shimmer trong lúc sync từ PostgreSQL — tránh "nhảy" layout */
+            /* Skeleton shimmer while syncing from PostgreSQL — avoid layout jump */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <div
@@ -337,7 +341,7 @@ export const HomePage: React.FC = () => {
       <Reveal>
         <TestimonialsSection />
 
-        {/* Sự kiện viral: Mời bạn mua — Nhận ngay tài khoản đã được thanh toán */}
+        {/* Viral event: Invite to buy — Receive paid account instantly */}
         <ErrorBoundary contextName="ReferralEventSection">
           <ReferralEventSection />
         </ErrorBoundary>

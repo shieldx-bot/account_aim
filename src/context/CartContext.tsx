@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CartItem, ProductPlan, DurationOption, ProvisioningType } from '@/types';
 import { useAuth } from './AuthContext';
+import { couponsApi } from '@/services/api';
 import { trackEvent } from '@/utils/telemetry';
 
 interface CartContextType {
@@ -15,7 +16,7 @@ interface CartContextType {
   toggleCart: () => void;
   couponCode: string | null;
   couponDiscountPercent: number;
-  applyCoupon: (code: string) => { success: boolean; message: string };
+  applyCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
   removeCoupon: () => void;
   totalCount: number;
   subtotalVND: number;
@@ -29,10 +30,10 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const CART_STORAGE_KEY = 'aipro_cart_items';
+const CART_STORAGE_KEY = 'agentlab_cart_items';
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, token: authToken } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [couponDiscountPercent, setCouponDiscountPercent] = useState(0);
@@ -113,19 +114,21 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const closeCart = () => setIsOpen(false);
   const toggleCart = () => setIsOpen((prev) => !prev);
 
-  const applyCoupon = (code: string): { success: boolean; message: string } => {
-    const normalized = code.trim().toUpperCase();
-    if (normalized === 'DEVVIP10') {
-      setCouponCode(normalized);
-      setCouponDiscountPercent(10);
-      return { success: true, message: 'Áp dụng mã DEVVIP10 thành công: Giảm thêm 10%!' };
+  // Coupon validity lives on the server — the client never decides discount rates
+  const applyCoupon = async (code: string): Promise<{ success: boolean; message: string }> => {
+    if (!authToken) {
+      return { success: false, message: 'Please log in to use a discount code.' };
     }
-    if (normalized === 'AI2025') {
-      setCouponCode(normalized);
-      setCouponDiscountPercent(5);
-      return { success: true, message: 'Áp dụng mã AI2025 thành công: Giảm thêm 5%!' };
+    try {
+      const result = await couponsApi.validate(authToken, code);
+      setCouponCode(result.code);
+      setCouponDiscountPercent(result.discountPercent);
+      return { success: true, message: `Code ${result.code} applied successfully: ${result.discountPercent}% off!` };
+    } catch (err: any) {
+      setCouponCode(null);
+      setCouponDiscountPercent(0);
+      return { success: false, message: err.message || 'This discount code is invalid or has expired.' };
     }
-    return { success: false, message: 'Mã giảm giá không hợp lệ hoặc đã hết hạn.' };
   };
 
   const removeCoupon = () => {

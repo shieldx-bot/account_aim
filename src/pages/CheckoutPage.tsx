@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { trackEvent } from '@/utils/telemetry';
 import { openTelegramSupport } from '@/utils/diagnostics';
-import { ordersApi } from '@/services/api';
+import { ordersApi, paymentsApi, API_BASE_URL } from '@/services/api';
 import { peekPendingReferral, consumePendingReferral, captureRefFromUrl } from '@/utils/referral';
 import {
   Check,
@@ -25,17 +25,31 @@ export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { activeConfig, formatPrice, currency } = useApp();
+  const { activeConfig, formatPrice, currency, isLoadingProducts } = useApp();
   const { user, token } = useAuth();
   const { items, finalTotalVND, finalTotalUSD, discountVND, discountUSD, couponCode, clearCart } = useCart();
 
-  const [paymentSubMethod, setPaymentSubMethod] = useState<'card_visa' | 'paypal_wallet' | 'paypal_credit'>('card_visa');
   const [timeLeft, setTimeLeft] = useState(ORDER_DURATION_SECONDS);
   const [isExpired, setIsExpired] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processStage, setProcessStage] = useState<'idle' | 'authorizing' | 'capturing' | 'completed'>('idle');
   const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  // ── PayPal pre-payment health check (#test-before-pay) ──
+  const [paypalStatus, setPaypalStatus] = useState<{ connected: boolean; env: string; clientId: string | null } | null>(
+    null
+  );
+  const refreshPaypalStatus = () => {
+    setPaypalStatus(null);
+    paymentsApi
+      .getPaypalStatus()
+      .then((s) => setPaypalStatus({ connected: s.connected, env: s.env, clientId: s.clientId }))
+      .catch(() => setPaypalStatus({ connected: false, env: 'unknown', clientId: null }));
+  };
+  useEffect(() => {
+    refreshPaypalStatus();
+  }, []);
 
   // ── Referral attribution (#InviteToPay) ──
   // Priority: router state (from ReferralEventSection) → ?ref= URL → pending localStorage.
@@ -45,15 +59,11 @@ export const CheckoutPage: React.FC = () => {
     return captureRefFromUrl() ?? peekPendingReferral()?.code ?? null;
   });
 
-  // Visa / Card input form states
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
-  const [cardHolder, setCardHolder] = useState('');
-  const [cardError, setCardError] = useState('');
+  // Card input form states — REMOVED: payment details are entered on PayPal's
+  // hosted page, never on our servers.
 
   // Generate deterministic order id (will be replaced by server response)
-  const orderId = useRef(`AIPRO-${Math.floor(10000 + Math.random() * 90000)}`).current;
+  const orderId = useRef(`AGTLAB-${Math.floor(10000 + Math.random() * 90000)}`).current;
 
   // Determine if we're using cart mode or single-product mode
   const isCartMode = items.length > 0;
@@ -76,12 +86,14 @@ export const CheckoutPage: React.FC = () => {
     });
   }, [orderId, activeConfig, totalAmountUSD, isCartMode, items.length]);
 
-  // Guard: no cart items and no DB-backed configuration → nothing to checkout
+  // Guard: no cart items and no DB-backed configuration → nothing to checkout.
+  // Wait for the catalog fetch to settle first — activeConfig is derived from
+  // the loaded products (?plan= param), so bouncing early races the fetch.
   useEffect(() => {
-    if (!isCartMode && !activeConfig) {
+    if (!isLoadingProducts && !isCartMode && !activeConfig) {
       navigate('/', { replace: true });
     }
-  }, [isCartMode, activeConfig, navigate]);
+  }, [isLoadingProducts, isCartMode, activeConfig, navigate]);
 
   // 10-Minute Countdown Timer based on wall-clock delta
   useEffect(() => {
@@ -101,143 +113,183 @@ export const CheckoutPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [orderId]);
 
-  // Format card number with spaces (#### #### #### ####)
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 16);
-    const formatted = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-    setCardNumber(formatted);
-    if (cardError) setCardError('');
-  };
-
-  // Format expiry (MM/YY)
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-    if (value.length >= 2) {
-      setCardExpiry(`${value.slice(0, 2)}/${value.slice(2)}`);
-    } else {
-      setCardExpiry(value);
-    }
-  };
-
-  // Detect card type (Visa starts with 4, Mastercard starts with 5)
-  const detectedCardType = cardNumber.startsWith('4')
-    ? 'visa'
-    : cardNumber.startsWith('5')
-    ? 'mastercard'
-    : 'unknown';
-
-  // Process PayPal / Visa payment — calls real API to create order
-  const handleExecutePayment = async (methodType: 'card_visa' | 'paypal_wallet' | 'paypal_credit') => {
+  /**
+   * Create the PENDING order (server reprices from the catalog, so the client
+   * never dictates the amount).
+   */
+  const createPendingOrder = async (): Promise<string> => {
     if (!user || !token) {
       navigate('/login', { state: { from: '/checkout' } });
-      return;
+      throw new Error('Not authenticated');
     }
 
-    setIsProcessing(true);
-    setProcessStage('authorizing');
-    setPaymentError(null);
+    let createdOrderId = orderId;
 
-    trackEvent('payment_initiated', {
-      order_id: orderId,
-      sub_method: methodType,
-      amount_usd: totalAmountUSD,
-    });
+    const createPayload = {
+      planDurationMonths: 1,
+      provisioningType: 'pre_created',
+      targetEmail: undefined as string | undefined,
+      guestEmail: '',
+      quantity: 1,
+      couponCode: couponCode || undefined,
+      referralCode: consumePendingReferral() ?? referralCode ?? undefined,
+    };
+    let productId: string | undefined;
 
-    try {
-      // Stage 1: Authorizing — real round-trip to the backend (replaces fake delay)
-      setProcessStage('authorizing');
-      const health = await fetch(`${import.meta.env.VITE_API_BASE ?? '/api'}/health`).then((r) => r.json());
-      if (health?.postgres !== 'connected') {
-        throw new Error('Gateway tạm thời không sẵn sàng. Vui lòng thử lại.');
-      }
-
-      // Stage 2: Capturing — create real order in DB via API
-      setProcessStage('capturing');
-
-      let createdOrderId = orderId;
-
-      if (isCartMode && items.length > 0) {
-        // Cart mode: create an order for the first item (or handle multi-item)
-        const firstItem = items[0];
-        const result = await ordersApi.create(token, {
-          productId: firstItem.product.id,
-          productName: firstItem.product.name,
-          productSlug: firstItem.product.slug,
-          planDurationMonths: firstItem.duration.months,
-          provisioningType: firstItem.provisioningType,
-          targetEmail: firstItem.targetEmail,
-          guestEmail: user.email,
-          quantity: firstItem.quantity,
-          unitPriceVND: firstItem.unitPriceVND,
-          unitPriceUSD: firstItem.unitPriceUSD,
-          discountVND: discountVND,
-          discountUSD: discountUSD,
-          totalVND: finalTotalVND,
-          totalUSD: finalTotalUSD,
-          currency: 'USD',
-          paymentMethod: methodType === 'card_visa' ? 'paypal_card' : methodType === 'paypal_wallet' ? 'paypal_wallet' : 'paypal_credit',
-          paymentGatewayRef: `PAYPAL-${Date.now()}`,
-          couponCode: couponCode || undefined,
-          referralCode: consumePendingReferral() ?? referralCode ?? undefined,
-        });
-        if (result.data?.orderId) {
-          createdOrderId = result.data.orderId;
-        }
-        clearCart();
-      } else if (activeConfig) {
-        // Single product mode (activeConfig — sourced from DB catalog)
-        const result = await ordersApi.create(token, {
-          productId: activeConfig.product.id,
-          productName: activeConfig.product.name,
-          productSlug: activeConfig.product.slug,
-          planDurationMonths: activeConfig.duration.months,
-          provisioningType: activeConfig.provisioningType,
-          targetEmail: activeConfig.targetEmail,
-          guestEmail: activeConfig.guestEmail || user.email,
-          quantity: 1,
-          unitPriceVND: activeConfig.duration.monthlyEquivalentVND * activeConfig.duration.months,
-          unitPriceUSD: activeConfig.duration.monthlyEquivalentUSD * activeConfig.duration.months,
-          discountVND: 0,
-          discountUSD: 0,
-          totalVND: totalAmountVND,
-          totalUSD: totalAmountUSD,
-          currency: 'USD',
-          paymentMethod: methodType === 'card_visa' ? 'paypal_card' : methodType === 'paypal_wallet' ? 'paypal_wallet' : 'paypal_credit',
-          paymentGatewayRef: `PAYPAL-${Date.now()}`,
-          referralCode: consumePendingReferral() ?? referralCode ?? undefined,
-        });
-        if (result.data?.orderId) {
-          createdOrderId = result.data.orderId;
-        }
-      }
-
-      setProcessStage('completed');
-      setPaymentSuccess(true);
-
-      trackEvent('purchase', {
-        transaction_id: createdOrderId,
-        referral_code: referralCode ?? undefined,
-        value: totalAmountUSD,
-        currency: 'USD',
-        payment_method: 'paypal',
-        card_type: methodType === 'card_visa' ? detectedCardType : 'paypal_balance',
-        items: isCartMode
-          ? items.map((i) => ({ item_id: i.product.slug, item_name: i.product.name, quantity: i.quantity }))
-          : [{ item_id: activeConfig?.product.slug ?? '', item_name: activeConfig?.product.name ?? '', quantity: 1 }],
-      });
-
-      setTimeout(() => {
-        navigate(`/order/success/${createdOrderId}`);
-      }, 1200);
-
-    } catch (err: any) {
-      console.error('[Checkout] Payment/Order creation failed:', err);
-      setIsProcessing(false);
-      setProcessStage('idle');
-      setPaymentError(err.message || 'Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ hỗ trợ.');
+    if (isCartMode && items.length > 0) {
+      const firstItem = items[0];
+      productId = firstItem.product.id;
+      createPayload.planDurationMonths = firstItem.duration.months;
+      createPayload.provisioningType = firstItem.provisioningType;
+      createPayload.targetEmail = firstItem.targetEmail || undefined;
+      createPayload.guestEmail = user.email;
+      createPayload.quantity = firstItem.quantity;
+    } else if (activeConfig) {
+      productId = activeConfig.product.id;
+      createPayload.planDurationMonths = activeConfig.duration.months;
+      createPayload.provisioningType = activeConfig.provisioningType;
+      createPayload.targetEmail = activeConfig.targetEmail || undefined;
+      createPayload.guestEmail = activeConfig.guestEmail || user.email;
+      createPayload.quantity = 1;
     }
+
+    if (!productId) {
+      throw new Error('No product available to check out.');
+    }
+
+    const result = await ordersApi.create(token, { productId, ...createPayload });
+    if (result.data?.orderId) {
+      createdOrderId = result.data.orderId;
+    }
+    return createdOrderId;
   };
 
+  /**
+   * PayPal & Card flow (PayPal JS SDK):
+   *   The SDK renders two buttons — PayPal wallet and Debit/Credit Card.
+   *   createOrder creates the pending order + PayPal Order server-side
+   *   (amount always from the order row); onApprove captures server-side.
+   *   Card details never touch our servers — they are entered in PayPal's
+   *   hosted popup (PCI scope stays with PayPal).
+   */
+  const paypalButtonsHostRef = useRef<HTMLDivElement | null>(null);
+  const [sdkReady, setSdkReady] = useState(false);
+  const [sdk, setSdk] = useState<any>(null);
+  const lastPendingOrderIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!sdkReady) return;
+    const w = window as any;
+    if (w.paypal?.Buttons) setSdk(w.paypal);
+  }, [sdkReady]);
+
+  // Load the PayPal JS SDK once PayPal is verified as available.
+  useEffect(() => {
+    if (!paypalStatus?.connected || !paypalStatus.clientId) return;
+    const id = 'paypal-js-sdk';
+    if (document.getElementById(id)) {
+      setSdkReady(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = id;
+    script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(
+      paypalStatus.clientId
+    )}&currency=USD&intent=capture&components=buttons&enable-funding=card&disable-funding=credit,venmo,paylater`;
+    script.async = true;
+    script.onload = () => setSdkReady(true);
+    script.onerror = () => setPaymentError('Unable to load the PayPal payment module. Please retest or pay later.');
+    document.body.appendChild(script);
+  }, [paypalStatus]);
+
+  // Render the PayPal + Card buttons once the SDK is loaded and the checkout
+  // panel is visible (it is replaced by the processing overlay while paying).
+  useEffect(() => {
+    if (!sdkReady || isProcessing || !sdk || !paypalButtonsHostRef.current) return;
+    if (paypalButtonsHostRef.current.childElementCount > 0) return;
+
+    sdk
+      .Buttons({
+        style: { layout: 'vertical', label: 'paypal', height: 45 },
+        createOrder: async (): Promise<string> => {
+          if (!token) {
+            navigate('/login', { state: { from: '/checkout' } });
+            throw new Error('Please sign in to continue.');
+          }
+          trackEvent('payment_initiated', {
+            order_id: orderId,
+            gateway: 'paypal',
+            amount_usd: totalAmountUSD,
+          });
+          const health = await fetch(`${API_BASE_URL}/health`).then((r) => r.json());
+          if (health?.postgres !== 'connected') {
+            throw new Error('The system is temporarily unavailable. Please try again.');
+          }
+          const pendingOrderId = await createPendingOrder();
+          trackEvent('begin_paypal_checkout', { order_id: pendingOrderId, amount_usd: totalAmountUSD });
+          const pp = await paymentsApi.createPaypalOrder(token, pendingOrderId);
+          lastPendingOrderIdRef.current = pendingOrderId;
+          return pp.paypalOrderId;
+        },
+        onApprove: async (data: { orderID: string }) => {
+          if (!token) throw new Error('Session expired — please sign in again.');
+          setProcessStage('capturing');
+          await paymentsApi.capturePaypalOrder(token, data.orderID);
+          setProcessStage('completed');
+          setPaymentSuccess(true);
+          clearCart();
+          trackEvent('paypal_payment_captured', { order_id: lastPendingOrderIdRef.current });
+          setTimeout(() => navigate(`/order/success/${lastPendingOrderIdRef.current}`), 1200);
+        },
+        onError: (err: unknown) => {
+          console.error('[Checkout] PayPal SDK error:', err);
+          setIsProcessing(false);
+          setProcessStage('idle');
+          setPaymentError('PayPal payment failed. Please try again or contact support.');
+        },
+        onCancel: () => {
+          setPaymentError('PayPal payment was canceled. Your order is still reserved — you can try again.');
+        },
+      })
+      .render(paypalButtonsHostRef.current)
+      .catch((err: unknown) => {
+        console.error('[Checkout] PayPal button render failed:', err);
+        setPaymentError('Unable to display the PayPal payment buttons. Please retest.');
+      });
+  }, [sdkReady, isProcessing, sdk]);
+
+  // PayPal redirect-back: capture the approved payment, then finish the flow.
+  const paypalReturn = searchParams.get('paypal_return') === '1';
+  const paypalCancel = searchParams.get('paypal_cancel') === '1';
+  const paypalCaptureRef = useRef(false);
+  useEffect(() => {
+    if (paypalCancel) {
+      setPaymentError('PayPal payment was canceled. Your order is still reserved — you can try again.');
+      return;
+    }
+    if (!paypalReturn || !token || paypalCaptureRef.current) return;
+    const paypalOrderId = searchParams.get('token');
+    if (!paypalOrderId) return;
+
+    paypalCaptureRef.current = true;
+    setIsProcessing(true);
+    setProcessStage('capturing');
+    paymentsApi
+      .capturePaypalOrder(token, paypalOrderId)
+      .then(() => {
+        setProcessStage('completed');
+        setPaymentSuccess(true);
+        clearCart();
+        trackEvent('paypal_payment_captured', { order_id: searchParams.get('orderId') });
+        setTimeout(() => navigate(`/order/success/${searchParams.get('orderId')}`), 1200);
+      })
+      .catch((err) => {
+        console.error('[Checkout] PayPal capture failed:', err);
+        setIsProcessing(false);
+        setProcessStage('idle');
+        setPaymentError(err.message || 'PayPal capture failed. Please contact support.');
+      });
+  }, [paypalReturn, paypalCancel, token, searchParams]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -249,13 +301,13 @@ export const CheckoutPage: React.FC = () => {
       {/* SUCCESS OVERLAY (When PayPal confirms payment) */}
       {paymentSuccess && (
         <div className="fixed inset-0 z-50 bg-canvas/90 backdrop-blur-md flex items-center justify-center animate-fadeIn">
-          <div className="text-center p-8 rounded-2xl bg-surface border border-status-success/40 shadow-[0_0_50px_rgba(16,185,129,0.3)] max-w-md mx-4 animate-scaleUp">
+          <div className="text-center p-8 rounded-2xl bg-surface border border-status-success/40 shadow-[0_0_50px_rgba(16,185,129,0.15)] max-w-md mx-4 animate-scaleUp">
             <div className="w-16 h-16 rounded-full bg-status-success/20 text-status-success mx-auto mb-4 flex items-center justify-center">
               <Check className="w-10 h-10 stroke-[3]" />
             </div>
-            <h2 className="text-2xl font-extrabold text-text-primary">THANH TOÁN THÀNH CÔNG!</h2>
+            <h2 className="text-2xl font-extrabold text-text-primary">PAYMENT SUCCESSFUL!</h2>
             <p className="text-xs text-text-secondary mt-2">
-              PayPal đã xác nhận giao dịch an toàn. Đang tự động chuyển tiếp đến License Vault...
+              PayPal has confirmed the secure transaction. Automatically redirecting to your License Vault...
             </p>
             <div className="w-full h-1.5 bg-canvas rounded-full mt-6 overflow-hidden">
               <div className="h-full bg-status-success animate-[pulse_1s_infinite] w-full" />
@@ -266,16 +318,16 @@ export const CheckoutPage: React.FC = () => {
 
       {/* 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* LEFT COLUMN: 7 Cols (PayPal & Visa Gateway) */}
+        {/* LEFT COLUMN: 7 Cols (PayPal Gateway) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Referral Attribution Banner (#InviteToPay) */}
           {referralCode && (
             <div className="p-4 rounded-xl bg-accent-cyan/5 border border-accent-cyan/30 flex items-center gap-2.5">
               <Sparkles className="w-4 h-4 text-accent-cyan shrink-0" />
               <p className="text-xs text-text-secondary">
-                Đơn hàng này được quy kết cho lời mời{' '}
-                <span className="font-mono font-bold text-accent-cyan">{referralCode}</span> — người gửi lời mời
-                sẽ tự động nhận quà sau khi thanh toán hợp lệ (FAB).
+                This order is attributed to the invitation{' '}
+                <span className="font-mono font-bold text-accent-cyan">{referralCode}</span> — the inviter
+                will automatically receive their reward after a valid payment (FAB).
               </p>
             </div>
           )}
@@ -287,9 +339,9 @@ export const CheckoutPage: React.FC = () => {
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-xs text-text-muted block">Tài khoản &amp; bản quyền sẽ gửi về:</span>
+                <span className="text-xs text-text-muted block">Account &amp; license will be delivered to:</span>
                 <span className="text-xs font-semibold text-text-primary font-mono">
-                  {activeConfig?.guestEmail || 'Khách vãng lai (Chưa nhập mail)'}
+                  {activeConfig?.guestEmail || 'Guest (no email provided)'}
                 </span>
               </div>
             </div>
@@ -297,151 +349,81 @@ export const CheckoutPage: React.FC = () => {
               onClick={() => navigate(-1)}
               className="text-xs text-primary-blue hover:underline font-medium cursor-pointer"
             >
-              Đổi email
+              Change email
             </button>
           </div>
 
           {/* MAIN DEDICATED PAYPAL CHECKOUT CARD */}
           <div className="p-6 rounded-2xl bg-surface border border-border-subtle shadow-card-hover space-y-6">
-            {/* Header: PayPal Logo + Supported Card Brands */}
+            {/* Header: PayPal Branding */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border-subtle">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-[#003087]/15 border border-[#003087]/30 flex items-center justify-center">
-                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.79.79 0 0 1 .78-.663h6.732c4.12 0 6.643 2.052 6.136 5.864-.47 3.528-2.977 5.564-6.536 5.564H9.55l-1.428 6.074a.8.8 0 0 1-.787.662l-.259.11z"
-                      fill="#003087"
-                    />
-                    <path
-                      d="M8.706 8.922h4.522c2.476 0 4.093 1.258 3.75 3.84-.36 2.705-2.28 4.266-5.008 4.266H8.72a.64.64 0 0 1-.632-.534L7.076 21.337h2.868l1.042-6.61a.64.64 0 0 1 .632-.535h2.368c3.559 0 6.066-2.036 6.536-5.564.507-3.812-2.016-5.864-6.136-5.864H7.654a.79.79 0 0 0-.78.663L4.944 20.597a.641.641 0 0 0 .633.74h1.5l1.629-10.35a2.06 2.06 0 0 1 2.06-1.745l-.06.68z"
-                      fill="#0079C1"
-                    />
+                <div className="p-2.5 rounded-xl bg-[#FFC439]/20 border border-[#FFC439]/40 flex items-center justify-center">
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.773-4.471z" />
                   </svg>
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
-                    <span>Thanh Toán PayPal</span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#FFC439]/20 text-[#FFC439] border border-[#FFC439]/40 font-bold">
-                      Hỗ Trợ Visa &amp; Mastercard
+                    <span>PayPal Payment</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#FFC439]/20 text-[#003087] border border-[#FFC439]/40 font-bold">
+                      Secure Checkout
                     </span>
                   </h2>
                   <p className="text-xs text-text-muted mt-0.5">
-                    Cổng thanh toán quốc tế bảo mật hàng đầu thế giới
+                    Secure international payment gateway — payment is approved directly on PayPal's page
                   </p>
                 </div>
               </div>
 
-              {/* Supported Card Badges */}
+              {/* Accepted badges */}
               <div className="flex items-center gap-1.5 self-start sm:self-auto bg-canvas px-3 py-1.5 rounded-xl border border-border-subtle">
-                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider mr-1">Chấp nhận:</span>
-                {/* VISA badge */}
-                <span className="px-2 py-0.5 rounded bg-blue-600/20 text-blue-400 font-extrabold text-[11px] font-mono border border-blue-500/30">
+                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider mr-1">Accepted:</span>
+                <span className="px-2 py-0.5 rounded bg-[#003087]/10 text-[#003087] font-extrabold text-[11px] font-mono border border-[#003087]/30">
+                  PAYPAL
+                </span>
+                <span className="px-2 py-0.5 rounded bg-blue-600/20 text-blue-700 font-extrabold text-[11px] font-mono border border-blue-500/30">
                   VISA
                 </span>
-                {/* Mastercard badge */}
-                <span className="px-2 py-0.5 rounded bg-orange-600/20 text-orange-400 font-extrabold text-[11px] font-mono border border-orange-500/30">
+                <span className="px-2 py-0.5 rounded bg-orange-600/20 text-orange-700 font-extrabold text-[11px] font-mono border border-orange-500/30">
                   MC
-                </span>
-                {/* AMEX badge */}
-                <span className="px-2 py-0.5 rounded bg-cyan-600/20 text-cyan-400 font-extrabold text-[11px] font-mono border border-cyan-500/30">
-                  AMEX
                 </span>
               </div>
             </div>
 
-            {/* Price Conversion Banner */}
+            {/* Price Banner */}
             <div className="p-4 rounded-xl bg-canvas border border-border-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <span className="text-xs text-text-muted block">Số tiền thanh toán qua PayPal:</span>
+                <span className="text-xs text-text-muted block">Amount charged via PayPal:</span>
                 <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="text-2xl font-extrabold font-mono text-[#FFC439]">
+                  <span className="text-2xl font-extrabold font-mono text-[#003087]">
                     ${totalAmountUSD.toFixed(2)} USD
                   </span>
-
                 </div>
               </div>
               <div className="text-[11px] text-text-muted space-y-0.5 text-left sm:text-right">
                 <div className="flex items-center gap-1 sm:justify-end text-status-success font-medium">
                   <Shield className="w-3.5 h-3.5" />
-                  <span>Miễn phí giao dịch &amp; bảo hiểm 180 ngày</span>
+                  <span>No transaction fees &amp; 1-to-1 exchange warranty</span>
                 </div>
                 <div>Billing currency: US Dollars (USD)</div>
               </div>
             </div>
 
-            {/* Method Sub-Tabs inside PayPal */}
-            <div className="space-y-3">
-              <label className="text-xs font-semibold text-text-secondary block uppercase tracking-wider">
-                Chọn hình thức thanh toán thuận tiện:
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                {/* Option 1: Visa / Mastercard via PayPal */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentSubMethod('card_visa')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer ${
-                    paymentSubMethod === 'card_visa'
-                      ? 'bg-elevated border-primary-blue shadow-[0_0_15px_rgba(0,102,255,0.25)]'
-                      : 'bg-canvas/60 border-border-subtle hover:border-border-focus'
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5 text-blue-400" />
-                  <span className="text-xs font-bold text-text-primary">Thẻ Visa / MC</span>
-                  <span className="text-[10px] text-status-success font-medium">Không cần acc PayPal</span>
-                </button>
-
-                {/* Option 2: PayPal Account Balance */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentSubMethod('paypal_wallet')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer ${
-                    paymentSubMethod === 'paypal_wallet'
-                      ? 'bg-elevated border-[#FFC439] shadow-[0_0_15px_rgba(255,196,57,0.25)]'
-                      : 'bg-canvas/60 border-border-subtle hover:border-border-focus'
-                  }`}
-                >
-                  <span className="text-sm font-extrabold text-[#FFC439] italic">PayPal</span>
-                  <span className="text-xs font-bold text-text-primary">Tài Khoản PayPal</span>
-                  <span className="text-[10px] text-text-muted">1-Click Đăng nhập</span>
-                </button>
-
-                {/* Option 3: PayPal Pay Later */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentSubMethod('paypal_credit')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer ${
-                    paymentSubMethod === 'paypal_credit'
-                      ? 'bg-elevated border-[#0079C1] shadow-[0_0_15px_rgba(0,121,193,0.25)]'
-                      : 'bg-canvas/60 border-border-subtle hover:border-border-focus'
-                  }`}
-                >
-                  <span className="text-xs font-bold text-[#0079C1] italic">Pay Later</span>
-                  <span className="text-xs font-bold text-text-primary">Trả Góp 4 Kỳ</span>
-                  <span className="text-[10px] text-[#FFC439] font-medium">0% Lãi suất</span>
-                </button>
-              </div>
-            </div>
-
             {/* PROGRESS LOADING OVERLAY (During Payment) */}
             {isProcessing ? (
-              <div className="p-6 rounded-2xl bg-canvas border border-[#FFC439]/40 space-y-4 text-center animate-fadeIn">
-                <div className="flex items-center justify-center gap-2 text-[#FFC439]">
+              <div className="p-6 rounded-2xl bg-canvas border border-[#003087]/40 space-y-4 text-center animate-fadeIn">
+                <div className="flex items-center justify-center gap-2 text-[#003087]">
                   <Loader2 className="w-6 h-6 animate-spin" />
                   <span className="text-sm font-bold">
-                    {processStage === 'authorizing' &&
-                      (paymentSubMethod === 'card_visa'
-                        ? 'Đang kết nối cổng thanh toán an toàn PayPal Card Gateway...'
-                        : 'Đang kết nối bảo mật với tài khoản PayPal...')}
-                    {processStage === 'capturing' &&
-                      (paymentSubMethod === 'card_visa'
-                        ? 'Đang xác thực bảo mật thẻ Visa / Mastercard 3D-Secure...'
-                        : 'Đang xác thực trừ tiền ví PayPal...')}
-                    {processStage === 'completed' && 'Thanh toán thành công! Đang tự động cấp bản quyền...'}
+                    {processStage === 'authorizing' && 'Connecting to the AgentLab system...'}
+                    {processStage === 'capturing' && 'Redirecting to PayPal to approve your payment...'}
+                    {processStage === 'completed' && 'Payment successful! Provisioning your license...'}
                   </span>
                 </div>
                 <div className="w-full bg-surface h-2 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-[#FFC439] to-status-success transition-all duration-700"
+                    className="h-full bg-gradient-to-r from-[#003087] to-status-success transition-all duration-700"
                     style={{
                       width:
                         processStage === 'authorizing'
@@ -453,176 +435,82 @@ export const CheckoutPage: React.FC = () => {
                   />
                 </div>
                 <p className="text-[11px] text-text-muted">
-                  Vui lòng không đóng trình duyệt hoặc tải lại trang trong khi hệ thống mã hóa giao dịch.
+                  Please do not close your browser while the system initializes the transaction.
                 </p>
               </div>
             ) : (
-              <div>
-                {/* SUB-PANEL 1: VISA / MASTERCARD VIA PAYPAL GUEST CHECKOUT */}
-                {paymentSubMethod === 'card_visa' && (
-                  <div className="space-y-4 p-5 rounded-2xl bg-canvas border border-border-subtle animate-fadeIn">
-                    <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
-                      <div className="flex items-center gap-2 text-xs font-semibold text-text-primary">
-                        <CreditCard className="w-4 h-4 text-primary-blue" />
-                        <span>Nhập thông tin thẻ Visa / Mastercard</span>
-                      </div>
-                      <span className="text-[11px] text-text-muted flex items-center gap-1">
-                        <Lock className="w-3 h-3 text-status-success" />
-                        Bảo mật PCI-DSS bởi PayPal
-                      </span>
-                    </div>
+              <div className="space-y-4 p-5 rounded-2xl bg-canvas border border-border-subtle animate-fadeIn">
+                <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-text-primary">
+                    <CreditCard className="w-4 h-4 text-[#003087]" />
+                    <span>Pay securely with PayPal</span>
+                  </div>
+                  <span className="text-[11px] text-text-muted flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-status-success" />
+                    Buyer Protection by PayPal
+                  </span>
+                </div>
 
-                    <div className="space-y-3">
-                      {/* Card Number Input */}
-                      <div>
-                        <label className="text-[11px] font-semibold text-text-muted block mb-1">
-                          Số thẻ Visa / Mastercard
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={cardNumber}
-                            onChange={handleCardNumberChange}
-                            placeholder="4242 •••• •••• 4242"
-                            className="w-full pl-3.5 pr-20 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue tracking-wider"
-                          />
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                            {detectedCardType === 'visa' && (
-                              <span className="px-1.5 py-0.5 rounded bg-blue-600/30 text-blue-400 font-extrabold text-[10px] font-mono">
-                                VISA
-                              </span>
-                            )}
-                            {detectedCardType === 'mastercard' && (
-                              <span className="px-1.5 py-0.5 rounded bg-orange-600/30 text-orange-400 font-extrabold text-[10px] font-mono">
-                                MC
-                              </span>
-                            )}
-                            {detectedCardType === 'unknown' && (
-                              <span className="text-[10px] text-text-muted font-mono">VISA / MC</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Click the button below — you will be redirected to PayPal's secure page to approve the
+                  payment (PayPal balance or your linked Visa/Mastercard). After a successful payment,
+                  your account is delivered automatically.
+                </p>
 
-                      {/* Expiry and CVV Row */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-[11px] font-semibold text-text-muted block mb-1">
-                            Hạn dùng (MM/YY)
-                          </label>
-                          <input
-                            type="text"
-                            value={cardExpiry}
-                            onChange={handleExpiryChange}
-                            placeholder="MM / YY"
-                            className="w-full px-3.5 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue text-center"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-semibold text-text-muted block mb-1">
-                            Mã bảo mật CVV
-                          </label>
-                          <input
-                            type="password"
-                            value={cardCvv}
-                            onChange={(e) => setCardCvv(e.target.value.slice(0, 4))}
-                            placeholder="•••"
-                            maxLength={4}
-                            className="w-full px-3.5 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue text-center tracking-widest"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Cardholder Name */}
-                      <div>
-                        <label className="text-[11px] font-semibold text-text-muted block mb-1">
-                          Tên in trên thẻ (Không dấu)
-                        </label>
-                        <input
-                          type="text"
-                          value={cardHolder}
-                          onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                          placeholder="NGUYEN VAN A"
-                          className="w-full px-3.5 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue uppercase"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Pay with Visa Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleExecutePayment('card_visa')}
-                      className="w-full mt-2 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-primary-blue to-[#0079C1] hover:brightness-110 active:scale-[0.99] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-blue/25 transition-all cursor-pointer"
-                    >
-                      <Lock className="w-4 h-4" />
-                      <span>Thanh toán ${totalAmountUSD.toFixed(2)} USD bằng thẻ Visa / Mastercard</span>
-                      <ArrowRight className="w-4 h-4 ml-1" />
-                    </button>
-
-                    <p className="text-[11px] text-text-muted text-center">
-                      * Nhấn thanh toán để tự động điền thẻ test và mô phỏng giao dịch qua cổng an toàn PayPal.
-                    </p>
+                {paymentError && (
+                  <div className="p-3 rounded-xl bg-status-error/10 border border-status-error/30 text-xs text-status-error font-medium">
+                    {paymentError}
                   </div>
                 )}
 
-                {/* SUB-PANEL 2: PAYPAL WALLET ACCOUNT */}
-                {paymentSubMethod === 'paypal_wallet' && (
-                  <div className="space-y-4 p-5 rounded-2xl bg-canvas border border-[#FFC439]/30 text-center animate-fadeIn">
-                    <p className="text-xs text-text-secondary max-w-sm mx-auto">
-                      Đăng nhập an toàn vào ví PayPal của bạn để thanh toán bằng số dư hoặc tài khoản ngân hàng liên kết.
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() => handleExecutePayment('paypal_wallet')}
-                      className="w-full max-w-md mx-auto h-12 rounded-xl bg-[#FFC439] hover:bg-[#F2BA36] active:scale-[0.99] text-[#003087] font-bold text-sm flex items-center justify-center gap-2.5 shadow-[0_4px_14px_rgba(255,196,57,0.35)] transition-all cursor-pointer"
-                    >
-                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.79.79 0 0 1 .78-.663h6.732c4.12 0 6.643 2.052 6.136 5.864-.47 3.528-2.977 5.564-6.536 5.564H9.55l-1.428 6.074a.8.8 0 0 1-.787.662l-.259.11z"
-                          fill="#003087"
-                        />
-                        <path
-                          d="M8.706 8.922h4.522c2.476 0 4.093 1.258 3.75 3.84-.36 2.705-2.28 4.266-5.008 4.266H8.72a.64.64 0 0 1-.632-.534L7.076 21.337h2.868l1.042-6.61a.64.64 0 0 1 .632-.535h2.368c3.559 0 6.066-2.036 6.536-5.564.507-3.812-2.016-5.864-6.136-5.864H7.654a.79.79 0 0 0-.78.663L4.944 20.597a.641.641 0 0 0 .633.74h1.5l1.629-10.35a2.06 2.06 0 0 1 2.06-1.745l-.06.68z"
-                          fill="#0079C1"
-                        />
-                      </svg>
-                      <span className="italic font-extrabold tracking-tight text-base">PayPal</span>
-                      <span className="font-semibold text-xs text-[#003087]">
-                        - Trả ngay ${totalAmountUSD.toFixed(2)} USD
+                {/* PayPal pre-payment status check */}
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-canvas border border-border-subtle">
+                  <div className="flex items-center gap-2 text-[11px] font-semibold">
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        paypalStatus === null
+                          ? 'bg-status-warning animate-pulse'
+                          : paypalStatus.connected
+                          ? 'bg-status-success'
+                          : 'bg-status-error'
+                      }`}
+                    />
+                    {paypalStatus === null ? (
+                      <span className="text-text-muted">Checking PayPal availability…</span>
+                    ) : paypalStatus.connected ? (
+                      <span className="text-status-success">
+                        PayPal is available ({paypalStatus.env}) — verified just now
                       </span>
-                    </button>
-
-                    <div className="flex items-center justify-center gap-2 text-[11px] text-text-muted">
-                      <Lock className="w-3.5 h-3.5 text-status-success" />
-                      <span>Được bảo vệ bởi PayPal Buyer Protection 180 ngày</span>
-                    </div>
+                    ) : (
+                      <span className="text-status-error">PayPal is temporarily unavailable — please try again later or contact support</span>
+                    )}
                   </div>
-                )}
+                  <button
+                    type="button"
+                    onClick={refreshPaypalStatus}
+                    className="text-[10px] font-bold text-primary-blue hover:underline cursor-pointer shrink-0"
+                  >
+                    Retest
+                  </button>
+                </div>
 
-                {/* SUB-PANEL 3: PAYPAL PAY LATER */}
-                {paymentSubMethod === 'paypal_credit' && (
-                  <div className="space-y-4 p-5 rounded-2xl bg-canvas border border-[#0079C1]/30 text-center animate-fadeIn">
-                    <p className="text-xs text-text-secondary max-w-sm mx-auto">
-                      Chia nhỏ đơn hàng thành 4 kỳ thanh toán linh hoạt mỗi 2 tuần một lần, hoàn toàn không phát sinh lãi suất.
+                {/* PayPal SDK buttons: PayPal wallet + Debit/Credit Card */}
+                {paypalStatus !== null && !paypalStatus.connected ? (
+                  <p className="text-[11px] text-status-error text-center py-2">
+                    * PayPal is unavailable right now — please try again later (use the Retest button above).
+                  </p>
+                ) : (
+                  <div>
+                    <div ref={paypalButtonsHostRef} className="min-h-[110px]" />
+                    {!sdkReady && (
+                      <p className="text-[11px] text-text-muted text-center py-3">
+                        Loading secure PayPal &amp; card payment buttons…
+                      </p>
+                    )}
+                    <p className="text-[11px] text-text-muted text-center mt-2">
+                      * Pay with your PayPal balance or a Debit/Credit card (Visa, Mastercard, AMEX) — both are
+                      processed on PayPal's secure hosted page.
                     </p>
-
-                    <div className="p-3 bg-surface rounded-xl border border-border-subtle max-w-md mx-auto flex items-center justify-between text-xs font-mono">
-                      <span className="text-text-muted">Kỳ 1 (Thanh toán hôm nay):</span>
-                      <span className="font-bold text-accent-cyan">${(totalAmountUSD / 4).toFixed(2)} USD</span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleExecutePayment('paypal_credit')}
-                      className="w-full max-w-md mx-auto h-12 rounded-xl bg-[#003087] hover:bg-[#002266] active:scale-[0.99] text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
-                    >
-                      <span className="text-[#FFC439] font-bold italic text-sm">Pay</span>
-                      <span className="text-white font-bold italic text-sm">Later</span>
-                      <span className="text-gray-200">
-                        - Trả góp ${(totalAmountUSD / 4).toFixed(2)} USD / kỳ (0% Lãi)
-                      </span>
-                    </button>
                   </div>
                 )}
               </div>
@@ -631,13 +519,13 @@ export const CheckoutPage: React.FC = () => {
             {/* Trust Badges */}
             <div className="pt-4 border-t border-border-subtle/80 flex flex-wrap items-center justify-center gap-5 text-[11px] text-text-muted">
               <span className="flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-status-success" /> Mã hóa SSL 256-bit chuẩn PCI
+                <Lock className="w-3.5 h-3.5 text-status-success" /> 256-bit SSL encryption, PCI compliant
               </span>
               <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#FFC439]" /> PayPal Buyer Protection 180 ngày
+                <ShieldCheck className="w-3.5 h-3.5 text-[#003087]" /> PayPal Buyer Protection
               </span>
               <span className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-accent-cyan" /> Kích hoạt bản quyền tức thì &lt; 30s
+                <Sparkles className="w-3.5 h-3.5 text-accent-cyan" /> Instant license activation &lt; 30s
               </span>
             </div>
           </div>
@@ -651,7 +539,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="flex items-center justify-between text-xs font-semibold mb-2">
                 <span className="flex items-center gap-1.5 text-text-secondary">
                   <Clock className="w-4 h-4 text-status-warning" />
-                  Thời gian giữ slot tài khoản:
+                  Account slot reservation time:
                 </span>
                 <span className="font-mono text-base font-bold text-status-warning">
                   {timerString}
@@ -669,36 +557,36 @@ export const CheckoutPage: React.FC = () => {
             {/* Order Details */}
             <div className="py-4 space-y-3 text-xs border-b border-border-subtle/60">
               <div className="flex justify-between font-medium">
-                <span className="text-text-secondary">Mã đơn hàng:</span>
+                <span className="text-text-secondary">Order ID:</span>
                 <span className="font-mono font-bold text-text-primary">{orderId}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Sản phẩm:</span>
+                <span className="text-text-secondary">Product:</span>
                 <span className="font-semibold text-text-primary">
                   {activeConfig?.product.name ?? '—'} ({activeConfig?.duration.label ?? '—'})
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Cổng thanh toán:</span>
-                <span className="font-semibold text-[#FFC439] flex items-center gap-1">
-                  <span>PayPal (Visa/MC)</span>
+                <span className="text-text-secondary">Payment gateway:</span>
+                <span className="font-semibold text-[#003087] flex items-center gap-1">
+                  <span>PayPal (Visa/MC via PayPal)</span>
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Loại bàn giao:</span>
+                <span className="text-text-secondary">Delivery type:</span>
                 <span className="text-text-primary">
-                  {activeConfig?.provisioningType === 'invite_email' ? 'Nâng chính chủ' : 'Cấp sẵn độc quyền'}
+                  {activeConfig?.provisioningType === 'invite_email' ? 'Owner upgrade' : 'Dedicated pre-created'}
                 </span>
               </div>
               <div className="flex justify-between text-text-muted">
-                <span>Bàn giao SLA:</span>
-                <span className="text-status-success font-semibold">&lt; 30 giây</span>
+                <span>Delivery SLA:</span>
+                <span className="text-status-success font-semibold">&lt; 30 seconds</span>
               </div>
             </div>
 
             {/* Total */}
             <div className="py-4 flex items-baseline justify-between">
-              <span className="text-xs text-text-muted">Tổng thanh toán:</span>
+              <span className="text-xs text-text-muted">Total due:</span>
               <div className="text-right">
                 <span className="text-2xl font-extrabold font-mono text-[#FFC439] block">
                   ${totalAmountUSD.toFixed(2)} USD
@@ -710,14 +598,14 @@ export const CheckoutPage: React.FC = () => {
             {/* CSKH Escalation */}
             <div className="pt-4 border-t border-border-subtle/60 text-center">
               <p className="text-[11px] text-text-muted mb-2">
-                Cần hỗ trợ thanh toán hoặc thắc mắc về PayPal &amp; Thẻ Visa?
+                Need help with payment or questions about PayPal &amp; international cards?
               </p>
               <button
                 type="button"
                 onClick={() => openTelegramSupport(orderId, { totalAmountVND, totalAmountUSD })}
                 className="text-xs text-primary-blue hover:underline font-semibold cursor-pointer"
               >
-                [Báo Kỹ Thuật Viên Telegram 24/7]
+                [Talk to a Telegram Support Engineer 24/7]
               </button>
             </div>
           </div>

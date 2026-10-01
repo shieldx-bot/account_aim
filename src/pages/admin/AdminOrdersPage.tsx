@@ -38,7 +38,7 @@ interface AdminOrderRow {
 
 const formatDateTime = (iso: string) => {
   const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso : d.toLocaleString('vi-VN');
+  return isNaN(d.getTime()) ? iso : d.toLocaleString('en-US');
 };
 
 export const AdminOrdersPage: React.FC = () => {
@@ -66,7 +66,7 @@ export const AdminOrdersPage: React.FC = () => {
       setOrders(ordersRes.data || []);
       setStats(statsRes);
     } catch (err: any) {
-      setError(err.message || 'Không thể tải đơn hàng từ database.');
+      setError(err.message || 'Unable to load orders from the database.');
     } finally {
       setLoading(false);
     }
@@ -103,11 +103,11 @@ export const AdminOrdersPage: React.FC = () => {
     if (!token) return;
     setUpdatingId(orderId);
     try {
-      await adminApi.updateOrderStatus(token, orderId, 'dispatched', 'Admin duyệt khớp lệnh thủ công');
+      await adminApi.updateOrderStatus(token, orderId, 'dispatched', 'Admin approved via manual order matching');
       setOrders((prev) => prev.map((o) => (o.orderId === orderId ? { ...o, status: 'dispatched' } : o)));
       setSelectedOrder((prev) => (prev && prev.orderId === orderId ? { ...prev, status: 'dispatched' } : prev));
     } catch (err: any) {
-      alert(err.message || 'Không thể cập nhật đơn hàng. Vui lòng thử lại.');
+      alert(err.message || 'Unable to update the order. Please try again.');
     } finally {
       setUpdatingId(null);
     }
@@ -115,7 +115,7 @@ export const AdminOrdersPage: React.FC = () => {
 
   // Export CSV (from live DB data)
   const handleExportCSV = () => {
-    const headers = 'ID,Thời Gian,Email,Sản Phẩm,Kỳ Hạn,Số Tiền,Cổng,Trạng Thái\n';
+    const headers = 'ID,Time,Email,Product,Term,Amount,Gateway,Status\n';
     const rows = filteredOrders
       .map(
         (o) =>
@@ -147,7 +147,7 @@ export const AdminOrdersPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-extrabold text-text-primary mt-1 flex items-center gap-2.5">
             <Terminal className="w-6 h-6 text-accent-cyan" />
-            Quản Lý Đơn Hàng &amp; Đối Soát Webhook
+            Orders &amp; Webhook Reconciliation
           </h1>
         </div>
 
@@ -156,7 +156,7 @@ export const AdminOrdersPage: React.FC = () => {
             type="button"
             onClick={fetchOrders}
             className="p-2 rounded-lg bg-surface border border-border-subtle text-text-muted hover:text-text-primary"
-            title="Tải lại dữ liệu từ Database"
+            title="Reload data from database"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -164,20 +164,20 @@ export const AdminOrdersPage: React.FC = () => {
             to="/admin/inventory"
             className="px-3 py-1.5 rounded-lg bg-surface border border-border-subtle text-xs font-medium text-text-secondary hover:text-text-primary"
           >
-            Quản Lý Kho Tài Khoản
+            Account Inventory
           </Link>
           <Link
             to="/admin/warranty"
             className="px-3 py-1.5 rounded-lg bg-surface border border-border-subtle text-xs font-medium text-text-secondary hover:text-text-primary"
           >
-            Giám Sát SLA &amp; Bảo Hành
+            SLA &amp; Warranty Monitoring
           </Link>
 
           <button
             type="button"
             onClick={() => setMaskPrivacy(!maskPrivacy)}
             className="p-2 rounded-lg bg-surface border border-border-subtle text-text-muted hover:text-text-primary"
-            title="Ẩn/Hiện dữ liệu nhạy cảm"
+            title="Show/hide sensitive data"
           >
             {maskPrivacy ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
@@ -188,7 +188,7 @@ export const AdminOrdersPage: React.FC = () => {
             className="px-3 py-2 rounded-xl bg-surface hover:bg-elevated border border-border-subtle text-xs font-semibold text-text-primary flex items-center gap-1.5"
           >
             <Download className="w-3.5 h-3.5 text-accent-cyan" />
-            <span>Xuất CSV</span>
+            <span>Export CSV</span>
           </button>
         </div>
       </div>
@@ -196,43 +196,43 @@ export const AdminOrdersPage: React.FC = () => {
       {/* Error banner */}
       {error && (
         <div className="p-4 rounded-xl bg-status-error/10 border border-status-error/30 text-status-error text-xs font-semibold mb-6">
-          ⚠️ {error} — kiểm tra kết nối backend PostgreSQL.
+          ⚠️ {error} — check the PostgreSQL backend connection.
         </div>
       )}
 
       {/* KPI METRIC CARDS ROW (live from /api/admin/stats) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
         <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
-          <span className="text-xs text-text-muted font-medium">Doanh Thu Hôm Nay</span>
+          <span className="text-xs text-text-muted font-medium">Revenue Today</span>
           <div className="text-2xl font-extrabold font-mono text-text-primary mt-1">
             {stats ? `$${(stats.revenueToday / 25000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '…'}
           </div>
-          <span className="text-[11px] text-text-muted mt-1 inline-block">Đơn paid/dispatched trong ngày</span>
+          <span className="text-[11px] text-text-muted mt-1 inline-block">Paid/dispatched orders today</span>
         </div>
 
         <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
-          <span className="text-xs text-text-muted font-medium">Đơn Chờ Xử Lý / Cần Duyệt</span>
+          <span className="text-xs text-text-muted font-medium">Pending / Needs Approval</span>
           <div className="text-2xl font-extrabold font-mono text-status-warning mt-1">
-            {orders.filter(isMismatch).length} Đơn
+            {orders.filter(isMismatch).length} Orders
           </div>
-          <span className="text-[11px] text-status-warning mt-1 inline-block">Cần admin xác nhận khớp lệnh</span>
+          <span className="text-[11px] text-status-warning mt-1 inline-block">Awaiting admin order matching</span>
         </div>
 
         <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
-          <span className="text-xs text-text-muted font-medium">Tổng Đơn Đang Chờ Tiền</span>
+          <span className="text-xs text-text-muted font-medium">Total Orders Awaiting Payment</span>
           <div className="text-2xl font-extrabold font-mono text-text-primary mt-1">
-            {stats ? `${stats.ordersPending} Đơn` : '…'}
+            {stats ? `${stats.ordersPending} Orders` : '…'}
           </div>
-          <span className="text-[11px] text-text-muted mt-1 inline-block">Trạng thái pending trong DB</span>
+          <span className="text-[11px] text-text-muted mt-1 inline-block">Pending status in the DB</span>
         </div>
 
         <div className="p-5 rounded-2xl bg-surface border border-border-subtle">
-          <span className="text-xs text-text-muted font-medium">Nguồn Dữ Liệu</span>
+          <span className="text-xs text-text-muted font-medium">Data Source</span>
           <div className="flex items-center gap-2 text-sm font-bold text-status-success mt-2">
             <span className="w-2.5 h-2.5 rounded-full bg-status-success animate-pulse inline-block"></span>
             <span>PostgreSQL Live</span>
           </div>
-          <span className="text-[11px] text-text-muted mt-1 inline-block">{orders.length} đơn đã tải gần nhất</span>
+          <span className="text-[11px] text-text-muted mt-1 inline-block">{orders.length} orders loaded last fetch</span>
         </div>
       </div>
 
@@ -245,16 +245,16 @@ export const AdminOrdersPage: React.FC = () => {
               statusFilter === 'all' ? 'bg-primary-blue text-white' : 'text-text-muted hover:text-text-primary'
             }`}
           >
-            Tất Cả ({orders.length})
+            All ({orders.length})
           </button>
           <button
             onClick={() => setStatusFilter('mismatch')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-colors ${
-              statusFilter === 'mismatch' ? 'bg-status-warning text-black font-bold' : 'text-status-warning hover:bg-status-warning/10'
+              statusFilter === 'mismatch' ? 'bg-status-warning text-white font-bold' : 'text-status-warning hover:bg-status-warning/10'
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
-            <span>Cần Xử Lý ({orders.filter(isMismatch).length})</span>
+            <span>Needs Action ({orders.filter(isMismatch).length})</span>
           </button>
           <button
             onClick={() => setStatusFilter('dispatched')}
@@ -262,7 +262,7 @@ export const AdminOrdersPage: React.FC = () => {
               statusFilter === 'dispatched' ? 'bg-status-success/20 text-status-success' : 'text-text-muted hover:text-text-primary'
             }`}
           >
-            Đã Bàn Giao
+            Dispatched
           </button>
           <button
             onClick={() => setStatusFilter('pending')}
@@ -270,7 +270,7 @@ export const AdminOrdersPage: React.FC = () => {
               statusFilter === 'pending' ? 'bg-canvas text-text-primary border border-border-subtle' : 'text-text-muted hover:text-text-primary'
             }`}
           >
-            Đang Chờ Chuyển Tiền
+            Awaiting Transfer
           </button>
         </div>
 
@@ -281,7 +281,7 @@ export const AdminOrdersPage: React.FC = () => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo Mã đơn, Email, Sản phẩm..."
+            placeholder="Search by Order ID, Email, Product..."
             className="w-full h-9 pl-9 pr-3 rounded-lg bg-canvas border border-border-subtle text-xs text-text-primary focus:border-border-focus focus:outline-none"
           />
         </div>
@@ -293,14 +293,14 @@ export const AdminOrdersPage: React.FC = () => {
           <table className="w-full text-left text-xs text-text-secondary">
             <thead className="bg-canvas/80 text-[11px] font-semibold text-text-muted uppercase border-b border-border-subtle">
               <tr>
-                <th className="p-4">Mã Đơn</th>
-                <th className="p-4">Thời Gian</th>
-                <th className="p-4">Khách Hàng (Email)</th>
-                <th className="p-4">Gói Bản Quyền</th>
-                <th className="p-4">Cổng</th>
-                <th className="p-4">Số Tiền</th>
-                <th className="p-4">Trạng Thái</th>
-                <th className="p-4 text-right">Thao Tác</th>
+                <th className="p-4">Order ID</th>
+                <th className="p-4">Time</th>
+                <th className="p-4">Customer (Email)</th>
+                <th className="p-4">License Plan</th>
+                <th className="p-4">Gateway</th>
+                <th className="p-4">Amount</th>
+                <th className="p-4">Status</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle/50">
@@ -308,13 +308,13 @@ export const AdminOrdersPage: React.FC = () => {
                 <tr>
                   <td colSpan={8} className="p-10 text-center text-text-muted">
                     <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-                    Đang tải đơn hàng từ database...
+                    Loading orders from the database...
                   </td>
                 </tr>
               ) : filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="p-10 text-center text-text-muted">
-                    Không có đơn hàng nào khớp bộ lọc.
+                    No orders match the current filters.
                   </td>
                 </tr>
               ) : (
@@ -335,7 +335,7 @@ export const AdminOrdersPage: React.FC = () => {
                       </td>
                       <td className="p-4">
                         <span className="font-semibold text-text-primary">{order.productName}</span>{' '}
-                        <span className="text-text-muted">({order.planDurationMonths} Tháng)</span>
+                        <span className="text-text-muted">({order.planDurationMonths} Months)</span>
                       </td>
                       <td className="p-4">
                         <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-canvas border border-border-subtle">
@@ -348,22 +348,22 @@ export const AdminOrdersPage: React.FC = () => {
                       <td className="p-4">
                         {order.status === 'dispatched' && (
                           <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-status-success/15 text-status-success border border-status-success/30 flex items-center gap-1 w-fit">
-                            <CheckCircle2 className="w-3 h-3" /> Đã giao
+                            <CheckCircle2 className="w-3 h-3" /> Delivered
                           </span>
                         )}
                         {order.status === 'paid' && (
-                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-status-warning text-black flex items-center gap-1 w-fit">
-                            <AlertTriangle className="w-3 h-3" /> Đã thu, chờ giao
+                          <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-status-warning text-white flex items-center gap-1 w-fit">
+                            <AlertTriangle className="w-3 h-3" /> Paid, awaiting delivery
                           </span>
                         )}
                         {order.status === 'pending' && (
                           <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-canvas text-text-muted border border-border-subtle flex items-center gap-1 w-fit">
-                            <Clock className="w-3 h-3" /> Chờ chuyển
+                            <Clock className="w-3 h-3" /> Awaiting transfer
                           </span>
                         )}
                         {(order.status === 'cancelled' || order.status === 'refunded') && (
                           <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-status-error/10 text-status-error border border-status-error/30 flex items-center gap-1 w-fit">
-                            {order.status === 'cancelled' ? 'Đã hủy' : 'Hoàn tiền'}
+                            {order.status === 'cancelled' ? 'Cancelled' : 'Refunded'}
                           </span>
                         )}
                       </td>
@@ -379,14 +379,14 @@ export const AdminOrdersPage: React.FC = () => {
                             className="px-2.5 py-1 rounded bg-primary-blue hover:bg-primary-hover disabled:opacity-50 text-white text-[11px] font-bold inline-flex items-center gap-1"
                           >
                             {updatingId === order.orderId && <Loader2 className="w-3 h-3 animate-spin" />}
-                            Khớp lệnh ngay
+                            Match & dispatch now
                           </button>
                         ) : (
                           <button
                             type="button"
                             className="text-text-muted hover:text-text-primary text-[11px] underline"
                           >
-                            Chi tiết
+                            Details
                           </button>
                         )}
                       </td>
@@ -405,14 +405,14 @@ export const AdminOrdersPage: React.FC = () => {
           <div className="w-full max-w-lg bg-surface border-l border-border-subtle p-6 h-full overflow-y-auto shadow-2xl space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-border-subtle">
               <div>
-                <span className="text-xs font-mono text-accent-cyan block">Chi Tiết Đơn Hàng</span>
+                <span className="text-xs font-mono text-accent-cyan block">Order Details</span>
                 <h3 className="text-xl font-bold text-text-primary break-all">{selectedOrder.orderId}</h3>
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="p-1.5 rounded-lg bg-canvas border border-border-subtle text-text-muted hover:text-text-primary text-xs"
               >
-                Đóng ✕
+                Close ✕
               </button>
             </div>
 
@@ -421,10 +421,10 @@ export const AdminOrdersPage: React.FC = () => {
               <div className="p-4 rounded-xl bg-status-warning/10 border border-status-warning/30 space-y-3">
                 <div className="flex items-center gap-2 text-status-warning text-xs font-bold">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>Chờ Duyệt Khớp Lệnh / Bàn Giao</span>
+                  <span>Awaiting Match Approval / Delivery</span>
                 </div>
                 <p className="text-xs text-text-secondary leading-relaxed">
-                  Thanh toán đã ghi nhận trong database nhưng chưa bàn giao. Bấm duyệt để trích tài khoản từ kho giao ngay cho khách.
+                  Payment has been recorded in the database but not yet delivered. Approve to pull an account from inventory and deliver it to the customer immediately.
                 </p>
                 <button
                   type="button"
@@ -433,7 +433,7 @@ export const AdminOrdersPage: React.FC = () => {
                   className="w-full h-10 rounded-xl bg-primary-blue hover:bg-primary-hover disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5"
                 >
                   <Zap className="w-3.5 h-3.5" />
-                  <span>⚡ Khớp lệnh thủ công &amp; Bàn giao ngay</span>
+                  <span>⚡ Manual match &amp; dispatch now</span>
                 </button>
               </div>
             )}
@@ -441,24 +441,24 @@ export const AdminOrdersPage: React.FC = () => {
             {/* Payload Details */}
             <div className="space-y-3 text-xs">
               <div className="p-3 rounded-lg bg-canvas border border-border-subtle">
-                <span className="text-text-muted block text-[11px]">Email nhận hàng:</span>
+                <span className="text-text-muted block text-[11px]">Delivery email:</span>
                 <span className="font-mono text-text-primary">{selectedOrder.targetEmail || selectedOrder.guestEmail || selectedOrder.userEmail || '—'}</span>
               </div>
 
               <div className="p-3 rounded-lg bg-canvas border border-border-subtle">
-                <span className="text-text-muted block text-[11px]">Sản phẩm &amp; kỳ hạn:</span>
+                <span className="text-text-muted block text-[11px]">Product &amp; term:</span>
                 <span className="font-mono text-accent-cyan font-bold">
-                  {selectedOrder.productName} — {selectedOrder.planDurationMonths} tháng — ${(selectedOrder.totalVND / 25000).toFixed(2)}
+                  {selectedOrder.productName} — {selectedOrder.planDurationMonths} months — ${(selectedOrder.totalVND / 25000).toFixed(2)}
                 </span>
               </div>
 
               <div className="p-3 rounded-lg bg-canvas border border-border-subtle">
-                <span className="text-text-muted block text-[11px]">Mã tham chiếu thanh toán:</span>
-                <span className="font-mono text-text-primary">{selectedOrder.paymentGatewayRef || 'Chưa có'}</span>
+                <span className="text-text-muted block text-[11px]">Payment reference:</span>
+                <span className="font-mono text-text-primary">{selectedOrder.paymentGatewayRef || 'None'}</span>
               </div>
 
               <div className="p-3 rounded-lg bg-canvas border border-border-subtle">
-                <span className="text-text-muted block text-[11px]">Thời gian tạo đơn:</span>
+                <span className="text-text-muted block text-[11px]">Order created at:</span>
                 <span className="font-mono text-text-primary">{formatDateTime(selectedOrder.createdAt)}</span>
               </div>
             </div>
@@ -469,14 +469,14 @@ export const AdminOrdersPage: React.FC = () => {
                 className="flex-1 h-10 rounded-xl bg-canvas hover:bg-elevated border border-border-subtle text-xs font-semibold text-text-primary flex items-center justify-center gap-1.5"
               >
                 <ArrowUpRight className="w-3.5 h-3.5" />
-                <span>Mở Trang Bàn Giao</span>
+                <span>Open Delivery Page</span>
               </Link>
               <a
                 href={`mailto:${selectedOrder.guestEmail || selectedOrder.userEmail || ''}`}
                 className="flex-1 h-10 rounded-xl bg-canvas hover:bg-elevated border border-border-subtle text-xs font-semibold text-text-primary flex items-center justify-center gap-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Gửi Email License</span>
+                <span>Send License Email</span>
               </a>
             </div>
           </div>

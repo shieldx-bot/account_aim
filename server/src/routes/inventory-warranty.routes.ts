@@ -15,7 +15,7 @@ export const inventoryAdminRouter = Router();
 export const warrantyAdminRouter = Router();
 export const warrantyPublicRouter = Router();
 
-// ─────────── Admin: Inventory (Kho tài khoản) ───────────
+// ─────────── Admin: Inventory (Account Warehouse) ───────────
 
 /**
  * GET /api/admin/inventory?pool=active|buffer&status=available
@@ -31,7 +31,7 @@ inventoryAdminRouter.post('/bulk', authenticateToken, requireAdmin, bulkImportIn
 
 /**
  * PATCH /api/admin/inventory/:id/pool
- * Toggle account between Kho bán (active) and Kho dự phòng (buffer)
+ * Toggle account between the Sales pool (active) and Buffer pool (buffer)
  */
 inventoryAdminRouter.patch('/:id/pool', authenticateToken, requireAdmin, moveInventoryPool);
 
@@ -40,7 +40,7 @@ inventoryAdminRouter.patch('/:id/pool', authenticateToken, requireAdmin, moveInv
  */
 inventoryAdminRouter.delete('/:id', authenticateToken, requireAdmin, deleteInventoryAccount);
 
-// ─────────── Admin: Warranty (Khiếu nại bảo hành SLA) ───────────
+// ─────────── Admin: Warranty (SLA Warranty Claims) ───────────
 
 /**
  * GET /api/admin/warranty?status=agent_pending

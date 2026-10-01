@@ -1,12 +1,12 @@
 -- =====================================================================
 -- Migration 002: Production tables (Inventory accounts & Warranty tickets)
--- Chuyển dữ liệu quản lý dạng mock/dev sang lưu trữ tập trung PostgreSQL
+-- Move mock/dev-era management data into centralized PostgreSQL storage
 -- =====================================================================
 
--- Kho tài khoản AI (Inventory Pool)
+-- AI account warehouse (inventory pool)
 CREATE TABLE IF NOT EXISTS inventory_accounts (
     id VARCHAR(60) PRIMARY KEY,                     -- e.g. ACC-1712345678901
-    tool VARCHAR(255) NOT NULL,                     -- Tên công cụ (Cursor Pro, Claude Pro...)
+    tool VARCHAR(255) NOT NULL,                     -- Tool name (Cursor Pro, Claude Pro...)
     product_id VARCHAR(100) REFERENCES products(id) ON DELETE SET NULL,
     email VARCHAR(255) NOT NULL,
     password TEXT NOT NULL,
@@ -21,7 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_inventory_pool ON inventory_accounts(pool);
 CREATE INDEX IF NOT EXISTS idx_inventory_status ON inventory_accounts(status);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_email ON inventory_accounts(email);
 
--- Khiếu nại bảo hành (Warranty / Dispute Tickets)
+-- Warranty / dispute tickets
 CREATE TABLE IF NOT EXISTS warranty_tickets (
     id VARCHAR(60) PRIMARY KEY,                     -- e.g. DISP-1712345678901
     order_id VARCHAR(50) REFERENCES orders(id) ON DELETE SET NULL,

@@ -54,17 +54,17 @@ const STATUS_COLORS = {
 };
 
 const STATUS_LABELS = {
-  operational: 'Hoạt động bình thường',
-  degraded_performance: 'Hiệu suất giảm',
-  partial_outage: 'Gián đoạn một phần',
-  major_outage: 'Sự cố nghiêm trọng',
+  operational: 'Operational',
+  degraded_performance: 'Degraded performance',
+  partial_outage: 'Partial outage',
+  major_outage: 'Major outage',
 };
 
 const CATEGORY_CONFIG = {
-  ai_providers: { label: 'Nhà cung cấp AI', icon: Cpu, color: 'text-primary-blue', bg: 'bg-primary-blue/10', image: 'https://images.unsplash.com/photo-1677442136019-21780ecbd995?w=120&h=80&fit=crop' },
-  payment_gateways: { label: 'Cổng thanh toán', icon: Globe, color: 'text-accent-cyan', bg: 'bg-accent-cyan/10', image: 'https://images.unsplash.com/photo-1556742049-0cf9d78d7b8a?w=120&h=80&fit=crop' },
-  fulfillment_bot: { label: 'Hệ thống tự động hóa', icon: Zap, color: 'text-status-success', bg: 'bg-status-success/10', image: 'https://images.unsplash.com/photo-1485827404663-1c2c9a5e5c4e?w=120&h=80&fit=crop' },
-  core_infrastructure: { label: 'Cơ sở hạ tầng', icon: Server, color: 'text-status-warning', bg: 'bg-status-warning/10', image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=120&h=80&fit=crop' },
+  ai_providers: { label: 'AgentLabviders', icon: Cpu, color: 'text-primary-blue', bg: 'bg-primary-blue/10', image: 'https://images.unsplash.com/photo-1677442136019-21780ecbd995?w=120&h=80&fit=crop' },
+  payment_gateways: { label: 'Payment Gateways', icon: Globe, color: 'text-accent-cyan', bg: 'bg-accent-cyan/10', image: 'https://images.unsplash.com/photo-1556742049-0cf9d78d7b8a?w=120&h=80&fit=crop' },
+  fulfillment_bot: { label: 'Automation Systems', icon: Zap, color: 'text-status-success', bg: 'bg-status-success/10', image: 'https://images.unsplash.com/photo-1485827404663-1c2c9a5e5c4e?w=120&h=80&fit=crop' },
+  core_infrastructure: { label: 'Core Infrastructure', icon: Server, color: 'text-status-warning', bg: 'bg-status-warning/10', image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=120&h=80&fit=crop' },
 };
 
 export const StatusPage: React.FC = () => {
@@ -89,7 +89,7 @@ export const StatusPage: React.FC = () => {
       setStatusData(data);
       setLastUpdated(new Date());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tải dữ liệu trạng thái');
+      setError(err instanceof Error ? err.message : 'Failed to load status data');
     } finally {
       setLoading(false);
     }
@@ -172,7 +172,7 @@ export const StatusPage: React.FC = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <Loader2 className="w-12 h-12 text-primary-blue animate-spin mx-auto mb-4" />
-            <p className="text-text-secondary">Đang tải trạng thái hệ thống...</p>
+            <p className="text-text-secondary">Loading system status...</p>
           </div>
         </div>
       </div>
@@ -185,13 +185,13 @@ export const StatusPage: React.FC = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-status-error mx-auto mb-4" />
-            <p className="text-status-error font-medium mb-2">Không thể tải dữ liệu</p>
+            <p className="text-status-error font-medium mb-2">Failed to load data</p>
             <p className="text-text-secondary mb-4">{error}</p>
             <button
               onClick={handleRefresh}
               className="px-4 py-2 rounded-xl bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors"
             >
-              Thử lại
+              Try again
             </button>
           </div>
         </div>
@@ -207,10 +207,10 @@ export const StatusPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-extrabold text-text-primary tracking-tight flex items-center gap-3">
               <Shield className="w-8 h-8 text-primary-blue" />
-              Trạng Thái Hệ Thống AIPro
+              AgentLab System Status
             </h1>
             <p className="text-sm text-text-secondary mt-1">
-              Theo dõi hiệu suất, uptime và sự cố thời gian thực cho tất cả dịch vụ AIPro.dev
+              Real-time performance, uptime and incident monitoring for all AgentLab services
             </p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
@@ -242,7 +242,7 @@ export const StatusPage: React.FC = () => {
               className="px-4 py-2 rounded-xl bg-surface border border-border-subtle text-sm font-medium text-text-primary hover:bg-canvas hover:border-primary-blue/50 transition-colors flex items-center gap-2"
             >
               <RefreshCw className="w-4 h-4" />
-              Làm mới
+              Refresh
             </button>
           </div>
         </div>
@@ -259,26 +259,26 @@ export const StatusPage: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary">
-                  {overallStatus === 'operational' && 'Toàn Bộ Hệ Thống Đang Hoạt Động Bình Thường'}
-                  {overallStatus === 'degraded_performance' && 'Hệ Thống Đang Gặp Hiệu Suất Giảm'}
-                  {overallStatus === 'partial_outage' && 'Hệ Thống Đang Gặp Gián Đoạn Một Phần'}
-                  {overallStatus === 'major_outage' && 'Hệ Thống Đang Gặp Sự Cố Nghiêm Trọng'}
+                  {overallStatus === 'operational' && 'All Systems Operational'}
+                  {overallStatus === 'degraded_performance' && 'System Experiencing Degraded Performance'}
+                  {overallStatus === 'partial_outage' && 'System Experiencing a Partial Outage'}
+                  {overallStatus === 'major_outage' && 'System Experiencing a Major Outage'}
                 </h2>
                 <p className="text-sm text-text-secondary mt-0.5">
                   {overallStatus === 'operational'
-                    ? 'Tất cả dịch vụ hoạt động bình thường. Không có sự cố nào được báo cáo.'
-                    : 'Một số dịch vụ đang gặp sự cố. Vui lòng xem chi tiết bên dưới.'}
+                    ? 'All services are running normally. No incidents reported.'
+                    : 'Some services are experiencing issues. See details below.'}
                 </p>
               </div>
             </div>
             <div className="flex flex-col sm:items-end gap-2 text-right sm:flex-shrink-0">
               <div className="flex items-center gap-2 text-xs text-text-muted">
                 <Activity className="w-3.5 h-3.5" />
-                <span>Cập nhật: <span className="font-mono text-text-primary">{lastUpdated.toLocaleString('vi-VN')}</span></span>
+                <span>Updated: <span className="font-mono text-text-primary">{lastUpdated.toLocaleString('en-US')}</span></span>
               </div>
               <div className="flex items-center gap-2 text-xs text-text-muted">
                 <Clock className="w-3.5 h-3.5" />
-                <span>Uptime 90 ngày: <strong className="font-mono text-status-success">{statusData?.overall?.uptimePercent?.toFixed(2)}%</strong></span>
+                <span>90-day uptime: <strong className="font-mono text-status-success">{statusData?.overall?.uptimePercent?.toFixed(2)}%</strong></span>
               </div>
             </div>
           </div>
@@ -290,7 +290,7 @@ export const StatusPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h3 className="font-semibold text-text-primary flex items-center gap-2">
             <Bell className="w-5 h-5" />
-            Đăng Ký Nhận Thông Báo Sự Cố
+            Subscribe to Incident Notifications
           </h3>
           <div className="flex flex-wrap items-center gap-3">
             <button onClick={() => setShowSubscribeModal(true)} className="px-3 py-2 rounded-xl bg-primary-blue/10 border border-primary-blue/20 text-primary-blue text-sm font-medium hover:bg-primary-blue/20 transition-colors flex items-center gap-2">
@@ -319,7 +319,7 @@ export const StatusPage: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
           <input
             type="text"
-            placeholder="Tìm kiếm dịch vụ..."
+            placeholder="Search services..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-border-subtle text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue transition-colors"
@@ -337,7 +337,7 @@ export const StatusPage: React.FC = () => {
                   : 'bg-surface border border-border-subtle text-text-secondary hover:bg-canvas'
               }`}
             >
-              {filter === 'all' ? 'Tất cả' : STATUS_LABELS[filter as keyof typeof STATUS_LABELS]}
+              {filter === 'all' ? 'All' : STATUS_LABELS[filter as keyof typeof STATUS_LABELS]}
             </button>
           ))}
         </div>
@@ -347,8 +347,8 @@ export const StatusPage: React.FC = () => {
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-6">
           <Monitor className="w-6 h-6 text-primary-blue" />
-          <h2 className="text-xl font-bold text-text-primary">Trạng Thái Thành Phần Dịch Vụ</h2>
-          <span className="text-sm text-text-muted">({Object.values(filteredComponents).flat().length} thành phần)</span>
+          <h2 className="text-xl font-bold text-text-primary">Service Component Status</h2>
+          <span className="text-sm text-text-muted">({Object.values(filteredComponents).flat().length} components)</span>
         </div>
 
         <div className="space-y-6">
@@ -366,7 +366,7 @@ export const StatusPage: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-text-primary">{config.label}</h3>
-                      <p className="text-xs text-text-muted">{services.length} thành phần</p>
+                      <p className="text-xs text-text-muted">{services.length} components</p>
                     </div>
                   </div>
                 </div>
@@ -378,7 +378,7 @@ export const StatusPage: React.FC = () => {
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-sm text-text-primary truncate">{svc.name}</h4>
                           <div className="flex flex-wrap items-center gap-3 text-xs text-text-muted mt-1.5">
-                            <span className="font-mono text-status-success font-medium">{svc.uptimePercent.toFixed(2)}% uptime (90 ngày)</span>
+                            <span className="font-mono text-status-success font-medium">{svc.uptimePercent.toFixed(2)}% uptime (90 days)</span>
                             {svc.latency_ms && (
                               <span className="flex items-center gap-1">
                                 <Activity className="w-3 h-3" />
@@ -413,14 +413,14 @@ export const StatusPage: React.FC = () => {
       <section className="mb-8">
         <h2 className="text-xl font-bold text-text-primary flex items-center gap-2 mb-6">
           <Activity className="w-6 h-6" />
-          Lịch Sử Sự Cố (90 Ngày Qua)
+          Incident History (Last 90 Days)
         </h2>
         <div className="space-y-4">
           {statusData?.incidents?.length === 0 ? (
             <div className="p-8 text-center text-text-muted rounded-2xl bg-surface border border-border-subtle">
               <CheckCircle2 className="w-12 h-12 mx-auto text-status-success/50 mb-3" />
-              <p className="font-medium">Không có sự cố nào trong 90 ngày qua</p>
-              <p className="text-sm mt-1">Tất cả dịch vụ hoạt động ổn định</p>
+              <p className="font-medium">No incidents in the last 90 days</p>
+              <p className="text-sm mt-1">All services are running stably</p>
             </div>
           ) : (
             statusData?.incidents?.map((incident: any) => {
@@ -439,14 +439,14 @@ export const StatusPage: React.FC = () => {
                       <div>
                         <h4 className="font-semibold text-text-primary">{incident.title}</h4>
                         <div className="flex items-center gap-3 text-xs text-text-muted mt-0.5">
-                          <span className="font-mono">{new Date(incident.started_at).toLocaleString('vi-VN')}</span>
+                          <span className="font-mono">{new Date(incident.started_at).toLocaleString('en-US')}</span>
                           <span>•</span>
-                          <span className="font-mono">{new Date(incident.resolved_at).toLocaleString('vi-VN')}</span>
+                          <span className="font-mono">{new Date(incident.resolved_at).toLocaleString('en-US')}</span>
                           <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${incident.impact === 'minor' ? 'bg-status-warning/10 text-status-warning' : 'bg-status-error/10 text-status-error'}`}>
-                            {incident.impact === 'minor' ? 'Tác động nhỏ' : 'Tác động lớn'}
+                            {incident.impact === 'minor' ? 'Minor impact' : 'Major impact'}
                           </span>
                           <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-status-success/10 text-status-success">
-                            {incident.status === 'resolved' ? 'Đã giải quyết' : incident.status}
+                            {incident.status === 'resolved' ? 'Resolved' : incident.status}
                           </span>
                         </div>
                       </div>
@@ -470,7 +470,7 @@ export const StatusPage: React.FC = () => {
                             </div>
                             <div className="flex-1 pb-4">
                               <div className="flex items-center gap-2 text-xs mb-1">
-                                <span className="font-mono text-text-muted">{new Date(update.created_at).toLocaleString('vi-VN')}</span>
+                                <span className="font-mono text-text-muted">{new Date(update.created_at).toLocaleString('en-US')}</span>
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary-blue/10 text-primary-blue">
                                   {update.status}
                                 </span>
@@ -493,13 +493,13 @@ export const StatusPage: React.FC = () => {
       <section className="mb-8">
         <h2 className="text-xl font-bold text-text-primary flex items-center gap-2 mb-6">
           <Calendar className="w-6 h-6" />
-          Bảo Trì Dự Kiến
+          Scheduled Maintenance
         </h2>
         <div className="space-y-4">
           {statusData?.maintenance?.length === 0 ? (
             <div className="p-8 text-center text-text-muted rounded-2xl bg-surface border border-border-subtle">
               <Calendar className="w-12 h-12 mx-auto text-primary-blue/50 mb-3" />
-              <p className="font-medium">Không có bảo trì nào được lên lịch</p>
+              <p className="font-medium">No maintenance scheduled</p>
             </div>
           ) : (
             statusData?.maintenance?.map((maint: any) => {
@@ -517,11 +517,11 @@ export const StatusPage: React.FC = () => {
                       <div>
                         <h4 className="font-semibold text-text-primary">{maint.title}</h4>
                         <div className="flex items-center gap-3 text-xs text-text-muted mt-0.5">
-                          <span className="font-mono">{new Date(maint.scheduled_for).toLocaleString('vi-VN')}</span>
+                          <span className="font-mono">{new Date(maint.scheduled_for).toLocaleString('en-US')}</span>
                           <span>→</span>
-                          <span className="font-mono">{new Date(maint.scheduled_until).toLocaleString('vi-VN')}</span>
+                          <span className="font-mono">{new Date(maint.scheduled_until).toLocaleString('en-US')}</span>
                           <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-primary-blue/10 text-primary-blue">
-                            {maint.status === 'scheduled' ? 'Đã lên lịch' : maint.status}
+                            {maint.status === 'scheduled' ? 'Scheduled' : maint.status}
                           </span>
                         </div>
                       </div>
@@ -555,41 +555,41 @@ export const StatusPage: React.FC = () => {
           <div>
             <h4 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
               <Info className="w-4 h-4" />
-              Về Trang Trạng Thái Này
+              About This Status Page
             </h4>
             <p className="leading-relaxed">
-              Trang này cung cấp thông tin thời gian thực về trạng thái hoạt động của các dịch vụ AIPro.dev.
-              Dữ liệu được cập nhật tự động mỗi 30 giây qua kết nối real-time. Uptime được tính dựa trên 90 ngày hoạt động gần nhất.
+              This page provides real-time information about the operational status of AgentLab services.
+              Data is refreshed automatically every 30 seconds over a real-time connection. Uptime is calculated based on the last 90 days of operation.
             </p>
           </div>
           <div>
             <h4 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
               <ExternalLinkIcon className="w-4 h-4" />
-              Tài Nguyên Hữu Ích
+              Useful Resources
             </h4>
             <ul className="space-y-1">
-              <li><a href="/docs" className="hover:text-primary-blue transition-colors">Tài liệu API & Hướng Dẫn</a></li>
-              <li><a href="/terms" className="hover:text-primary-blue transition-colors">Điều Khoản Dịch Vụ & SLA</a></li>
+              <li><a href="/docs" className="hover:text-primary-blue transition-colors">API Docs &amp; Guides</a></li>
+              <li><a href="/terms" className="hover:text-primary-blue transition-colors">Terms of Service &amp; SLA</a></li>
               <li><a href="/api/status" target="_blank" rel="noopener" className="hover:text-primary-blue transition-colors">Status API (JSON)</a></li>
-              <li><a href="mailto:support@aipro.dev" className="hover:text-primary-blue transition-colors">Liên Hệ Hỗ Trợ Kỹ Thuật</a></li>
+              <li><a href="mailto:support@agentlab.dev" className="hover:text-primary-blue transition-colors">Contact Technical Support</a></li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold text-text-primary mb-2 flex items-center gap-2">
               <Lock className="w-4 h-4" />
-              Cam Kết AIPro
+              AgentLab Commitments
             </h4>
             <ul className="space-y-1 text-xs">
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-status-success" /> SLA Uptime 99.9%</li>
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-status-success" /> Bảo hành 1-đổi-1 trọn đời</li>
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-status-success" /> Hỗ trợ 24/7 qua Telegram</li>
-              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-status-success" /> Hoàn tiền nếu không giao được</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-status-success" /> 99.9% SLA Uptime</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-status-success" /> Lifetime 1-to-1 exchange warranty</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-status-success" /> 24/7 support via Telegram</li>
+              <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-status-success" /> Money-back if delivery fails</li>
             </ul>
           </div>
         </div>
         <div className="mt-6 pt-6 border-t border-border-subtle text-center text-xs text-text-muted">
-          <p>AIPro.dev - Cung cấp tài khoản AI Premium chính hãng, bảo hành trọn đời, SLA 24/7</p>
-          <p className="mt-1">© 2024 AIPro. All rights reserved.</p>
+          <p>AgentLab - Official premium AI accounts, lifetime warranty, 24/7 SLA</p>
+          <p className="mt-1">© 2024 AgentLab. All rights reserved.</p>
         </div>
       </footer>
     </div>

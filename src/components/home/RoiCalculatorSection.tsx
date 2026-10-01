@@ -35,7 +35,7 @@ export const RoiCalculatorSection: React.FC = () => {
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-              Calculate the Value AI Pro Accounts Bring You
+              Calculate the Value AgentLab Accounts Bring You
             </h2>
             <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
               Based on a real-world survey of over 10,000 developers using Cursor Pro and Claude 3.7 Sonnet to automate unit testing, debugging, and boilerplate code generation.
@@ -94,7 +94,7 @@ export const RoiCalculatorSection: React.FC = () => {
               Estimated Monthly ROI
             </span>
             <div className="flex items-baseline gap-2 mb-6">
-<span className="text-3xl sm:text-4xl font-extrabold text-white font-mono">
+<span className="text-3xl sm:text-4xl font-extrabold text-primary-blue font-mono">
                   +{hoursSavedPerMonth} Hours
                 </span>
                 <span className="text-xs text-text-muted">hours saved/month</span>
@@ -108,7 +108,7 @@ export const RoiCalculatorSection: React.FC = () => {
                 </span>
               </div>
               <div className="flex justify-between items-center">
-<span className="text-text-secondary">AI Pro account cost:</span>
+<span className="text-text-secondary">AgentLab account cost:</span>
                   <span className="text-text-muted line-through">$10/mo</span>
                   <span className="font-bold text-text-primary">$7.47/mo</span>
               </div>
@@ -129,9 +129,9 @@ export const RoiCalculatorSection: React.FC = () => {
 
             <a
               href="#catalog"
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-blue/25 hover:shadow-primary-blue/40 transition-all text-center"
+              className="w-full py-3 px-4 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center justify-center gap-2 shadow-button transition-colors text-center"
             >
-              <span>Xem các gói tài khoản &amp; Nhận ngay trong 30s</span>
+              <span>Browse AI account plans &amp; get instant access in 30s</span>
               <ArrowRight className="w-4 h-4" />
             </a>
           </div>

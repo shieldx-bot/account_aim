@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { useApp } from '@/context/AppContext';
+import { SupportChatWidget } from '@/components/common/SupportChatWidget';
 import { WifiOff, AlertCircle } from 'lucide-react';
 
 export const MainLayout: React.FC = () => {
@@ -36,6 +37,9 @@ export const MainLayout: React.FC = () => {
 
       {/* Footer */}
       <Footer />
+
+      {/* Floating customer-support chat (Grok AI) */}
+      <SupportChatWidget />
     </div>
   );
 };

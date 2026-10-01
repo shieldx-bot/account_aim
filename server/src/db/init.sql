@@ -41,7 +41,7 @@ INSERT INTO users (email, password_hash, name, role, avatar, balance_vnd, balanc
 VALUES (
     'alex.dev@gmail.com',
     '$2a$10$WqB8L.6k9vLwT3v3hZ4Q7eD7e8c3f4e5a6b7c8d9e0f1a2b3c4d5e',
-    'Alex Nguyễn',
+    'Alex Nguyen',
     'member',
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     650000,
@@ -81,7 +81,7 @@ CREATE INDEX IF NOT EXISTS idx_products_is_active ON products(is_active);
 
 -- Orders Table
 CREATE TABLE IF NOT EXISTS orders (
-    id VARCHAR(50) PRIMARY KEY, -- e.g. AIPRO-94820
+    id VARCHAR(50) PRIMARY KEY, -- e.g. AGTLAB-94820
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     guest_email VARCHAR(255) NOT NULL,
     product_id VARCHAR(100) REFERENCES products(id) ON DELETE SET NULL,

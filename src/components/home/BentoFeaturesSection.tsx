@@ -21,7 +21,7 @@ export const BentoFeaturesSection: React.FC = () => {
           <span>Enterprise-Grade Supply Infrastructure</span>
         </div>
         <h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
-          Why Top Engineers Choose AIPro Over Floating Accounts?
+          Why Top Engineers Choose AgentLab Over Floating Accounts?
         </h2>
         <p className="mt-3 text-sm sm:text-base text-text-secondary">
           Automated license distribution architecture eliminates 100% risk of account bans, source code leaks, and workflow disruption.
@@ -49,7 +49,7 @@ export const BentoFeaturesSection: React.FC = () => {
           </div>
 
 <p className="text-xs sm:text-sm text-text-secondary leading-relaxed mb-6 max-w-xl">
-              No hack cards (BIN/CC chùa) or cracked lulled accounts used. All Cursor Pro, Claude and ChatGPT licenses are registered directly via partner enterprise payment gateways with transparent IP and invoicing.
+              No cloned BIN/CC cards or cracked recycled accounts. All Cursor Pro, Claude and ChatGPT licenses are registered directly via partner enterprise payment gateways with transparent IP and invoicing.
             </p>
 
           {/* Interactive Visual Element: Clean Security Terminal */}
@@ -87,8 +87,8 @@ export const BentoFeaturesSection: React.FC = () => {
             MBBank webhook scans transactions every 1.5s. Once payment received, the system auto-grants access and opens the Vault delivery on screen.
           </p>
           <div className="mt-auto pt-4 border-t border-border-subtle flex items-center justify-between font-mono text-[11px] text-text-muted">
-            <span>Latency trung bình:</span>
-            <span className="text-status-success font-bold">14.2 giây</span>
+            <span>Average latency:</span>
+            <span className="text-status-success font-bold">14.2 seconds</span>
           </div>
         </div>
 
@@ -107,7 +107,7 @@ export const BentoFeaturesSection: React.FC = () => {
             No waiting for CSKH on Zalo. If account loses Pro or has password issues, just enter order code and Bot auto-diagnoses and issues new account in 30s.
           </p>
           <div className="mt-auto pt-4 border-t border-border-subtle flex items-center justify-between font-mono text-[11px] text-text-muted">
-            <span>Tỷ lệ tự giải quyết:</span>
+            <span>Self-service resolution rate:</span>
             <span className="text-accent-cyan font-bold">96.8%</span>
           </div>
         </div>
@@ -129,14 +129,14 @@ export const BentoFeaturesSection: React.FC = () => {
           </div>
 
           <p className="text-xs sm:text-sm text-text-secondary leading-relaxed mb-4 max-w-xl">
-            Tự do liên kết tài khoản AI vào email công ty hoặc email cá nhân có sẵn. Bạn không phải dùng chung profile hay lịch sử chat với người khác, bảo vệ trọn vẹn bí mật kinh doanh và source code của dự án.
+            Link your AI accounts freely to your company email or an existing personal email. You never share a profile or chat history with anyone else, fully protecting your trade secrets and your project's source code.
           </p>
 
           {/* Real workspace photography (downloaded locally from Unsplash) */}
           <div className="relative mt-2 mb-4 rounded-2xl overflow-hidden border border-border-subtle group/img">
             <img
               src="/images/bento-workspace.jpg"
-              alt="Góc làm việc của kỹ sư với nhiều màn hình code"
+              alt="Engineer's workstation with multiple code monitors"
               loading="lazy"
               decoding="async"
               className="w-full h-40 sm:h-48 object-cover opacity-80 saturate-[0.75] transition-transform duration-700 ease-out group-hover/img:scale-[1.06]"
@@ -151,15 +151,15 @@ export const BentoFeaturesSection: React.FC = () => {
 
           <div className="grid grid-cols-3 gap-3 font-mono text-xs">
             <div className="p-3 rounded-xl bg-canvas border border-border-subtle text-center">
-              <span className="text-[10px] text-text-muted block">Lịch sử chat</span>
+              <span className="text-[10px] text-text-muted block">Chat history</span>
               <span className="text-status-success font-bold">100% Private</span>
             </div>
             <div className="p-3 rounded-xl bg-canvas border border-border-subtle text-center">
-              <span className="text-[10px] text-text-muted block">Thiết bị hỗ trợ</span>
+              <span className="text-[10px] text-text-muted block">Supported devices</span>
               <span className="text-accent-cyan font-bold">Mac / Win / Linux</span>
             </div>
             <div className="p-3 rounded-xl bg-canvas border border-border-subtle text-center">
-              <span className="text-[10px] text-text-muted block">Chính sách SLA</span>
+              <span className="text-[10px] text-text-muted block">SLA policy</span>
               <span className="text-primary-blue font-bold">99.9% Uptime</span>
             </div>
           </div>

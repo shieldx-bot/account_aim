@@ -19,10 +19,10 @@ import {
 } from 'lucide-react';
 
 const DURATION_OPTIONS: { months: number; label: string; discountPercent: number; isGiftExtraMonth?: boolean }[] = [
-  { months: 1, label: '1 Tháng', discountPercent: 0 },
-  { months: 3, label: '3 Tháng', discountPercent: 15 },
-  { months: 6, label: '6 Tháng', discountPercent: 25 },
-  { months: 12, label: '12 Tháng', discountPercent: 35, isGiftExtraMonth: true },
+  { months: 1, label: '1 Month', discountPercent: 0 },
+  { months: 3, label: '3 Months', discountPercent: 15 },
+  { months: 6, label: '6 Months', discountPercent: 25 },
+  { months: 12, label: '12 Months', discountPercent: 35, isGiftExtraMonth: true },
 ];
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -41,7 +41,7 @@ export const ProductPage: React.FC = () => {
       <div className="w-full max-w-[1200px] mx-auto px-4 py-20 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-text-muted">
           <div className="w-10 h-10 rounded-full border-2 border-border-subtle border-t-accent-cyan animate-spin" />
-          <span className="text-xs font-medium uppercase tracking-wider">Đang tải danh mục từ server...</span>
+          <span className="text-xs font-medium uppercase tracking-wider">Loading catalog from server...</span>
         </div>
       </div>
     );
@@ -52,14 +52,14 @@ export const ProductPage: React.FC = () => {
       <div className="w-full max-w-[1200px] mx-auto px-4 py-20 flex items-center justify-center">
         <div className="p-8 rounded-2xl bg-surface border border-border-subtle text-center max-w-md space-y-4">
           <AlertCircle className="w-10 h-10 mx-auto text-status-warning" />
-          <h1 className="text-lg font-bold text-text-primary">Không tìm thấy sản phẩm</h1>
+          <h1 className="text-lg font-bold text-text-primary">No product found</h1>
           <p className="text-xs text-text-secondary">
             {productsError
-              ? `Không thể tải dữ liệu sản phẩm từ server: ${productsError}. Vui lòng thử lại sau.`
-              : 'Sản phẩm này không tồn tại hoặc đã ngừng kinh doanh.'}
+              ? `Failed to load product data from server: ${productsError}. Please try again later.`
+              : 'This product does not exist or is no longer available.'}
           </p>
           <Link to="/" className="inline-flex items-center gap-1 text-xs font-bold text-accent-cyan hover:underline">
-            <ArrowLeft className="w-3.5 h-3.5" /> Về trang chủ
+            <ArrowLeft className="w-3.5 h-3.5" /> Back to home
           </Link>
         </div>
       </div>
@@ -110,12 +110,12 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
     if (honeypot) return;
 
     if (!isGuestEmailValid) {
-      setGuestEmailError('Vui lòng nhập địa chỉ email hợp lệ để nhận thông tin license');
+      setGuestEmailError('Please enter a valid email address to receive your license info');
       return;
     }
 
     if (provisioningType === 'invite_email' && !EMAIL_REGEX.test(targetEmail.trim())) {
-      setGuestEmailError('Vui lòng nhập email cá nhân cần nâng cấp');
+      setGuestEmailError('Please enter the personal email to upgrade');
       return;
     }
 
@@ -149,7 +149,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
     if (honeypot) return;
 
     if (provisioningType === 'invite_email' && !EMAIL_REGEX.test(targetEmail.trim())) {
-      setGuestEmailError('Vui lòng nhập email cá nhân cần nâng cấp');
+      setGuestEmailError('Please enter the personal email to upgrade');
       return;
     }
 
@@ -175,7 +175,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 text-xs text-text-muted mb-8">
         <Link to="/" className="hover:text-text-primary transition-colors flex items-center gap-1">
-          <ArrowLeft className="w-3.5 h-3.5" /> Trang chủ
+          <ArrowLeft className="w-3.5 h-3.5" /> Home
         </Link>
         <span>/</span>
         <span className="text-text-secondary capitalize">{product.category}</span>
@@ -208,23 +208,23 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-primary-blue text-white flex items-center justify-center text-xs">1</span>
-                Chọn Loại Tài Khoản Bàn Giao
+                Choose Delivery Account Type
               </h2>
-              <span className="text-xs text-text-muted">100% Bảo hành chính hãng</span>
+              <span className="text-xs text-text-muted">100% official warranty</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Option A: Nâng trên email cá nhân */}
+              {/* Option A: Upgrade on personal email */}
               <div
                 onClick={() => setProvisioningType('invite_email')}
                 className={`p-4 rounded-xl border cursor-pointer transition-all ${
                   provisioningType === 'invite_email'
-                    ? 'bg-elevated border-primary-blue shadow-[0_0_15px_rgba(0,102,255,0.2)]'
+                    ? 'bg-elevated border-primary-blue shadow-[0_0_15px_rgba(99,91,255,0.2)]'
                     : 'bg-canvas/50 border-border-subtle hover:border-border-focus'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-text-primary">Nâng Trên Email Cá Nhân</span>
+                  <span className="text-xs font-bold text-text-primary">Upgrade on Personal Email</span>
                   <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                     provisioningType === 'invite_email' ? 'border-primary-blue bg-primary-blue' : 'border-border-subtle'
                   }`}>
@@ -232,21 +232,21 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
                   </div>
                 </div>
                 <p className="text-[11px] text-text-muted leading-relaxed">
-                  Giữ nguyên dữ liệu cũ, không cần đổi tài khoản, bảo mật riêng tư tuyệt đối.
+                  Keep your existing data, no need to switch accounts, complete privacy and security.
                 </p>
               </div>
 
-              {/* Option B: Tài khoản tạo sẵn */}
+              {/* Option B: Pre-created account */}
               <div
                 onClick={() => setProvisioningType('pre_created')}
                 className={`p-4 rounded-xl border cursor-pointer transition-all ${
                   provisioningType === 'pre_created'
-                    ? 'bg-elevated border-primary-blue shadow-[0_0_15px_rgba(0,102,255,0.2)]'
+                    ? 'bg-elevated border-primary-blue shadow-[0_0_15px_rgba(99,91,255,0.2)]'
                     : 'bg-canvas/50 border-border-subtle hover:border-border-focus'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-text-primary">Tài Khoản Cấp Sẵn (10s)</span>
+                  <span className="text-xs font-bold text-text-primary">Pre-Created Account (10s)</span>
                   <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                     provisioningType === 'pre_created' ? 'border-primary-blue bg-primary-blue' : 'border-border-subtle'
                   }`}>
@@ -254,7 +254,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
                   </div>
                 </div>
                 <p className="text-[11px] text-text-muted leading-relaxed">
-                  Nhận tài khoản độc quyền riêng biệt, xuất ngay thông tin đăng nhập sau 10 giây.
+                  Receive your own dedicated account, login details delivered within 10 seconds.
                 </p>
               </div>
             </div>
@@ -263,7 +263,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
             {provisioningType === 'invite_email' && (
               <div className="mt-4 pt-4 border-t border-border-subtle/60 animate-fadeIn">
                 <label className="block text-xs font-semibold text-text-secondary mb-1.5">
-                  Email cá nhân cần nâng cấp (Nhận thư mời):
+                  Personal email to upgrade (receives invitation):
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
@@ -276,7 +276,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
                   />
                 </div>
                 <p className="text-[11px] text-text-muted mt-1.5">
-                  ℹ️ Khuyên dùng Gmail để nhận thư mời kích hoạt từ hệ thống quốc tế nhanh nhất.
+                  ℹ️ Gmail is recommended for the fastest international activation invites from our system.
                 </p>
               </div>
             )}
@@ -286,7 +286,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
           <div className="p-6 rounded-2xl bg-surface border border-border-subtle">
             <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-primary-blue text-white flex items-center justify-center text-xs">2</span>
-              Chọn Kỳ Hạn Sử Dụng
+              Choose Usage Period
             </h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -305,12 +305,12 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
                     }}
                     className={`relative p-3.5 rounded-xl border text-left flex flex-col justify-between transition-all ${
                       isSelected
-                        ? 'bg-elevated border-primary-blue shadow-[0_0_15px_rgba(0,102,255,0.25)]'
+                        ? 'bg-elevated border-primary-blue shadow-[0_0_15px_rgba(99,91,255,0.25)]'
                         : 'bg-canvas/60 border-border-subtle hover:border-border-focus'
                     }`}
                   >
                     {opt.discountPercent > 0 && (
-                      <span className="absolute -top-2 -right-1 px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-status-success text-black">
+                      <span className="absolute -top-2 -right-1 px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-status-success text-white">
                         -{opt.discountPercent}%
                       </span>
                     )}
@@ -324,7 +324,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
 
                     {opt.isGiftExtraMonth && (
                       <span className="text-[10px] text-status-warning font-semibold mt-2">
-                        🎁 Tặng 1 tháng
+                        🎁 1 month free
                       </span>
                     )}
                   </button>
@@ -337,12 +337,12 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
           <div className="p-6 rounded-2xl bg-surface border border-border-subtle">
             <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider mb-4 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-primary-blue text-white flex items-center justify-center text-xs">3</span>
-              Thông Số Kỹ Thuật Dành Cho Developer
+              Developer Technical Specifications
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="p-3 rounded-xl bg-canvas border border-border-subtle/60">
-                <span className="text-text-muted">Hạn ngạch Fast Quota:</span>
+                <span className="text-text-muted">Fast Quota:</span>
                 <p className="font-semibold text-text-primary mt-1">{product.specs.fastQuota}</p>
               </div>
               <div className="p-3 rounded-xl bg-canvas border border-border-subtle/60">
@@ -350,11 +350,11 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
                 <p className="font-semibold text-text-primary mt-1">{product.specs.contextWindow}</p>
               </div>
               <div className="p-3 rounded-xl bg-canvas border border-border-subtle/60">
-                <span className="text-text-muted">Mô hình AI hỗ trợ:</span>
+                <span className="text-text-muted">Supported AI models:</span>
                 <p className="font-semibold text-text-primary mt-1">{product.specs.models}</p>
               </div>
               <div className="p-3 rounded-xl bg-canvas border border-border-subtle/60">
-                <span className="text-text-muted">Thiết bị đồng bộ:</span>
+                <span className="text-text-muted">Synced devices:</span>
                 <p className="font-semibold text-text-primary mt-1">{product.specs.multiDevice}</p>
               </div>
             </div>
@@ -366,43 +366,43 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
           <ErrorBoundary contextName="ProductPage_SummaryBox">
             <div className="p-6 rounded-2xl bg-surface border border-border-subtle shadow-card-hover">
               <h3 className="font-bold text-base text-text-primary pb-3 border-b border-border-subtle/60 flex items-center justify-between">
-                <span>Tóm Tắt Đơn Hàng</span>
-                <span className="text-xs font-normal text-text-muted">Giao tức thì &lt; 30s</span>
+                <span>Order Summary</span>
+                <span className="text-xs font-normal text-text-muted">Instant delivery &lt; 30s</span>
               </h3>
 
               {/* Line items */}
               <div className="py-4 space-y-3 text-xs border-b border-border-subtle/60">
                 <div className="flex justify-between">
-                  <span className="text-text-secondary">Gói tài khoản:</span>
+                  <span className="text-text-secondary">Plan:</span>
                   <span className="font-semibold text-text-primary">{product.name} ({durationConfig.label})</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-text-secondary">Loại bàn giao:</span>
+                  <span className="text-text-secondary">Delivery type:</span>
                   <span className="font-medium text-text-primary">
-                    {provisioningType === 'invite_email' ? 'Nâng chính chủ' : 'Cấp sẵn độc quyền'}
+                    {provisioningType === 'invite_email' ? 'Owner upgrade' : 'Dedicated pre-created'}
                   </span>
                 </div>
                 <div className="flex justify-between text-text-muted">
-                  <span>Giá gốc niêm yết:</span>
+                  <span>List price:</span>
                   <span className="line-through font-mono">
                     {formatPrice(rawTotalVND, rawTotalUSD)}
                   </span>
                 </div>
                 <div className="flex justify-between text-status-success">
-                  <span>Ưu đãi Developer (-{durationConfig.discountPercent}%):</span>
+                  <span>Developer discount (-{durationConfig.discountPercent}%):</span>
                   <span className="font-mono font-semibold">
                     -{formatPrice(rawTotalVND - finalTotalVND, rawTotalUSD - finalTotalUSD)}
                   </span>
                 </div>
                 <div className="flex justify-between text-text-secondary">
-                  <span>Thuế VAT &amp; Phí giao dịch:</span>
-                  <span className="font-mono text-status-success font-semibold">+ $0.00 (Miễn phí)</span>
+                  <span>VAT &amp; transaction fees:</span>
+                  <span className="font-mono text-status-success font-semibold">+ $0.00 (Free)</span>
                 </div>
               </div>
 
               {/* Total Amount Box with Odometer Effect */}
               <div className="py-4">
-                <span className="text-xs text-text-muted">Tổng số tiền thanh toán trọn gói:</span>
+                <span className="text-xs text-text-muted">Total all-inclusive payment:</span>
                 <div className="text-3xl font-extrabold font-mono text-text-primary mt-1 tracking-tight">
                   {formatPrice(finalTotalVND, finalTotalUSD)}
                 </div>
@@ -423,7 +423,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
 
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary mb-1">
-                    Email nhận License &amp; Hóa đơn:
+                    Email for license &amp; invoice:
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
@@ -460,17 +460,17 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
                     type="submit"
                     className="w-full h-12 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-sm font-bold flex items-center justify-center gap-2 glow-blue-button active:scale-[0.98] transition-all"
                   >
-                    <Zap className="w-4 h-4 text-accent-cyan fill-accent-cyan" />
-                    <span>⚡ Thanh Toán Ngay (30s)</span>
+                    <Zap className="w-4 h-4 text-white fill-white" />
+                    <span>⚡ Checkout Now (30s)</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleAddToCart}
-                    className="w-full h-11 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle hover:border-primary-blue text-text-primary text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                    className="w-full h-11 rounded-xl bg-canvas hover:bg-surface-subtle border border-border-subtle hover:border-primary-blue text-text-primary text-xs font-bold flex items-center justify-center gap-2 transition-all"
                   >
                     <ShoppingBag className="w-4 h-4 text-accent-cyan" />
-                    <span>Thêm Vào Giỏ Hàng</span>
+                    <span>Add to Cart</span>
                   </button>
                 </div>
               </form>
@@ -479,11 +479,11 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
               <div className="mt-5 pt-4 border-t border-border-subtle/50 space-y-2 text-[11px] text-text-muted">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-3.5 h-3.5 text-status-success shrink-0" />
-                  <span>Cam kết hoàn tiền 100% nếu tài khoản lỗi không kích hoạt được</span>
+                  <span>100% money-back guarantee if the account fails to activate</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Lock className="w-3.5 h-3.5 text-primary-blue shrink-0" />
-                  <span>Bảo mật SSL 256-bit &bull; Không lưu mật khẩu cá nhân</span>
+                  <span>256-bit SSL encryption &bull; No personal passwords stored</span>
                 </div>
               </div>
             </div>
@@ -492,7 +492,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
       </div>
 
       {/* Mobile Sticky Bottom CTA Bar (Thumb Zone) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3 bg-surface/95 backdrop-blur-md border-t border-border-subtle z-40 flex items-center justify-between gap-3 shadow-[0_-8px_20px_rgba(0,0,0,0.5)]">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3 bg-surface/95 backdrop-blur-md border-t border-border-subtle z-40 flex items-center justify-between gap-3 shadow-[0_-8px_20px_rgba(10,37,64,0.1)]">
         <div>
           <div className="text-[11px] text-text-muted leading-tight">{product.name} ({durationConfig.label})</div>
           <div className="text-base font-bold font-mono text-text-primary">
@@ -504,7 +504,7 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
             type="button"
             onClick={handleAddToCart}
             className="h-11 px-3.5 rounded-xl bg-canvas border border-border-subtle text-text-primary text-xs font-bold flex items-center justify-center gap-1.5 shrink-0"
-            title="Thêm vào giỏ"
+            title="Add to cart"
           >
             <ShoppingBag className="w-4 h-4 text-accent-cyan" />
           </button>
@@ -513,8 +513,8 @@ const ProductDetail: React.FC<{ product: ProductPlan }> = ({ product }) => {
             onClick={handleCheckout}
             className="h-11 px-4 rounded-xl bg-primary-blue text-white text-xs font-bold flex items-center gap-1.5 shrink-0 glow-blue-button"
           >
-            <Zap className="w-3.5 h-3.5 text-accent-cyan fill-accent-cyan" />
-            <span>Thanh toán 30s</span>
+            <Zap className="w-3.5 h-3.5 text-white fill-white" />
+            <span>Checkout 30s</span>
           </button>
         </div>
       </div>

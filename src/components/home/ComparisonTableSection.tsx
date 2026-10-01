@@ -4,39 +4,39 @@ import { Check, X, ShieldAlert, Sparkles, ShieldCheck } from 'lucide-react';
 const COMPARISON_ROWS = [
   {
     feature: 'Licensing method',
-    aipro: 'Direct assignment to primary email or 100% private account',
+    agentlab: 'Direct assignment to primary email or 100% private account',
     blackMarket: 'Shared account with 5-10 strangers',
-    aiproHighlight: true,
+    agentlabHighlight: true,
   },
   {
     feature: 'Delivery speed after payment',
-    aipro: 'Automatic within < 30 seconds via VietQR MBBank Webhook',
+    agentlab: 'Automatic within < 30 seconds via VietQR MBBank Webhook',
     blackMarket: 'Seller reply wait time 2 to 24 hours',
-    aiproHighlight: true,
+    agentlabHighlight: true,
   },
   {
     feature: 'Issue handling & warranty process',
-    aipro: '1-for-1 automated bot 24/7, new account issued within 30s',
+    agentlab: '1-for-1 automated bot 24/7, new account issued within 30s',
     blackMarket: 'Promised warranty but often blocked / communication cut off',
-    aiproHighlight: true,
+    agentlabHighlight: true,
   },
   {
     feature: 'Source code & chat history security',
-    aipro: '100% session isolation, no project source code theft',
+    agentlab: '100% session isolation, no project source code theft',
     blackMarket: 'Everyone shares the same account, all code and chat history visible',
-    aiproHighlight: true,
+    agentlabHighlight: true,
   },
   {
     feature: 'Payment origin & account lock risk',
-    aipro: 'Valid business card, 0% risk of AI provider ban',
-    blackMarket: 'Hacked/shared cards (BIN chúa), permanent account lock risk',
-    aiproHighlight: true,
+    agentlab: 'Valid business card, 0% risk of AI provider ban',
+    blackMarket: 'Hacked/shared cards (cloned BINs), permanent account lock risk',
+    agentlabHighlight: true,
   },
   {
     feature: 'Payment method & invoice',
-    aipro: 'International gateway PayPal, Visa/Mastercard, JSON/PDF receipt issued',
+    agentlab: 'International gateway PayPal, Visa/Mastercard, JSON/PDF receipt issued',
     blackMarket: 'Personal transfer, no paperwork or proof',
-    aiproHighlight: true,
+    agentlabHighlight: true,
   },
 ];
 
@@ -49,7 +49,7 @@ export const ComparisonTableSection: React.FC = () => {
           <span>Protect Your Assets & Reputation</span>
         </div>
         <h2 className="text-2xl sm:text-4xl font-extrabold text-text-primary tracking-tight">
-          Comparing AIPro.dev vs Black Market Purchases
+          Comparing AgentLab vs Black Market Purchases
         </h2>
         <p className="mt-3 text-sm sm:text-base text-text-secondary">
           Why saving a few tens of thousands on the black market could risk your entire project source code and device bans.
@@ -68,7 +68,7 @@ export const ComparisonTableSection: React.FC = () => {
                 <th className="py-5 px-6 bg-primary-blue/10 border-x border-primary-blue/30 w-1/3">
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-sm sm:text-base text-accent-cyan">
-                      AIPro<span className="text-white">.dev</span>
+                      AgentLab
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-primary-blue text-white text-[10px] font-bold">
                       Recommended
@@ -87,13 +87,13 @@ export const ComparisonTableSection: React.FC = () => {
                     {row.feature}
                   </td>
 
-                  {/* AIPro column */}
+                  {/* AgentLab column */}
                   <td className="py-4 px-6 bg-primary-blue/5 border-x border-primary-blue/20 text-text-primary font-medium">
                     <div className="flex items-start gap-2">
                       <div className="w-4 h-4 rounded-full bg-status-success/20 text-status-success flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Check className="w-3 h-3" />
                       </div>
-                      <span className="leading-snug">{row.aipro}</span>
+                      <span className="leading-snug">{row.agentlab}</span>
                     </div>
                   </td>
 

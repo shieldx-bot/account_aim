@@ -24,11 +24,11 @@ import {
 } from 'lucide-react';
 
 const CATEGORIES: { key: ProductCategory; label: string }[] = [
-  { key: 'all', label: 'Tất cả' },
+  { key: 'all', label: 'All' },
   { key: 'coding', label: 'Coding AI' },
-  { key: 'llm', label: 'Mô hình LLM' },
-  { key: 'design', label: 'Đồ họa & Sáng tạo' },
-  { key: 'enterprise', label: 'Doanh nghiệp' },
+  { key: 'llm', label: 'LLM Models' },
+  { key: 'design', label: 'Design & Creative' },
+  { key: 'enterprise', label: 'Enterprise' },
 ];
 
 export const AdminProductsPage: React.FC = () => {
@@ -62,11 +62,11 @@ export const AdminProductsPage: React.FC = () => {
     stockCount: 30,
     badge: '🔥 Hot Deal',
     platformSubtext: 'Windows / macOS / Linux',
-    quotaFeaturesText: 'Truy cập AI không giới hạn\nTốc độ siêu tốc\nBảo hành 1-đổi-1 tự động',
+    quotaFeaturesText: 'Unlimited AI access\nUltra-fast speed\nAutomatic 1-for-1 warranty',
     fastQuota: '500 Requests/mo',
     contextWindow: '200K Tokens',
     models: 'Claude 3.7 Sonnet, GPT-4.5',
-    multiDevice: 'Đồng bộ 3 thiết bị',
+    multiDevice: 'Sync across 3 devices',
     instantDelivery: true,
     isActive: true,
   });
@@ -78,7 +78,7 @@ export const AdminProductsPage: React.FC = () => {
       const data = await productsApi.getAll(true);
       setProducts(data);
     } catch (err: any) {
-      setActionError(err.message || 'Không thể tải danh sách sản phẩm.');
+      setActionError(err.message || 'Unable to load the product list.');
     } finally {
       setIsLoading(false);
     }
@@ -113,13 +113,13 @@ export const AdminProductsPage: React.FC = () => {
       currentPriceUSD: 9.99,
       discountPercent: 50,
       stockCount: 30,
-      badge: '🔥 Mới Ra Mắt',
+      badge: '🔥 New Release',
       platformSubtext: 'Web / Desktop App',
-      quotaFeaturesText: 'Truy cập mô hình AI cao cấp\nTốc độ phản hồi tức thì < 2s\nBảo hành 1-đổi-1 suốt thời hạn',
-      fastQuota: 'Không giới hạn tiêu chuẩn',
+      quotaFeaturesText: 'Premium AI model access\nInstant response time < 2s\n1-for-1 warranty for the full term',
+      fastQuota: 'Unlimited standard usage',
       contextWindow: '128K Tokens',
       models: 'GPT-4o, Claude 3.7 Sonnet',
-      multiDevice: 'Đồng bộ đa thiết bị',
+      multiDevice: 'Sync across multiple devices',
       instantDelivery: true,
       isActive: true,
     });
@@ -158,7 +158,7 @@ export const AdminProductsPage: React.FC = () => {
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) {
-      showNotification('Vui lòng đăng nhập với tài khoản Quản trị viên.', true);
+      showNotification('Please sign in with an administrator account.', true);
       return;
     }
 
@@ -194,17 +194,17 @@ export const AdminProductsPage: React.FC = () => {
 
       if (editingProduct) {
         await productsApi.update(token, editingProduct.id, payload);
-        showNotification(`Đã cập nhật sản phẩm "${formData.name}" thành công.`);
+        showNotification(`Product "${formData.name}" updated successfully.`);
       } else {
         await productsApi.create(token, payload);
-        showNotification(`Đã thêm mới sản phẩm "${formData.name}" vào cơ sở dữ liệu.`);
+        showNotification(`Product "${formData.name}" added to the database.`);
       }
 
       setIsModalOpen(false);
       await loadAdminProducts();
       await refreshGlobalProducts();
     } catch (err: any) {
-      showNotification(err.message || 'Lỗi khi lưu sản phẩm.', true);
+      showNotification(err.message || 'Error saving the product.', true);
     } finally {
       setIsSubmitting(false);
     }
@@ -214,17 +214,17 @@ export const AdminProductsPage: React.FC = () => {
   const handleDeleteProduct = async (prod: ProductPlan) => {
     if (!token) return;
     const confirmDelete = window.confirm(
-      `Bạn có chắc chắn muốn xóa sản phẩm "${prod.name}" (${prod.slug}) khỏi cơ sở dữ liệu PostgreSQL không?`
+      `Are you sure you want to delete the product "${prod.name}" (${prod.slug}) from the PostgreSQL database?`
     );
     if (!confirmDelete) return;
 
     try {
       await productsApi.delete(token, prod.id);
-      showNotification(`Đã xóa sản phẩm "${prod.name}".`);
+      showNotification(`Product "${prod.name}" deleted.`);
       await loadAdminProducts();
       await refreshGlobalProducts();
     } catch (err: any) {
-      showNotification(err.message || 'Lỗi khi xóa sản phẩm.', true);
+      showNotification(err.message || 'Error deleting the product.', true);
     }
   };
 
@@ -237,12 +237,12 @@ export const AdminProductsPage: React.FC = () => {
         ...( { isActive: !currentActive } as any ),
       });
       showNotification(
-        `Đã ${!currentActive ? 'kích hoạt' : 'tạm ẩn'} sản phẩm "${prod.name}".`
+        `Product "${prod.name}" ${!currentActive ? 'activated' : 'hidden'}.`
       );
       await loadAdminProducts();
       await refreshGlobalProducts();
     } catch (err: any) {
-      showNotification(err.message || 'Lỗi khi đổi trạng thái sản phẩm.', true);
+      showNotification(err.message || 'Error toggling the product status.', true);
     }
   };
 
@@ -284,11 +284,11 @@ export const AdminProductsPage: React.FC = () => {
               <Package className="w-5 h-5" />
             </span>
             <h1 className="text-xl font-black text-text-primary tracking-tight">
-              Quản Lý Sản Phẩm AI (PostgreSQL Catalog)
+              AgentLabduct Management (PostgreSQL Catalog)
             </h1>
           </div>
           <p className="text-xs text-text-secondary mt-1">
-            Toàn bộ thay đổi giá, tồn kho và danh mục được lưu trữ thực tế trong bảng <code className="font-mono text-accent-cyan">products</code> PostgreSQL.
+            All price, stock, and category changes are persisted in the PostgreSQL <code className="font-mono text-accent-cyan">products</code> table.
           </p>
         </div>
 
@@ -296,17 +296,17 @@ export const AdminProductsPage: React.FC = () => {
           <button
             onClick={loadAdminProducts}
             disabled={isLoading}
-            className="p-2.5 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-            title="Tải lại từ Database"
+            className="p-2.5 rounded-xl bg-canvas hover:bg-surface-subtle border border-border-subtle text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+            title="Reload from database"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={handleOpenCreateModal}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan hover:brightness-110 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-primary-blue/20 transition-all cursor-pointer"
+            className="px-4 py-2.5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-primary-blue/20 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Thêm Sản Phẩm Mới</span>
+            <span>Add New Product</span>
           </button>
         </div>
       </div>
@@ -314,19 +314,19 @@ export const AdminProductsPage: React.FC = () => {
       {/* Metric Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl bg-surface border border-border-subtle">
-          <span className="text-xs text-text-muted">Tổng số sản phẩm</span>
+          <span className="text-xs text-text-muted">Total products</span>
           <div className="text-2xl font-black font-mono text-text-primary mt-1">
-            {products.length} <span className="text-xs font-normal text-text-muted">gói</span>
+            {products.length} <span className="text-xs font-normal text-text-muted">plans</span>
           </div>
         </div>
         <div className="p-4 rounded-xl bg-surface border border-border-subtle">
-          <span className="text-xs text-text-muted">Đang kinh doanh (Active)</span>
+          <span className="text-xs text-text-muted">Active (on sale)</span>
           <div className="text-2xl font-black font-mono text-status-success mt-1">
-            {activeCount} <span className="text-xs font-normal text-text-muted">hiển thị store</span>
+            {activeCount} <span className="text-xs font-normal text-text-muted">shown in store</span>
           </div>
         </div>
         <div className="p-4 rounded-xl bg-surface border border-border-subtle">
-          <span className="text-xs text-text-muted">Tổng tồn kho tự động</span>
+          <span className="text-xs text-text-muted">Total automated stock</span>
           <div className="text-2xl font-black font-mono text-accent-cyan mt-1">
             {totalStock} <span className="text-xs font-normal text-text-muted">slots</span>
           </div>
@@ -342,7 +342,7 @@ export const AdminProductsPage: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo tên, hãng hoặc slug..."
+            placeholder="Search by name, brand, or slug..."
             className="w-full pl-9 pr-4 py-2 bg-canvas border border-border-subtle rounded-xl text-xs text-text-primary focus:outline-none focus:border-primary-blue"
           />
         </div>
@@ -370,25 +370,25 @@ export const AdminProductsPage: React.FC = () => {
         {isLoading ? (
           <div className="p-12 text-center text-text-muted text-xs space-y-3">
             <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary-blue" />
-            <p>Đang tải danh mục sản phẩm từ PostgreSQL...</p>
+            <p>Loading the product catalog from PostgreSQL...</p>
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="p-12 text-center text-text-muted text-xs space-y-2">
             <Package className="w-10 h-10 mx-auto text-text-muted/40" />
-            <p className="font-semibold text-text-primary">Không tìm thấy sản phẩm phù hợp.</p>
-            <p>Hãy thử thay đổi từ khóa hoặc bộ lọc danh mục.</p>
+            <p className="font-semibold text-text-primary">No matching products found.</p>
+            <p>Try changing the keyword or category filter.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-[#090A0E] text-text-muted uppercase text-[10px] tracking-wider border-b border-border-subtle">
+              <thead className="bg-surface text-text-muted uppercase text-[10px] tracking-wider border-b border-border-subtle">
                 <tr>
-                  <th className="py-3.5 px-4 font-semibold">Sản Phẩm &amp; Thương Hiệu</th>
-                  <th className="py-3.5 px-4 font-semibold">Chuyên Mục</th>
-                  <th className="py-3.5 px-4 font-semibold">Giá Bán (USD)</th>
-                  <th className="py-3.5 px-4 font-semibold">Tồn Kho</th>
-                  <th className="py-3.5 px-4 font-semibold">Trạng Thái</th>
-                  <th className="py-3.5 px-4 font-semibold text-right">Thao Tác</th>
+                  <th className="py-3.5 px-4 font-semibold">Product &amp; Brand</th>
+                  <th className="py-3.5 px-4 font-semibold">Category</th>
+                  <th className="py-3.5 px-4 font-semibold">Price (USD)</th>
+                  <th className="py-3.5 px-4 font-semibold">Stock</th>
+                  <th className="py-3.5 px-4 font-semibold">Status</th>
+                  <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -451,7 +451,7 @@ export const AdminProductsPage: React.FC = () => {
                               : 'bg-status-error/15 text-status-error'
                           }`}
                         >
-                          {prod.stockCount > 0 ? `${prod.stockCount} sẵn có` : 'Hết hàng'}
+                          {prod.stockCount > 0 ? `${prod.stockCount} in stock` : 'Out of stock'}
                         </span>
                       </td>
 
@@ -469,12 +469,12 @@ export const AdminProductsPage: React.FC = () => {
                           {isActive ? (
                             <>
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Hiển thị</span>
+                              <span>Visible</span>
                             </>
                           ) : (
                             <>
                               <XCircle className="w-3.5 h-3.5" />
-                              <span>Đã ẩn</span>
+                              <span>Hidden</span>
                             </>
                           )}
                         </button>
@@ -486,8 +486,8 @@ export const AdminProductsPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleOpenEditModal(prod)}
-                            className="p-1.5 rounded-lg bg-canvas hover:bg-canvas-subtle border border-border-subtle text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-                            title="Sửa thông tin sản phẩm"
+                            className="p-1.5 rounded-lg bg-canvas hover:bg-surface-subtle border border-border-subtle text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                            title="Edit product details"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
@@ -495,7 +495,7 @@ export const AdminProductsPage: React.FC = () => {
                             type="button"
                             onClick={() => handleDeleteProduct(prod)}
                             className="p-1.5 rounded-lg bg-canvas hover:bg-status-error/15 border border-border-subtle text-text-muted hover:text-status-error transition-colors cursor-pointer"
-                            title="Xóa sản phẩm"
+                            title="Delete product"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -512,17 +512,17 @@ export const AdminProductsPage: React.FC = () => {
 
       {/* CREATE / EDIT MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-text-primary/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-surface border border-border-subtle rounded-2xl w-full max-w-2xl my-8 overflow-hidden shadow-2xl animate-scaleUp">
             {/* Modal Header */}
-            <div className="p-5 border-b border-border-subtle flex items-center justify-between bg-[#08090C]">
+            <div className="p-5 border-b border-border-subtle flex items-center justify-between bg-white">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-primary-blue/20 text-primary-blue">
                   <Package className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-text-primary">
-                    {editingProduct ? `Chỉnh Sửa: ${editingProduct.name}` : 'Thêm Sản Phẩm Mới Vào Database'}
+                    {editingProduct ? `Edit: ${editingProduct.name}` : 'Add New Product to Database'}
                   </h3>
                   <span className="text-[11px] text-text-muted font-mono">
                     PostgreSQL Table: public.products
@@ -543,14 +543,14 @@ export const AdminProductsPage: React.FC = () => {
                 {/* Name */}
                 <div>
                   <label className="block text-[11px] font-semibold text-text-secondary uppercase mb-1">
-                    Tên sản phẩm *
+                    Product name *
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="VD: Cursor Pro 2026"
+                    placeholder="E.g.: Cursor Pro 2026"
                     className="w-full px-3.5 py-2 bg-canvas border border-border-subtle rounded-xl text-text-primary focus:outline-none focus:border-primary-blue font-sans text-xs"
                   />
                 </div>
@@ -558,14 +558,14 @@ export const AdminProductsPage: React.FC = () => {
                 {/* Slug */}
                 <div>
                   <label className="block text-[11px] font-semibold text-text-secondary uppercase mb-1">
-                    Slug định danh URL *
+                    URL slug *
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="VD: cursor-pro"
+                    placeholder="E.g.: cursor-pro"
                     className="w-full px-3.5 py-2 bg-canvas border border-border-subtle rounded-xl text-text-primary focus:outline-none focus:border-primary-blue font-mono text-xs"
                   />
                 </div>
@@ -573,14 +573,14 @@ export const AdminProductsPage: React.FC = () => {
                 {/* Brand */}
                 <div>
                   <label className="block text-[11px] font-semibold text-text-secondary uppercase mb-1">
-                    Hãng phát triển (Brand) *
+                    Developer (Brand) *
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.brand}
                     onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    placeholder="VD: Cursor AI, Anthropic, OpenAI"
+                    placeholder="E.g.: Cursor AI, Anthropic, OpenAI"
                     className="w-full px-3.5 py-2 bg-canvas border border-border-subtle rounded-xl text-text-primary focus:outline-none focus:border-primary-blue font-sans text-xs"
                   />
                 </div>
@@ -588,7 +588,7 @@ export const AdminProductsPage: React.FC = () => {
                 {/* Brand Logo URL */}
                 <div>
                   <label className="block text-[11px] font-semibold text-text-secondary uppercase mb-1">
-                    Logo Thương Hiệu (SVG/Image URL)
+                    Brand Logo (SVG/Image URL)
                   </label>
                   <input
                     type="text"
@@ -602,30 +602,30 @@ export const AdminProductsPage: React.FC = () => {
                 {/* Category */}
                 <div>
                   <label className="block text-[11px] font-semibold text-text-secondary uppercase mb-1">
-                    Chuyên mục
+                    Category
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value as ProductCategory })}
                     className="w-full px-3.5 py-2 bg-canvas border border-border-subtle rounded-xl text-text-primary focus:outline-none focus:border-primary-blue font-sans text-xs cursor-pointer"
                   >
-                    <option value="coding">Coding AI (Lập trình)</option>
-                    <option value="llm">Mô hình LLM (Chat &amp; Reasoning)</option>
-                    <option value="design">Đồ họa &amp; Thiết kế (Design)</option>
-                    <option value="enterprise">Doanh nghiệp (Enterprise)</option>
+                    <option value="coding">Coding AI (Programming)</option>
+                    <option value="llm">LLM Models (Chat &amp; Reasoning)</option>
+                    <option value="design">Design &amp; Creative (Design)</option>
+                    <option value="enterprise">Enterprise (Business)</option>
                   </select>
                 </div>
 
                 {/* Badge */}
                 <div>
                   <label className="block text-[11px] font-semibold text-text-secondary uppercase mb-1">
-                    Huy hiệu nổi bật (Badge)
+                    Highlighted badge (Badge)
                   </label>
                   <input
                     type="text"
                     value={formData.badge}
                     onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                    placeholder="VD: 🔥 Khuyên Dùng Cho Dev"
+                    placeholder="E.g.: 🔥 Recommended for Devs"
                     className="w-full px-3.5 py-2 bg-canvas border border-border-subtle rounded-xl text-text-primary focus:outline-none focus:border-primary-blue font-sans text-xs"
                   />
                 </div>
@@ -634,11 +634,11 @@ export const AdminProductsPage: React.FC = () => {
               {/* Price & Stock Section */}
               <div className="pt-2 border-t border-border-subtle">
                 <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider block mb-3">
-                  Giá bán &amp; Tồn kho
+                  Price &amp; Stock
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-[10px] text-text-muted uppercase mb-1">Giá bán USD ($)</label>
+                    <label className="block text-[10px] text-text-muted uppercase mb-1">Price USD ($)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -649,7 +649,7 @@ export const AdminProductsPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-text-muted uppercase mb-1">Giá gốc USD ($)</label>
+                    <label className="block text-[10px] text-text-muted uppercase mb-1">Original price USD ($)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -659,7 +659,7 @@ export const AdminProductsPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-text-muted uppercase mb-1">Số lượng tồn kho</label>
+                    <label className="block text-[10px] text-text-muted uppercase mb-1">Stock quantity</label>
                     <input
                       type="number"
                       value={formData.stockCount}
@@ -673,12 +673,12 @@ export const AdminProductsPage: React.FC = () => {
               {/* Quota & Specs */}
               <div className="pt-2 border-t border-border-subtle space-y-3">
                 <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider block">
-                  Đặc quyền &amp; Thông số kỹ thuật
+                  Perks &amp; Technical Specs
                 </span>
 
                 <div>
                   <label className="block text-[10px] text-text-muted uppercase mb-1">
-                    Danh sách đặc quyền (Mỗi dòng một tính năng)
+                    Feature list (one feature per line)
                   </label>
                   <textarea
                     rows={3}
@@ -690,22 +690,22 @@ export const AdminProductsPage: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] text-text-muted uppercase mb-1">Hạn ngạch (Fast Quota)</label>
+                    <label className="block text-[10px] text-text-muted uppercase mb-1">Quota (Fast Quota)</label>
                     <input
                       type="text"
                       value={formData.fastQuota}
                       onChange={(e) => setFormData({ ...formData, fastQuota: e.target.value })}
-                      placeholder="VD: 500 Fast Requests/mo"
+                      placeholder="E.g.: 500 Fast Requests/mo"
                       className="w-full px-3 py-2 bg-canvas border border-border-subtle rounded-xl text-text-primary font-mono text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-text-muted uppercase mb-1">Ngữ cảnh (Context Window)</label>
+                    <label className="block text-[10px] text-text-muted uppercase mb-1">Context (Context Window)</label>
                     <input
                       type="text"
                       value={formData.contextWindow}
                       onChange={(e) => setFormData({ ...formData, contextWindow: e.target.value })}
-                      placeholder="VD: 200K Tokens"
+                      placeholder="E.g.: 200K Tokens"
                       className="w-full px-3 py-2 bg-canvas border border-border-subtle rounded-xl text-text-primary font-mono text-xs"
                     />
                   </div>
@@ -721,7 +721,7 @@ export const AdminProductsPage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                     className="rounded border-border-subtle text-primary-blue focus:ring-0"
                   />
-                  <span className="text-xs font-semibold text-text-primary">Kích hoạt hiển thị trên Website</span>
+                  <span className="text-xs font-semibold text-text-primary">Visible on the website</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -730,7 +730,7 @@ export const AdminProductsPage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, instantDelivery: e.target.checked })}
                     className="rounded border-border-subtle text-status-success focus:ring-0"
                   />
-                  <span className="text-xs font-semibold text-text-primary">Bàn giao tức thì SLA &lt; 30s</span>
+                  <span className="text-xs font-semibold text-text-primary">Instant delivery, SLA &lt; 30s</span>
                 </label>
               </div>
 
@@ -739,24 +739,24 @@ export const AdminProductsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle text-text-secondary text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-canvas hover:bg-surface-subtle border border-border-subtle text-text-secondary text-xs font-bold cursor-pointer"
                 >
-                  Hủy bỏ
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan hover:brightness-110 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-primary-blue/20 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-primary-blue/20 cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Đang lưu...</span>
+                      <span>Saving...</span>
                     </>
                   ) : (
                     <>
                       <Save className="w-3.5 h-3.5" />
-                      <span>{editingProduct ? 'Cập Nhật Database' : 'Lưu Vào Database'}</span>
+                      <span>{editingProduct ? 'Update Database' : 'Save to Database'}</span>
                     </>
                   )}
                 </button>

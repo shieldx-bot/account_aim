@@ -38,7 +38,7 @@ export const MemberSubscriptionsPage: React.FC = () => {
         if (!cancelled) setSubscriptions(data as MemberSubscription[]);
       })
       .catch((err: Error) => {
-        if (!cancelled) setError(err.message || 'Không thể tải danh sách tài khoản từ máy chủ.');
+        if (!cancelled) setError(err.message || 'Unable to load the account list from the server.');
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -67,7 +67,7 @@ export const MemberSubscriptionsPage: React.FC = () => {
     } catch (err) {
       // Rollback on failure
       setSubscriptions((prev) => prev.map((sub) => (sub.id === id ? { ...sub, autoRenew: !nextValue } : sub)));
-      setError((err as Error).message || 'Không thể lưu thiết lập tự động gia hạn.');
+      setError((err as Error).message || 'Unable to save the auto-renew setting.');
     }
   };
 
@@ -76,17 +76,17 @@ export const MemberSubscriptionsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-text-primary">
-            Quản lý Tài khoản AI &amp; Credentials
+            AI Account &amp; Credentials Management
           </h1>
           <p className="text-xs sm:text-sm text-text-secondary mt-1">
-            Toàn bộ tài khoản AI Pro bản quyền đã mua, khóa truy cập API và thiết lập gia hạn.
+            All purchased AgentLab licenses, API access keys, and renewal settings.
           </p>
         </div>
         <Link
           to="/"
           className="px-4 py-2.5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold shadow-lg shadow-primary-blue/25 transition-all text-center"
         >
-          + Mua thêm tài khoản mới
+          + Buy more accounts
         </Link>
       </div>
 
@@ -100,7 +100,7 @@ export const MemberSubscriptionsPage: React.FC = () => {
       {loading ? (
         <div className="text-center py-12 bg-surface rounded-2xl border border-border-subtle">
           <Loader2 className="w-6 h-6 animate-spin text-primary-blue mx-auto mb-3" />
-          <p className="text-xs text-text-muted">Đang tải vault tài khoản từ máy chủ…</p>
+          <p className="text-xs text-text-muted">Loading account vault from the server…</p>
         </div>
       ) : (
       <div className="space-y-4">
@@ -126,9 +126,9 @@ export const MemberSubscriptionsPage: React.FC = () => {
                         </span>
                       </div>
                       <span className="text-xs text-text-secondary">
-                        Phương thức:{' '}
+                        Method:{' '}
                         <strong className="text-text-primary">
-                          {sub.provisioningType === 'invite_email' ? 'Gán Email chính chủ' : 'Tài khoản cấp sẵn'}
+                          {sub.provisioningType === 'invite_email' ? 'Assign to your own email' : 'Pre-provisioned account'}
                         </strong>
                       </span>
                     </div>
@@ -136,9 +136,9 @@ export const MemberSubscriptionsPage: React.FC = () => {
 
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <span className="text-[11px] text-text-muted block">Hạn sử dụng đến:</span>
+                      <span className="text-[11px] text-text-muted block">Valid until:</span>
                       <span className="font-mono text-xs font-bold text-text-primary">
-                        {new Date(sub.expiresAt).toLocaleDateString('vi-VN')}
+                        {new Date(sub.expiresAt).toLocaleDateString('en-US')}
                       </span>
                     </div>
                     <span
@@ -148,7 +148,7 @@ export const MemberSubscriptionsPage: React.FC = () => {
                           : 'bg-status-success/15 text-status-success'
                       }`}
                     >
-                      Còn {sub.daysRemaining} ngày
+                      {sub.daysRemaining} days left
                     </span>
                   </div>
                 </div>
@@ -157,7 +157,7 @@ export const MemberSubscriptionsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 my-4">
                   {/* Email Access */}
                   <div className="p-3 rounded-xl bg-canvas border border-border-subtle font-mono text-xs">
-                    <span className="text-[10px] text-text-muted block uppercase mb-1">Email đăng nhập / nhận quyền</span>
+                    <span className="text-[10px] text-text-muted block uppercase mb-1">Login / license email</span>
                     <div className="flex items-center justify-between">
                       <span className="text-text-primary truncate">{sub.accountEmail}</span>
                       <button
@@ -176,7 +176,7 @@ export const MemberSubscriptionsPage: React.FC = () => {
                   {/* Password if available */}
                   {sub.accountPassword && (
                     <div className="p-3 rounded-xl bg-canvas border border-border-subtle font-mono text-xs">
-                      <span className="text-[10px] text-text-muted block uppercase mb-1">Mật khẩu bảo mật</span>
+                      <span className="text-[10px] text-text-muted block uppercase mb-1">Security password</span>
                       <div className="flex items-center justify-between">
                         <span className="text-text-primary">
                           {isRevealed ? sub.accountPassword : '••••••••••••••••'}
@@ -236,23 +236,23 @@ export const MemberSubscriptionsPage: React.FC = () => {
                       className="w-4 h-4 rounded border-border-subtle bg-canvas text-primary-blue focus:ring-primary-blue/20"
                     />
                     <span className="text-text-secondary">
-                      Tự động gia hạn khi số dư ví đủ (chiết khấu thêm 5%)
+                      Auto-renew when the wallet balance is sufficient (extra 5% discount)
                     </span>
                   </label>
 
                   <div className="flex items-center gap-2">
                     <Link
                       to="/lookup"
-                      className="px-3 py-1.5 rounded-lg bg-canvas hover:bg-canvas-subtle border border-border-subtle text-text-secondary hover:text-status-error flex items-center gap-1.5 transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-canvas hover:bg-surface-subtle border border-border-subtle text-text-secondary hover:text-status-error flex items-center gap-1.5 transition-colors"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
-                      <span>Báo lỗi / Yêu cầu đổi mới</span>
+                      <span>Report issue / Request replacement</span>
                     </Link>
                     <Link
                       to={`/product/${sub.productSlug}`}
                       className="px-4 py-1.5 rounded-lg bg-primary-blue hover:bg-primary-hover text-white font-bold transition-all"
                     >
-                      Gia hạn gói
+                      Renew plan
                     </Link>
                   </div>
                 </div>
@@ -262,13 +262,13 @@ export const MemberSubscriptionsPage: React.FC = () => {
         ) : (
           <div className="text-center py-12 bg-surface rounded-2xl border border-border-subtle shadow-sm">
             <KeyRound className="w-12 h-12 text-text-muted mx-auto mb-4 opacity-50" />
-            <h3 className="text-base font-bold text-text-primary mb-1">Chưa có tài khoản nào</h3>
-            <p className="text-xs text-text-secondary mb-5">Khám phá các gói AI Pro mạnh mẽ nhất để bắt đầu.</p>
+            <h3 className="text-base font-bold text-text-primary mb-1">No accounts yet</h3>
+            <p className="text-xs text-text-secondary mb-5">Explore the most powerful AgentLab plans to get started.</p>
             <Link
               to="/"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold transition-all shadow-md shadow-primary-blue/20"
             >
-              Xem Cửa hàng ngay
+              Visit the Store
             </Link>
           </div>
         )}

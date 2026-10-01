@@ -24,7 +24,7 @@ export const Footer: React.FC = () => {
             </div>
             <div>
               <h4 className="font-semibold text-text-primary text-sm">Auto 1-for-1 Warranty</h4>
-              <p className="text-text-muted mt-0.5">Automatic account recovery within 60 seconds, no need to wait for CSKH support.</p>
+              <p className="text-text-muted mt-0.5">Automatic account recovery within 60 seconds — no waiting for human support.</p>
             </div>
           </div>
 
@@ -44,7 +44,7 @@ export const Footer: React.FC = () => {
           <div>
             <h5 className="font-semibold text-text-primary text-sm mb-3">AI Services</h5>
             <ul className="space-y-2">
-              <li><Link to="/product/cursor-pro" className="hover:text-text-primary transition-colors">Cursor Pro 1-3 Tháng</Link></li>
+              <li><Link to="/product/cursor-pro" className="hover:text-text-primary transition-colors">Cursor Pro 1-3 Months</Link></li>
               <li><Link to="/product/claude-pro" className="hover:text-text-primary transition-colors">Claude Pro Sonnet 3.7</Link></li>
               <li><Link to="/product/chatgpt-plus" className="hover:text-text-primary transition-colors">ChatGPT Plus GPT-4.5</Link></li>
               <li><Link to="/product/github-copilot" className="hover:text-text-primary transition-colors">GitHub Copilot Pro</Link></li>
@@ -54,9 +54,9 @@ export const Footer: React.FC = () => {
           <div>
             <h5 className="font-semibold text-text-primary text-sm mb-3">Self-Service &amp; Lookup</h5>
             <ul className="space-y-2">
-              <li><Link to="/lookup" className="hover:text-text-primary transition-colors">Tra cứu đơn hàng qua OTP</Link></li>
-              <li><Link to="/lookup" className="hover:text-text-primary transition-colors">Trung tâm bảo hành tự động</Link></li>
-              <li><Link to="/docs" className="hover:text-text-primary transition-colors">Hướng dẫn kích hoạt IDE</Link></li>
+              <li><Link to="/lookup" className="hover:text-text-primary transition-colors">Order lookup via OTP</Link></li>
+              <li><Link to="/lookup" className="hover:text-text-primary transition-colors">Automated warranty center</Link></li>
+              <li><Link to="/docs" className="hover:text-text-primary transition-colors">IDE activation guide</Link></li>
               <li><Link to="/status" className="hover:text-text-primary transition-colors flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-status-success inline-block"></span>Live System Status</Link></li>
             </ul>
           </div>
@@ -64,16 +64,16 @@ export const Footer: React.FC = () => {
           <div>
             <h5 className="font-semibold text-text-primary text-sm mb-3">Policies &amp; Legal</h5>
             <ul className="space-y-2">
-              <li><Link to="/about" className="hover:text-text-primary transition-colors">Về người sáng lập (Jeff Su)</Link></li>
-              <li><Link to="/terms?tab=terms" className="hover:text-text-primary transition-colors">Điều khoản dịch vụ</Link></li>
-              <li><Link to="/terms?tab=sla" className="hover:text-text-primary transition-colors">Cam kết chất lượng SLA 99.9%</Link></li>
-              <li><Link to="/terms?tab=refund" className="hover:text-text-primary transition-colors">Chính sách bảo hành &amp; hoàn tiền</Link></li>
-              <li><Link to="/terms?tab=privacy" className="hover:text-text-primary transition-colors">Chính sách bảo mật thông tin</Link></li>
+              <li><Link to="/about" className="hover:text-text-primary transition-colors">About the founder (Jeff Su)</Link></li>
+              <li><Link to="/terms?tab=terms" className="hover:text-text-primary transition-colors">Terms of Service</Link></li>
+              <li><Link to="/terms?tab=sla" className="hover:text-text-primary transition-colors">99.9% SLA commitment</Link></li>
+              <li><Link to="/terms?tab=refund" className="hover:text-text-primary transition-colors">Warranty &amp; refund policy</Link></li>
+              <li><Link to="/terms?tab=privacy" className="hover:text-text-primary transition-colors">Privacy policy</Link></li>
             </ul>
           </div>
 
           <div>
-            <h5 className="font-semibold text-text-primary text-sm mb-3">Hỗ Trợ Kỹ Thuật</h5>
+            <h5 className="font-semibold text-text-primary text-sm mb-3">Technical Support</h5>
             <p className="text-text-muted mb-3 leading-relaxed">Technical engineering team online 24/7 via Telegram, specialized for developers.</p>
             <a
               href="https://t.me/aipro_support"
@@ -91,7 +91,7 @@ export const Footer: React.FC = () => {
         <div className="pt-8 border-t border-border-subtle/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-text-muted">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-mono font-semibold text-text-secondary">AIPro.dev</span>
+              <span className="font-mono font-semibold text-text-secondary">AgentLab</span>
               <span>&copy; 2026. One-Way Corridor UX Design Standard for Developers.</span>
             </div>
             <div className="flex items-center gap-1.5">

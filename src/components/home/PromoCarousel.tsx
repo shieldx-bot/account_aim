@@ -18,29 +18,29 @@ const SLIDES: PromoSlide[] = [
   {
     id: 'flash',
     icon: <Flame className="w-5 h-5" />,
-    title: 'FLASH SALE — Cursor Pro giảm 35% gói 12 tháng',
-    subtitle: 'Áp dụng đến hết Chủ nhật. Kho thực tế hiển thị realtime, hết là hết.',
-    cta: 'Săn deal ngay',
+    title: 'FLASH SALE — Cursor Pro 35% off on the 12-month plan',
+    subtitle: 'Ends this Sunday. Live warehouse stock, once it\'s gone it\'s gone.',
+    cta: 'Grab the deal',
     href: '#catalog',
     gradient: 'from-[#EF4444]/20 via-[#F59E0B]/10 to-transparent',
   },
   {
     id: 'combo',
     icon: <Gift className="w-5 h-5" />,
-    title: 'Combo Engineer: Claude 3.7 + Copilot — tặng 2 tuần dùng thử',
-    subtitle: 'Mua gói 6 tháng combo, nhận thêm 14 ngày miễn phí tính từ ngày kích hoạt.',
-    cta: 'Xem combo',
+    title: 'Engineer Combo: Claude 3.7 + Copilot — 2-week free trial included',
+    subtitle: 'Buy the 6-month combo and get 14 extra days free, counted from activation day.',
+    cta: 'View the combo',
     href: '#catalog',
-    gradient: 'from-[#8B5CF6]/20 via-[#0066FF]/10 to-transparent',
+    gradient: 'from-[#8B5CF6]/20 via-[#635BFF]/10 to-transparent',
   },
   {
     id: 'referral',
     icon: <Rocket className="w-5 h-5" />,
-    title: 'Giới thiệu bạn dev — nhận $4/lượt vào ví AI Pro',
-    subtitle: 'Tiền thật, rút thật, cộng ngay khi bạn bè hoàn tất đơn đầu tiên.',
-    cta: 'Nhận mã giới thiệu',
+    title: 'Refer a fellow dev — earn $4 per referral into your AgentLab wallet',
+    subtitle: 'Real money, real withdrawals, credited as soon as your friend completes their first order.',
+    cta: 'Get my referral code',
     href: '#calculator',
-    gradient: 'from-[#00F0FF]/15 via-[#10B981]/10 to-transparent',
+    gradient: 'from-[#00D4FF]/15 via-[#10B981]/10 to-transparent',
   },
 ];
 
@@ -101,16 +101,16 @@ export const PromoCarousel: React.FC = () => {
         <button
           type="button"
           onClick={prev}
-          aria-label="Promo trước"
-          className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/40 text-white/70 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          aria-label="Previous promo"
+          className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-elevated/90 border border-border-subtle text-text-secondary hover:text-primary-blue shadow-card-rest opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
         <button
           type="button"
           onClick={next}
-          aria-label="Promo sau"
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/40 text-white/70 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          aria-label="Next promo"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-elevated/90 border border-border-subtle text-text-secondary hover:text-primary-blue shadow-card-rest opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -121,9 +121,9 @@ export const PromoCarousel: React.FC = () => {
             <button
               key={s.id}
               type="button"
-              aria-label={`Chuyển tới promo ${i + 1}`}
+              aria-label={`Go to promo ${i + 1}`}
               onClick={() => setIndex(i)}
-              className={`h-1.5 rounded-full transition-all cursor-pointer ${i === index ? 'w-5 bg-accent-cyan' : 'w-1.5 bg-white/25 hover:bg-white/50'}`}
+              className={`h-1.5 rounded-full transition-all cursor-pointer ${i === index ? 'w-5 bg-accent-cyan' : 'w-1.5 bg-text-primary/20 hover:bg-text-primary/40'}`}
             />
           ))}
         </div>

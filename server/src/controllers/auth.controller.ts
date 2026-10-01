@@ -5,7 +5,7 @@ import { registerSchema, loginSchema } from "../schemas/auth.schema.js";
 import { pool } from '../config/db.js';
 import { env } from '../config/env.js';
 import { catchAsync } from '../utils/catch-async.js';
-import { BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError } from '../utils/app-error.js';
+import { BadRequestError, UnauthorizedError, NotFoundError } from '../utils/app-error.js';
 
 // Format user record for API responses (snake_case to camelCase)
 export const formatUserResponse = (row: any) => ({
@@ -26,8 +26,8 @@ export const formatUserResponse = (row: any) => ({
  */
 export const ensureSeedUsers = async () => {
   try {
-    const adminPassHash = await bcrypt.hash('admin123', 10);
-    const memberPassHash = await bcrypt.hash('123456', 10);
+    const adminPassHash = await bcrypt.hash(env.ADMIN_PASSWORD || 'admin123', 10);
+    const memberPassHash = await bcrypt.hash(env.MEMBER_PASSWORD || '123456', 10);
 
     // Upsert Admin
     await pool.query(
@@ -36,7 +36,7 @@ export const ensureSeedUsers = async () => {
        ON CONFLICT (email) 
        DO UPDATE SET password_hash = $2, role = 'admin'`,
       [
-        'admin@aipro.dev',
+        env.ADMIN_EMAIL || 'admin@agentlab.dev',
         adminPassHash,
         'Root Operator',
         'admin',
@@ -57,7 +57,7 @@ export const ensureSeedUsers = async () => {
       [
         'alex.dev@gmail.com',
         memberPassHash,
-        'Alex Nguyễn',
+        'Alex Nguyen',
         'member',
         'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         650000,
@@ -67,7 +67,7 @@ export const ensureSeedUsers = async () => {
       ]
     );
 
-    console.log('[Seed] Default admin@aipro.dev & alex.dev@gmail.com initialized in PostgreSQL.');
+    console.log('[Seed] Default admin@agentlab.dev & alex.dev@gmail.com initialized in PostgreSQL.');
   } catch (err) {
     console.error('[Seed Error] Failed to ensure seed users:', err);
   }
@@ -77,23 +77,18 @@ export const ensureSeedUsers = async () => {
  * POST /api/auth/register
  */
 export const register = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const { name, email, password, role, adminCode, phone } = req.body;
+  const { name, email, password, phone } = req.body;
 
-  // Role verification
-  let assignedRole: 'member' | 'admin' = 'member';
-  if (role === 'admin') {
-    if (adminCode !== env.ADMIN_ROOT_KEY) {
-      throw new ForbiddenError('Mã ủy quyền Root Key Quản trị viên không chính xác.');
-    }
-    assignedRole = 'admin';
-  }
+  // Public registration always creates a member. Admin accounts are seeded
+  // from ADMIN_EMAIL/ADMIN_PASSWORD in the server environment only.
+  const assignedRole: 'member' | 'admin' = 'member';
 
   const normalizedEmail = email.trim().toLowerCase();
 
   // Check if email already exists
   const existing = await pool.query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
   if (existing.rows.length > 0) {
-    throw new BadRequestError('Địa chỉ Email này đã được đăng ký. Vui lòng đăng nhập.');
+    throw new BadRequestError('This email address is already registered. Please log in.');
   }
 
   // Hash password
@@ -120,7 +115,7 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
 
   res.status(201).json({
     success: true,
-    message: 'Đăng ký tài khoản thành công! Tặng bạn $2.00 vào số dư ví.',
+    message: 'Account registered successfully! $2.00 has been added to your wallet balance.',
     token,
     user: formatUserResponse(newUser),
   });
@@ -136,7 +131,7 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
   // Query user
   const result = await pool.query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
   if (result.rows.length === 0) {
-    throw new UnauthorizedError('Email hoặc mật khẩu không chính xác.');
+    throw new UnauthorizedError('Email or password is incorrect.');
   }
 
   const user = result.rows[0];
@@ -144,7 +139,7 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
   // Check password
   const isMatch = await bcrypt.compare(password, user.password_hash);
   if (!isMatch) {
-    throw new UnauthorizedError('Email hoặc mật khẩu không chính xác.');
+    throw new UnauthorizedError('Email or password is incorrect.');
   }
 
   // Sign JWT token
@@ -156,7 +151,7 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
 
   res.status(200).json({
     success: true,
-    message: 'Đăng nhập thành công!',
+    message: 'Logged in successfully!',
     token,
     user: formatUserResponse(user),
   });
@@ -168,12 +163,12 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
 export const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const userId = (req as any).user?.id;
   if (!userId) {
-    throw new UnauthorizedError('Chưa xác thực.');
+    throw new UnauthorizedError('Not authenticated.');
   }
 
   const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
   if (result.rows.length === 0) {
-    throw new NotFoundError('Người dùng không tồn tại.');
+    throw new NotFoundError('User not found.');
   }
 
   res.status(200).json({

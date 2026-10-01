@@ -1,23 +1,89 @@
+# AgentLab — container packaging
+#
+# Two modes:
+#
+# 1. Full (external PostgreSQL container — production-like):
+#      docker compose up -d
+#    Postgres + backend + web, the classic three-service stack.
+#
+# 2. Embedded (SQLite-style, self-contained — local/small VPS, NO database
+#    server): see docker-compose.sqlite.yml
+#      docker compose -f docker-compose.sqlite.yml up -d
+#
+# Both modes expose the storefront at http://localhost:8080 (nginx proxies
+# /api to the backend container).
+
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: aipro_postgres
+    container_name: agentlab_postgres
     restart: unless-stopped
+    # Override credentials via environment — never commit real passwords.
     environment:
-      POSTGRES_DB: aipro_db
-      POSTGRES_USER: aipro_user
-      POSTGRES_PASSWORD: aipro_secure_pass_2025
+      POSTGRES_DB: ${DB_NAME:-agentlab_db}
+      POSTGRES_USER: ${DB_USER:-agentlab_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-agentlab_dev_password}
+    # Dev convenience only: bind to localhost. In production (Railway/managed
+    # Postgres) the backend reaches the DB over the private network instead.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./server/src/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aipro_user -d aipro_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-agentlab_user} -d ${DB_NAME:-agentlab_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # ---- Backend: external PostgreSQL engine (mode 2) ----
+  backend:
+    build:
+      context: ./server
+      network: host
+    container_name: agentlab_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DB_DRIVER: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-agentlab_user}
+      DB_PASSWORD: ${DB_PASSWORD:-agentlab_dev_password}
+      DB_NAME: ${DB_NAME:-agentlab_db}
+      PORT: 5000
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      ADMIN_ROOT_KEY: ${ADMIN_ROOT_KEY}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      MAIL_FROM: ${MAIL_FROM}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET}
+      PAYPAL_ENV: ${PAYPAL_ENV:-live}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GROK_MODEL: ${GROK_MODEL:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@agentlab.dev}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      MEMBER_PASSWORD: ${MEMBER_PASSWORD:-123456}
+    ports:
+      - "127.0.0.1:5000:5000"
+
+  # ---- Frontend: nginx SPA + /api reverse proxy (works with both modes) ----
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      network: host
+    container_name: agentlab_web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+
 volumes:
   postgres_data:
-    name: aipro_postgres_data
+    name: agentlab_postgres_data

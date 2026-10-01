@@ -4,9 +4,9 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'AIPro Backend API',
+      title: 'AgentLab Backend API',
       version: '1.0.0',
-      description: 'API documentation for AIPro.dev Backend',
+      description: 'API documentation for AgentLab Backend',
     },
     servers: [
       {

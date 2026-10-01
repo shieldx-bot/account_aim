@@ -15,7 +15,7 @@ export const FinalCtaSection: React.FC = () => {
           decoding="async"
           className="absolute inset-0 w-full h-full object-cover opacity-[0.12] saturate-[0.6]"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-background/70 via-transparent to-background/70 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-canvas/70 via-transparent to-canvas/70 pointer-events-none" />
         {/* Ambient glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-primary-blue/25 rounded-full blur-[140px] pointer-events-none" />
 
@@ -36,7 +36,7 @@ export const FinalCtaSection: React.FC = () => {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href="#catalog"
-              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan text-white text-sm font-bold shadow-xl shadow-primary-blue/30 hover:shadow-primary-blue/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-sm font-bold shadow-button hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
             >
               <Zap className="w-4 h-4 fill-white" />
               <span>Explore Pro Packages Now</span>

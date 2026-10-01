@@ -32,7 +32,7 @@ export const ProductsPage: React.FC = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
-    document.title = 'Official AI Pro License Accounts | AIPro.dev';
+    document.title = 'Official AgentLab License Accounts | AgentLab';
   }, []);
 
   // Sync category param with URL if needed
@@ -101,7 +101,7 @@ export const ProductsPage: React.FC = () => {
   const FAQS = [
     {
       q: 'How long will I receive my AI account after payment?',
-      a: 'AIPro.dev system activates completely automatically 24/7. Immediately after the PayPal payment gateway confirms the transaction (typically < 30 seconds), the system will send account access or Workspace invitation details to the email you provided.',
+      a: 'AgentLab system activates completely automatically 24/7. Immediately after the PayPal payment gateway confirms the transaction (typically < 30 seconds), the system will send account access or Workspace invitation details to the email you provided.',
     },
     {
       q: 'What provisioning methods are available for accounts?',
@@ -109,11 +109,11 @@ export const ProductsPage: React.FC = () => {
     },
     {
       q: 'What is the warranty and SLA commitment policy?',
-      a: 'All AIPro.dev license packages include automatic 1-exchange warranty throughout the service period. If any package or quota issues arise from the provider, our Bot system will automatically issue a new account or extend service days within 2 minutes.',
+      a: 'All AgentLab license packages include automatic 1-exchange warranty throughout the service period. If any package or quota issues arise from the provider, our Bot system will automatically issue a new account or extend service days within 2 minutes.',
     },
     {
       q: 'What payment methods are available?',
-      a: 'We support secure international payments via PayPal gateway, including PayPal balance, international credit/debit cards (Visa, Mastercard, American Express, Discover) without requiring a PayPal account.',
+      a: 'We support secure international payments via PayPal — pay with your PayPal balance or linked international cards (Visa, Mastercard, American Express, Discover). Payment is approved on PayPal\'s hosted page; we never see your card details.',
     },
   ];
 
@@ -129,17 +129,17 @@ export const ProductsPage: React.FC = () => {
             Home
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-border-subtle" />
-          <span className="text-accent-cyan font-semibold">AI Pro Product Catalog</span>
+          <span className="text-accent-cyan font-semibold">AgentLab Product Catalog</span>
         </nav>
 
         {/* Page Header */}
         <div className="text-center max-w-3xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface border border-accent-cyan/30 text-xs font-mono text-accent-cyan mb-4 shadow-[0_0_15px_rgba(0,240,255,0.15)]">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface border border-accent-cyan/30 text-xs font-mono text-accent-cyan mb-4 shadow-[0_0_15px_rgba(0,212,255,0.15)]">
             <Sparkles className="w-3.5 h-3.5" />
             <span>16 OFFICIAL LICENSES READY FOR DELIVERY</span>
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-text-primary tracking-tight leading-tight">
-            Premium AI Pro Account Vault for{' '}
+            Premium AgentLab Account Vault for{' '}
             <span className="bg-gradient-to-r from-accent-cyan via-primary-blue to-[#60A5FA] bg-clip-text text-transparent">
               Developers &amp; Teams
             </span>
@@ -212,7 +212,7 @@ export const ProductsPage: React.FC = () => {
           {(activeCategory !== 'all' || searchQuery || sortBy !== 'popular') && (
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1 text-accent-cyan hover:text-white transition-colors cursor-pointer text-xs"
+              className="flex items-center gap-1 text-accent-cyan hover:text-primary-blue transition-colors cursor-pointer text-xs"
             >
               <RotateCcw className="w-3 h-3" />
               <span>Reset Filters</span>
@@ -224,23 +224,23 @@ export const ProductsPage: React.FC = () => {
         {isLoadingProducts ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
             <div className="w-10 h-10 border-2 border-primary-blue border-t-accent-cyan rounded-full animate-spin" />
-            <span className="text-xs font-mono text-text-muted">Đang tải danh mục từ cơ sở dữ liệu...</span>
+            <span className="text-xs font-mono text-text-muted">Loading catalog from database...</span>
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="py-16 px-4 text-center rounded-2xl bg-surface/50 border border-border-subtle max-w-lg mx-auto">
             <div className="w-16 h-16 rounded-2xl bg-surface border border-border-subtle flex items-center justify-center text-text-muted mx-auto mb-4">
               <Search className="w-8 h-8 opacity-40" />
             </div>
-            <h3 className="text-base font-bold text-text-primary mb-2">Không tìm thấy sản phẩm phù hợp</h3>
+            <h3 className="text-base font-bold text-text-primary mb-2">No matching products found</h3>
             <p className="text-xs text-text-secondary mb-6 leading-relaxed">
-              Không có sản phẩm nào khớp với từ khóa "{searchQuery}" hoặc phân loại hiện tại. Hãy thử tìm kiếm với từ khóa khác như "Cursor", "Claude", "ChatGPT" hoặc đặt lại bộ lọc.
+              No products match the keyword "{searchQuery}" or the current category. Try searching with other keywords such as "Cursor", "Claude", "ChatGPT" or reset the filters.
             </p>
             <button
               onClick={clearFilters}
               className="px-5 py-2.5 rounded-xl bg-primary-blue text-white text-xs font-bold hover:bg-primary-blue/90 transition-all inline-flex items-center gap-2"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Xem tất cả sản phẩm</span>
+              <span>View all products</span>
             </button>
           </div>
         ) : viewMode === 'compact' ? (
@@ -257,11 +257,11 @@ export const ProductsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Why Choose AIPro.dev Trust Grid */}
+        {/* Why Choose AgentLab Trust Grid */}
         <section className="mt-20 pt-12 border-t border-border-subtle/80">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <h2 className="text-2xl font-bold text-text-primary tracking-tight">
-              Why 10,000+ Developers &amp; Teams Choose AIPro.dev?
+              Why 10,000+ Developers &amp; Teams Choose AgentLab?
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-text-secondary">
               Cost-optimized technology license solutions for developers and businesses.

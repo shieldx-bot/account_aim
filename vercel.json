@@ -1,0 +1,5 @@
+# AIPro.dev frontend — static build on Vercel/Netlify.
+# SPA rewrite keeps BrowserRouter routes (/member/*, /admin/*, ...) working on refresh.
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

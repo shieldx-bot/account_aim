@@ -1,9 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.statusRouter = void 0;
-const express_1 = require("express");
-const status_controller_js_1 = require("../controllers/status.controller.js");
-exports.statusRouter = (0, express_1.Router)();
+import { Router } from 'express';
+import { createHash } from 'crypto';
+import { getStatusPage, getComponentMetrics, getIncidents, getMaintenance } from '../controllers/status.controller.js';
+import { env } from '../config/env.js';
+export const statusRouter = Router();
 /**
  * @openapi
  * /api/status:
@@ -14,7 +13,7 @@ exports.statusRouter = (0, express_1.Router)();
  *       200:
  *         description: Status page data
  */
-exports.statusRouter.get('/', status_controller_js_1.getStatusPage);
+statusRouter.get('/', getStatusPage);
 /**
  * @openapi
  * /api/status/components:
@@ -25,7 +24,7 @@ exports.statusRouter.get('/', status_controller_js_1.getStatusPage);
  *       200:
  *         description: List of components with current status
  */
-exports.statusRouter.get('/components', async (req, res, next) => {
+statusRouter.get('/components', async (req, res, next) => {
     try {
         const { pool } = await import('../config/db.js');
         const result = await pool.query(`
@@ -60,7 +59,7 @@ exports.statusRouter.get('/components', async (req, res, next) => {
  *       200:
  *         description: Component metrics
  */
-exports.statusRouter.get('/components/:id/metrics', status_controller_js_1.getComponentMetrics);
+statusRouter.get('/components/:id/metrics', getComponentMetrics);
 /**
  * @openapi
  * /api/status/incidents:
@@ -81,7 +80,7 @@ exports.statusRouter.get('/components/:id/metrics', status_controller_js_1.getCo
  *       200:
  *         description: List of incidents
  */
-exports.statusRouter.get('/incidents', status_controller_js_1.getIncidents);
+statusRouter.get('/incidents', getIncidents);
 /**
  * @openapi
  * /api/status/maintenance:
@@ -97,7 +96,7 @@ exports.statusRouter.get('/incidents', status_controller_js_1.getIncidents);
  *       200:
  *         description: List of maintenance windows
  */
-exports.statusRouter.get('/maintenance', status_controller_js_1.getMaintenance);
+statusRouter.get('/maintenance', getMaintenance);
 /**
  * @openapi
  * /api/status/subscribe:
@@ -112,11 +111,12 @@ exports.statusRouter.get('/maintenance', status_controller_js_1.getMaintenance);
  *             schema:
  *               type: string
  */
-exports.statusRouter.get('/subscribe', async (req, res) => {
+statusRouter.get('/subscribe', async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Same-origin in prod; allow-list matters for cross-origin dev clients
+    res.setHeader('Access-Control-Allow-Origin', env.corsOrigins[0] ?? '*');
     res.flushHeaders();
     const sendEvent = (data) => {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
@@ -151,11 +151,11 @@ exports.statusRouter.get('/subscribe', async (req, res) => {
  *       201:
  *         description: View recorded
  */
-exports.statusRouter.post('/view', async (req, res, next) => {
+statusRouter.post('/view', async (req, res, next) => {
     try {
         const { pool } = await import('../config/db.js');
         const { path } = req.body;
-        const ipHash = req.ip ? require('crypto').createHash('sha256').update(req.ip).digest('hex').substring(0, 16) : null;
+        const ipHash = req.ip ? createHash('sha256').update(req.ip).digest('hex').substring(0, 16) : null;
         const userAgent = req.get('user-agent') || null;
         const referrer = req.get('referer') || null;
         await pool.query(`
@@ -184,33 +184,34 @@ exports.statusRouter.post('/view', async (req, res, next) => {
  *       200:
  *         description: Analytics data
  */
-exports.statusRouter.get('/analytics', async (req, res, next) => {
+statusRouter.get('/analytics', async (req, res, next) => {
     try {
         const { pool } = await import('../config/db.js');
-        const days = parseInt(req.query.days) || 30;
+        const days = Math.min(Math.max(parseInt(req.query.days) || 30, 1), 365);
+        const window = `NOW() - ($1::text || ' days')::interval`;
         const [views, uniqueVisitors, topPaths] = await Promise.all([
             pool.query(`
         SELECT DATE_TRUNC('day', created_at) as day, COUNT(*) as views
         FROM status_page_views
-        WHERE created_at >= NOW() - INTERVAL '${days} days'
+        WHERE created_at >= ${window}
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY day
-      `),
+      `, [days]),
             pool.query(`
         SELECT DATE_TRUNC('day', created_at) as day, COUNT(DISTINCT ip_hash) as visitors
         FROM status_page_views
-        WHERE created_at >= NOW() - INTERVAL '${days} days' AND ip_hash IS NOT NULL
+        WHERE created_at >= ${window} AND ip_hash IS NOT NULL
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY day
-      `),
+      `, [days]),
             pool.query(`
         SELECT path, COUNT(*) as views
         FROM status_page_views
-        WHERE created_at >= NOW() - INTERVAL '${days} days'
+        WHERE created_at >= ${window}
         GROUP BY path
         ORDER BY views DESC
         LIMIT 10
-      `),
+      `, [days]),
         ]);
         res.json({
             success: true,

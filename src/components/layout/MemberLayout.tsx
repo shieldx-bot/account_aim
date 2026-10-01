@@ -81,12 +81,12 @@ export const MemberLayout: React.FC = () => {
     <div className="min-h-screen bg-canvas text-text-primary flex">
       {/* Top-up Simulation Modal */}
       {showTopUpModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-text-primary/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-surface border border-primary-blue/30 rounded-2xl p-6 max-w-md w-full shadow-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-accent-cyan" />
-                <h3 className="text-base font-bold text-text-primary">Nạp số dư ví AIPro</h3>
+                <h3 className="text-base font-bold text-text-primary">Top up AgentLab wallet</h3>
               </div>
               <button
                 onClick={() => setShowTopUpModal(false)}
@@ -106,7 +106,7 @@ export const MemberLayout: React.FC = () => {
                   onClick={() => setTopUpAmountUSD(amt)}
                   className={`p-3 rounded-xl border text-center transition-all ${
                     topUpAmountUSD === amt
-                      ? 'bg-primary-blue/20 border-primary-blue text-white font-bold ring-1 ring-primary-blue'
+                      ? 'bg-primary-blue/10 border-primary-blue text-primary-blue font-bold ring-1 ring-primary-blue'
                       : 'bg-canvas border-border-subtle text-text-secondary hover:border-primary-blue/50'
                   }`}
                 >
@@ -118,7 +118,7 @@ export const MemberLayout: React.FC = () => {
               ))}
             </div>
             <div className="p-3.5 rounded-xl bg-canvas border border-border-subtle mb-5 flex items-center justify-between">
-              <span className="text-xs text-text-secondary">Số tiền nạp:</span>
+              <span className="text-xs text-text-secondary">Top-up amount:</span>
               <span className="font-mono text-base font-bold text-accent-cyan">
                 ${topUpAmountUSD.toFixed(2)}
               </span>
@@ -151,8 +151,8 @@ export const MemberLayout: React.FC = () => {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-blue to-accent-cyan flex items-center justify-center shadow-md">
               <Terminal className="w-4 h-4 text-white" />
             </div>
-            <span className="font-mono text-base font-bold tracking-tight text-white">
-              AIPro<span className="text-accent-cyan">.dev</span>
+            <span className="font-mono text-base font-bold tracking-tight text-text-primary">
+              AgentLab
             </span>
           </Link>
           <span className="px-2 py-0.5 rounded-md bg-primary-blue/15 text-accent-cyan text-[10px] font-bold uppercase tracking-wider font-mono">
@@ -188,7 +188,7 @@ export const MemberLayout: React.FC = () => {
             <button
               onClick={() => setShowTopUpModal(true)}
               className="p-1.5 rounded-md bg-primary-blue/10 hover:bg-primary-blue/20 text-primary-blue transition-colors"
-              title="Nạp tiền"
+              title="Top up"
             >
               <PlusCircle className="w-4 h-4" />
             </button>
@@ -239,7 +239,7 @@ export const MemberLayout: React.FC = () => {
             className="w-full flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-status-error/80 hover:text-status-error hover:bg-status-error/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            <span>Đăng xuất</span>
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
@@ -257,7 +257,7 @@ export const MemberLayout: React.FC = () => {
             </button>
             <div className="hidden sm:block">
               <h2 className="text-sm font-bold text-text-primary">
-                Khu vực Thành viên <span className="text-text-muted font-normal">• AIPro Developer Hub</span>
+                Member Area <span className="text-text-muted font-normal">• AgentLab Developer Hub</span>
               </h2>
             </div>
           </div>
@@ -273,11 +273,11 @@ export const MemberLayout: React.FC = () => {
               type="button"
               onClick={openCart}
               className="relative p-2 rounded-xl bg-canvas hover:bg-surface-subtle border border-border-subtle hover:border-primary-blue text-text-secondary hover:text-text-primary transition-all group"
-              title="Xem giỏ hàng"
+              title="View cart"
             >
               <ShoppingBag className="w-4 h-4 text-accent-cyan group-hover:scale-110 transition-transform" />
               {totalCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary-blue text-white text-[10px] font-bold font-mono flex items-center justify-center shadow-[0_0_8px_rgba(0,102,255,0.6)] animate-pulse">
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary-blue text-white text-[10px] font-bold font-mono flex items-center justify-center shadow-[0_0_8px_rgba(99,91,255,0.3)] animate-pulse">
                   {totalCount}
                 </span>
               )}
@@ -290,7 +290,7 @@ export const MemberLayout: React.FC = () => {
             >
               <Wallet className="w-3.5 h-3.5" />
               <span>{formatPrice(user?.balanceVND || 0, user?.balanceUSD || 0)}</span>
-              <span className="text-[10px] bg-status-success/20 px-1 rounded font-sans">+Nạp</span>
+              <span className="text-[10px] bg-status-success/20 px-1 rounded font-sans">+Top up</span>
             </button>
 
             {/* User Dropdown Preview */}
@@ -309,7 +309,7 @@ export const MemberLayout: React.FC = () => {
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-40 bg-black/80 backdrop-blur-sm pt-16">
+          <div className="lg:hidden fixed inset-0 z-40 bg-text-primary/40 backdrop-blur-sm pt-16">
             <div className="bg-surface border-b border-border-subtle p-4 space-y-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -342,13 +342,13 @@ export const MemberLayout: React.FC = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex-1 py-2.5 rounded-xl bg-canvas border border-border-subtle text-center text-xs font-semibold"
                 >
-                  Cửa hàng chính
+                  Main store
                 </Link>
                 <button
                   onClick={handleLogout}
                   className="flex-1 py-2.5 rounded-xl bg-status-error/15 text-status-error text-center text-xs font-semibold"
                 >
-                  Đăng xuất
+                  Sign out
                 </button>
               </div>
             </div>

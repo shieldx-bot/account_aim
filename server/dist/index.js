@@ -1,122 +1,141 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const helmet_1 = __importDefault(require("helmet"));
-const express_rate_limit_1 = require("express-rate-limit");
-const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
-const swagger_js_1 = require("./config/swagger.js");
-const env_js_1 = require("./config/env.js");
-const auth_routes_js_1 = require("./routes/auth.routes.js");
-const auth_controller_js_1 = require("./controllers/auth.controller.js");
-const product_routes_js_1 = require("./routes/product.routes.js");
-const status_routes_js_1 = require("./routes/status.routes.js");
-const orders_routes_js_1 = require("./routes/orders.routes.js");
-const inventory_warranty_routes_js_1 = require("./routes/inventory-warranty.routes.js");
-const referral_routes_js_1 = require("./routes/referral.routes.js");
-const error_middleware_js_1 = require("./middleware/error.middleware.js");
-const product_controller_js_1 = require("./controllers/product.controller.js");
-const db_js_1 = require("./config/db.js");
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
-const url_1 = require("url");
-const __dirname = path_1.default.dirname((0, url_1.fileURLToPath)(import.meta.url));
-const app = (0, express_1.default)();
-const PORT = env_js_1.env.PORT;
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.js';
+import { env } from './config/env.js';
+import { authRouter } from './routes/auth.routes.js';
+import { ensureSeedUsers } from './controllers/auth.controller.js';
+import { productRouter } from './routes/product.routes.js';
+import { statusRouter } from './routes/status.routes.js';
+import { ordersRouter, subscriptionsRouter, adminRouter } from './routes/orders.routes.js';
+import { inventoryAdminRouter, warrantyAdminRouter, warrantyPublicRouter } from './routes/inventory-warranty.routes.js';
+import { referralRouter } from './routes/referral.routes.js';
+import { paymentRouter } from './controllers/payment.controller.js';
+import { supportChatRouter } from './controllers/support-chat.controller.js';
+import { couponRouter } from './controllers/coupon.controller.js';
+import { errorMiddleware } from './middleware/error.middleware.js';
+import { ensureSeedProducts } from './controllers/product.controller.js';
+import { pool } from './config/db.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const app = express();
+const PORT = env.PORT;
+// Behind a reverse proxy (Railway, nginx...): use X-Forwarded-For for correct client IPs
+app.set('trust proxy', 1);
 // Security Middleware
-app.use((0, helmet_1.default)());
-app.use((0, cors_1.default)({
-    origin: env_js_1.env.corsOrigins,
+app.use(helmet());
+app.use(cors({
+    origin: env.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
 }));
-app.use(express_1.default.json({ limit: '10kb' }));
+app.use(express.json({ limit: '10kb' }));
 // Rate Limiting
-const apiLimiter = (0, express_rate_limit_1.rateLimit)({
+const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100,
     standardHeaders: true,
     legacyHeaders: false,
     message: { status: 429, message: 'Too many requests, please try again later.' },
 });
-const authLimiter = (0, express_rate_limit_1.rateLimit)({
+const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 20,
     standardHeaders: true,
     legacyHeaders: false,
     message: { status: 429, message: 'Too many authentication attempts, please try again later.' },
 });
-// Swagger Documentation
-app.use('/api/docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_js_1.swaggerSpec));
-// Health Check endpoint
-app.get('/api/health', (_req, res) => {
-    res.status(200).json({
-        status: 'healthy',
-        service: 'AIPro Backend API',
-        timestamp: new Date().toISOString(),
-        postgres: 'connected',
-    });
+// Swagger Documentation — dev convenience only, never expose the API surface in production
+if (!env.isProd) {
+    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
+// Health Check endpoint — actually verifies DB connectivity
+app.get('/api/health', async (_req, res) => {
+    try {
+        await pool.query('SELECT 1');
+        res.status(200).json({
+            status: 'healthy',
+            service: 'AgentLab Backend API',
+            timestamp: new Date().toISOString(),
+            postgres: 'connected',
+        });
+    }
+    catch {
+        res.status(503).json({
+            status: 'unhealthy',
+            service: 'AgentLab Backend API',
+            timestamp: new Date().toISOString(),
+            postgres: 'disconnected',
+        });
+    }
 });
 // Routes
 app.use('/api', apiLimiter);
-app.use('/api/auth', authLimiter, auth_routes_js_1.authRouter);
-app.use('/api/products', product_routes_js_1.productRouter);
-app.use('/api/status', status_routes_js_1.statusRouter);
-app.use('/api/orders', orders_routes_js_1.ordersRouter);
-app.use('/api/subscriptions', orders_routes_js_1.subscriptionsRouter);
-app.use('/api/warranty', inventory_warranty_routes_js_1.warrantyPublicRouter);
-app.use('/api/referral', referral_routes_js_1.referralRouter);
-app.use('/api/admin', orders_routes_js_1.adminRouter);
-app.use('/api/admin/inventory', inventory_warranty_routes_js_1.inventoryAdminRouter);
-app.use('/api/admin/warranty', inventory_warranty_routes_js_1.warrantyAdminRouter);
+app.use('/api/auth', authLimiter, authRouter);
+app.use('/api/products', productRouter);
+app.use('/api/status', statusRouter);
+app.use('/api/orders', ordersRouter);
+app.use('/api/subscriptions', subscriptionsRouter);
+app.use('/api/warranty', warrantyPublicRouter);
+app.use('/api/referral', referralRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/admin/inventory', inventoryAdminRouter);
+app.use('/api/admin/warranty', warrantyAdminRouter);
+app.use('/api/payments', paymentRouter);
+app.use('/api/coupons', couponRouter);
+app.use('/api/support', supportChatRouter);
 // Error handling middleware (must be last)
-app.use(error_middleware_js_1.errorMiddleware);
+app.use(errorMiddleware);
 /**
- * Run DB migrations to ensure all tables exist
+ * Run DB migrations: init.sql first, then every numbered migration in db/migrations/.
+ * In production a failed migration is fatal — booting without the schema would
+ * corrupt order/payment state, so the process exits instead of limping on.
  */
 const runMigrations = async () => {
-    try {
-        const sqlPath = path_1.default.join(__dirname, 'db', 'init.sql');
-        const sql = fs_1.default.readFileSync(sqlPath, 'utf-8');
-        await db_js_1.pool.query(sql);
-        // Production tables: inventory_accounts & warranty_tickets (migration 002)
-        const prodSqlPath = path_1.default.join(__dirname, 'db', 'migrations', '002_production_tables.sql');
-        if (fs_1.default.existsSync(prodSqlPath)) {
-            const prodSql = fs_1.default.readFileSync(prodSqlPath, 'utf-8');
-            await db_js_1.pool.query(prodSql);
+    const dbDir = path.join(__dirname, 'db');
+    const scripts = [path.join(dbDir, 'init.sql')];
+    const migrationsDir = path.join(dbDir, 'migrations');
+    if (fs.existsSync(migrationsDir)) {
+        for (const f of fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort()) {
+            scripts.push(path.join(migrationsDir, f));
         }
-        // Server-issued lookup OTPs (migration 003)
-        const otpSqlPath = path_1.default.join(__dirname, 'db', 'migrations', '003_lookup_otp.sql');
-        if (fs_1.default.existsSync(otpSqlPath)) {
-            const otpSql = fs_1.default.readFileSync(otpSqlPath, 'utf-8');
-            await db_js_1.pool.query(otpSql);
-        }
-        // Referral / #InviteToPay system (migration 004)
-        const refSqlPath = path_1.default.join(__dirname, 'db', 'migrations', '004_referral_system.sql');
-        if (fs_1.default.existsSync(refSqlPath)) {
-            const refSql = fs_1.default.readFileSync(refSqlPath, 'utf-8');
-            await db_js_1.pool.query(refSql);
-        }
-        console.log('[DB] Schema migrations applied successfully.');
     }
-    catch (err) {
-        console.error('[DB] Migration warning (tables may already exist):', err.message);
+    for (const scriptPath of scripts) {
+        if (!fs.existsSync(scriptPath)) {
+            if (env.isProd)
+                throw new Error(`Missing required SQL script: ${scriptPath}`);
+            console.warn(`[DB] Skipping missing script: ${scriptPath}`);
+            continue;
+        }
+        const sql = fs.readFileSync(scriptPath, 'utf-8');
+        await pool.query(sql);
     }
+    console.log('[DB] Schema migrations applied successfully.');
 };
 // Start server
 app.listen(PORT, async () => {
-    console.log(`🚀 [AIPro Backend] Server running on http://localhost:${PORT} (${env_js_1.env.NODE_ENV})`);
-    console.log(`📖 [AIPro Backend] Swagger docs at http://localhost:${PORT}/api/docs`);
+    console.log(`🚀 [AgentLab Backend] Server running on http://localhost:${PORT} (${env.NODE_ENV})`);
+    if (!env.isProd) {
+        console.log(`📖 [AgentLab Backend] Swagger docs at http://localhost:${PORT}/api/docs`);
+    }
     // Run DB schema migrations (creates orders, subscriptions tables if not exist)
-    await runMigrations();
+    try {
+        await runMigrations();
+    }
+    catch (err) {
+        console.error('[DB] Migration failed — aborting boot:', err.message);
+        process.exit(1);
+    }
     // Seed demo accounts only outside production — real signups own the DB in prod
-    if (env_js_1.env.NODE_ENV !== 'production') {
-        await (0, auth_controller_js_1.ensureSeedUsers)();
+    if (!env.isProd) {
+        await ensureSeedUsers();
     }
     // Seed initial AI products catalog (idempotent upsert)
-    await (0, product_controller_js_1.ensureSeedProducts)();
+    await ensureSeedProducts();
 });

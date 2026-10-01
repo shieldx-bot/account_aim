@@ -40,7 +40,7 @@ export const issueReferralCode = catchAsync(async (req: Request, res: Response) 
     .slice(0, 255) || null;
 
   if (!userId && !email) {
-    throw new BadRequestError('Cần đăng nhập hoặc cung cấp email để tạo mã mời.');
+    throw new BadRequestError('Please log in or provide an email to generate an invite code.');
   }
 
   // Idempotency: reuse existing code for this user (or this email)
@@ -79,7 +79,7 @@ export const issueReferralCode = catchAsync(async (req: Request, res: Response) 
   }
 
   if (!inserted) {
-    throw new BadRequestError('Không thể tạo mã mời, vui lòng thử lại.');
+    throw new BadRequestError('Could not create an invite code, please try again.');
   }
 
   res.status(201).json({ success: true, data: { code: inserted.code, reused: false } });
@@ -96,7 +96,7 @@ export const validateReferralCode = catchAsync(async (req: Request, res: Respons
     [code]
   );
   if (result.rows.length === 0) {
-    throw new NotFoundError('Mã mời không tồn tại hoặc đã hết hạn.');
+    throw new NotFoundError('This invite code does not exist or has expired.');
   }
   res.json({ success: true, data: { valid: true, code } });
 });
@@ -111,12 +111,12 @@ export const recordReferralClick = catchAsync(async (req: Request, res: Response
   const visitorId = String(req.body?.visitorId || '');
 
   if (!code || !isValidVisitorId(visitorId)) {
-    throw new BadRequestError('Thông tin click không hợp lệ.');
+    throw new BadRequestError('Invalid click information.');
   }
 
   const codeRow = await pool.query('SELECT code FROM referral_codes WHERE code = $1', [code]);
   if (codeRow.rows.length === 0) {
-    throw new NotFoundError('Mã mời không tồn tại.');
+    throw new NotFoundError('This invite code does not exist.');
   }
 
   await pool.query(
@@ -138,7 +138,7 @@ export const recordReferralClick = catchAsync(async (req: Request, res: Response
     [code, visitorId]
   );
 
-  res.status(201).json({ success: true, message: 'Attribution ghi nhận thành công (last-click, 30 ngày).' });
+  res.status(201).json({ success: true, message: 'Attribution recorded successfully (last-click, 30 days).' });
 });
 
 /**
@@ -209,23 +209,54 @@ export const processOrderReferral = async (params: {
     return { attributed: true, rewardGranted: false, reason: 'referrer_not_registered' };
   }
 
-  // Grant reward: 10% of order value as wallet credit, once per order (UNIQUE order_id)
-  const rewardVND = Math.round(orderTotalVND * 0.1);
+  // Get order details to know which product was purchased
+  const orderRes = await pool.query(
+    `SELECT o.product_id, o.product_name, o.product_slug, p.brand 
+     FROM orders o
+     LEFT JOIN products p ON p.id = o.product_id
+     WHERE o.id = $1`,
+    [orderId]
+  );
+  if (orderRes.rows.length === 0) {
+    return { attributed: true, rewardGranted: false, reason: 'order_not_found' };
+  }
+  const order = orderRes.rows[0];
+
+  // Grant reward: Create a 1-month subscription of the same product for the referrer
+  // Check if reward already granted for this order (UNIQUE order_id constraint)
   const rewardRes = await pool.query(
-    `INSERT INTO referral_rewards (code, referrer_id, order_id, amount_vnd, status, granted_at)
-     VALUES ($1, $2, $3, $4, 'granted', NOW())
+    `INSERT INTO referral_rewards (code, referrer_id, order_id, product_id, amount_vnd, reward_type, status, granted_at)
+     VALUES ($1, $2, $3, $4, 0, 'subscription_1month', 'granted', NOW())
      ON CONFLICT (order_id) DO NOTHING
      RETURNING id`,
-    [code, referrerId, orderId, rewardVND]
+    [code, referrerId, orderId, order.product_id]
   );
 
   if (rewardRes.rows.length === 0) {
     return { attributed: true, rewardGranted: false, reason: 'duplicate_reward' };
   }
 
+  // Create a 1-month subscription for the referrer
+  const startDate = new Date();
+  const expiresAt = new Date();
+  expiresAt.setMonth(expiresAt.getMonth() + 1);
+  const daysRemaining = Math.ceil((expiresAt.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
   await pool.query(
-    `UPDATE users SET balance_vnd = balance_vnd + $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
-    [rewardVND, referrerId]
+    `INSERT INTO subscriptions (
+      order_id, user_id, product_id, product_name, product_slug, brand,
+      provisioning_type, start_date, expires_at, days_remaining, status
+    ) VALUES ($1, $2, $3, $4, $5, $6, 'referral_reward', CURRENT_DATE, $7, $8, 'active')`,
+    [
+      orderId,
+      referrerId,
+      order.product_id,
+      order.product_name,
+      order.product_slug,
+      order.brand || order.product_slug.split('-')[0] || 'aipro',
+      expiresAt.toISOString().split('T')[0],
+      daysRemaining,
+    ]
   );
 
   return { attributed: true, rewardGranted: true };
@@ -253,16 +284,18 @@ export const getMyReferralStats = catchAsync(async (req: Request, res: Response)
       [userId]
     );
     const rewards = await pool.query(
-      `SELECT rr.order_id, rr.amount_vnd, rr.status, rr.created_at, o.product_name
+      `SELECT rr.order_id, rr.amount_vnd, rr.reward_type, rr.product_id, rr.status, rr.created_at, 
+              o.product_name, p.name as product_name_full, p.brand
        FROM referral_rewards rr
        LEFT JOIN orders o ON o.id = rr.order_id
+       LEFT JOIN products p ON p.id = rr.product_id
        WHERE rr.referrer_id = $1 OR rr.code = ANY($2::text[])
        ORDER BY rr.created_at DESC`,
       [userId, codeList]
     );
     stats = {
       totalClicks: agg.rows[0].total_clicks,
-      totalRewards: rewards.rows.filter((r) => r.status === 'granted').reduce((s, r) => s + Number(r.amount_vnd), 0),
+      totalRewards: rewards.rows.filter((r) => r.status === 'granted').length, // Count of accounts received
       pendingRewards: rewards.rows.filter((r) => r.status === 'pending').length,
       conversions: rewards.rows,
     };

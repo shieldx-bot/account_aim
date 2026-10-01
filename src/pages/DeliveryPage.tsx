@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { ordersApi, subscriptionsApi } from '@/services/api';
+import { ordersApi, subscriptionsApi, API_BASE_URL } from '@/services/api';
 import { trackEvent } from '@/utils/telemetry';
 import { openTelegramSupport } from '@/utils/diagnostics';
 import {
@@ -43,7 +43,7 @@ export const DeliveryPage: React.FC = () => {
     let cancelled = false;
     const load = async () => {
       if (!token || !orderId) {
-        setLoadError('Vui lòng đăng nhập để xem thông tin bàn giao đơn hàng.');
+        setLoadError('Please log in to view your order delivery details.');
         setLoading(false);
         return;
       }
@@ -58,7 +58,7 @@ export const DeliveryPage: React.FC = () => {
         const linked = (subs || []).find((s: any) => s.orderId === orderData.orderId);
         setSubscription(linked ?? null);
       } catch (err: any) {
-        if (!cancelled) setLoadError(err.message || 'Không tải được dữ liệu bàn giao từ server.');
+        if (!cancelled) setLoadError(err.message || 'Failed to load delivery data from the server.');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -69,8 +69,8 @@ export const DeliveryPage: React.FC = () => {
     };
   }, [token, orderId]);
 
-  const productName = order?.productName ?? activeConfig?.product.name ?? 'Đơn hàng AIPro';
-  const durationLabel = activeConfig?.duration.label ?? `${order?.planDurationMonths ?? '?'} tháng`;
+  const productName = order?.productName ?? activeConfig?.product.name ?? 'AgentLab Order';
+  const durationLabel = activeConfig?.duration.label ?? `${order?.planDurationMonths ?? '?'} months`;
 
   const credentials = {
     email: subscription?.accountEmail ?? order?.targetEmail ?? order?.guestEmail ?? '',
@@ -83,9 +83,9 @@ export const DeliveryPage: React.FC = () => {
         )
       : null,
     expiresAt: subscription?.expiresAt
-      ? new Date(subscription.expiresAt).toLocaleDateString('vi-VN')
+      ? new Date(subscription.expiresAt).toLocaleDateString('en-US')
       : order?.warrantyExpireDate
-        ? new Date(order.warrantyExpireDate).toLocaleDateString('vi-VN')
+        ? new Date(order.warrantyExpireDate).toLocaleDateString('en-US')
         : '—',
   };
 
@@ -126,7 +126,7 @@ export const DeliveryPage: React.FC = () => {
           password: credentials.password,
           twoFactorSecret: credentials.token2FA,
           warrantyExpiration: credentials.expiresAt,
-          instructions: 'https://aipro.dev/docs',
+          instructions: '/docs',
         },
         null,
         2
@@ -159,7 +159,7 @@ export const DeliveryPage: React.FC = () => {
 
   // Copy full markdown block for Notion / Password Managers
   const handleCopyMarkdown = () => {
-    const md = `### AIPro.dev License Vault - ${productName}
+    const md = `### AgentLab License Vault - ${productName}
 - **Order ID**: \`${orderId}\`
 - **Email**: \`${credentials.email}\`
 - **Password**: \`${credentials.password}\`
@@ -176,7 +176,7 @@ export const DeliveryPage: React.FC = () => {
     trackEvent('self_test_initiated', { order_id: orderId });
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/health`);
+      const res = await fetch(`${API_BASE_URL}/health`);
       const body = await res.json();
       if (res.ok && body.status === 'healthy' && body.postgres === 'connected') {
         setHealthStatus('active');
@@ -194,7 +194,7 @@ export const DeliveryPage: React.FC = () => {
       {loading && (
         <div className="flex flex-col items-center justify-center py-24 text-text-secondary gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-accent-cyan" />
-          <span className="text-xs font-medium">Đang tải thông tin bàn giao từ hệ thống...</span>
+          <span className="text-xs font-medium">Loading delivery details from the system...</span>
         </div>
       )}
 
@@ -204,36 +204,61 @@ export const DeliveryPage: React.FC = () => {
           <p className="text-sm font-semibold text-text-primary">{loadError}</p>
           <div className="flex items-center justify-center gap-3">
             <Link to="/login" className="text-xs text-primary-blue hover:underline font-semibold">
-              Đăng nhập ngay
+              Log in now
             </Link>
             <Link to="/member/orders" className="text-xs text-primary-blue hover:underline font-semibold">
-              Xem đơn hàng của tôi
+              My Orders
             </Link>
           </div>
         </div>
       )}
 
-      {!loading && !loadError && (
+      {!loading && !loadError && order && order.status !== 'paid' && order.status !== 'dispatched' && (
+        <div className="p-8 rounded-2xl bg-surface border border-status-warning/40 text-center space-y-4 animate-fadeIn">
+          <div className="w-16 h-16 rounded-full bg-status-warning/15 text-status-warning mx-auto flex items-center justify-center">
+            <Lock className="w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-text-primary">Order not paid yet</h1>
+          <p className="text-xs text-text-secondary max-w-md mx-auto leading-relaxed">
+            Account credentials are only delivered after the payment is confirmed.
+            Order <span className="font-mono font-bold">{orderId}</span> is currently in
+            {' '}<span className="font-semibold text-status-warning">{order.status}</span> status.
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Link
+              to="/checkout"
+              className="px-4 py-2 rounded-xl bg-primary-blue text-white text-xs font-bold hover:brightness-110 transition"
+            >
+              Complete payment
+            </Link>
+            <Link to="/member/orders" className="text-xs text-primary-blue hover:underline font-semibold">
+              My Orders
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {!loading && !loadError && (!order || order.status === 'paid' || order.status === 'dispatched') && (
       <>
       {/* 1. SUCCESS BANNER */}
       <div className="text-center mb-10 animate-fadeIn">
-        <div className="w-16 h-16 rounded-full bg-status-success/20 text-status-success mx-auto mb-4 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+        <div className="w-16 h-16 rounded-full bg-status-success/20 text-status-success mx-auto mb-4 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.15)]">
           <CheckCircle2 className="w-10 h-10 stroke-[2.5]" />
         </div>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/30 mb-3">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Bàn giao hoàn tất trong 18 giây</span>
+          <span>Delivery completed in 18 seconds</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-text-primary">
-          Thanh Toán Thành Công! Tài Khoản Đã Sẵn Sàng.
+          Payment Successful! Your Account Is Ready.
         </h1>
         <p className="text-xs sm:text-sm text-text-secondary mt-2">
-          Mã đơn hàng: <span className="font-mono font-bold text-text-primary">{orderId}</span> &bull; Bản sao lưu đã gửi về email của bạn.
+          Order ID: <span className="font-mono font-bold text-text-primary">{orderId}</span> &bull; A backup copy has been sent to your email.
         </p>
       </div>
 
       {/* 2. THE CREDENTIALS VAULT CARD */}
-      <div className="p-6 sm:p-8 rounded-2xl bg-surface border border-accent-cyan/40 shadow-[0_0_40px_rgba(0,240,255,0.08)] mb-8">
+      <div className="p-6 sm:p-8 rounded-2xl bg-surface border border-accent-cyan/40 shadow-[0_0_40px_rgba(0,212,255,0.08)] mb-8">
         <div className="flex items-center justify-between pb-4 border-b border-border-subtle/70 mb-6">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-accent-cyan block">
@@ -244,7 +269,7 @@ export const DeliveryPage: React.FC = () => {
             </h2>
           </div>
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-status-success/15 text-status-success border border-status-success/30">
-            🟢 Bảo hành: {credentials.warrantyDays !== null ? `Còn ${credentials.warrantyDays} ngày` : 'Đang đồng bộ'}
+            🟢 Warranty: {credentials.warrantyDays !== null ? `${credentials.warrantyDays} days left` : 'Syncing'}
           </span>
         </div>
 
@@ -253,7 +278,7 @@ export const DeliveryPage: React.FC = () => {
           {/* Row 1: Email */}
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-1">
-              Tài Khoản / Email Dịch Vụ:
+              Service Account / Email:
             </label>
             <div className="flex items-center gap-2">
               <div className="flex-1 h-11 px-4 rounded-xl bg-canvas border border-border-subtle flex items-center font-mono text-xs text-text-primary select-all">
@@ -267,12 +292,12 @@ export const DeliveryPage: React.FC = () => {
                 {copiedField === 'email' ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-status-success" />
-                    <span className="text-status-success">Đã chép</span>
+                    <span className="text-status-success">Copied</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5" />
-                    <span>Sao chép</span>
+                    <span>Copy</span>
                   </>
                 )}
               </button>
@@ -282,7 +307,7 @@ export const DeliveryPage: React.FC = () => {
           {/* Row 2: Password */}
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-1">
-              Mật Khẩu / Access Token:
+              Password / Access Token:
             </label>
             <div className="flex items-center gap-2">
               <div className="flex-1 h-11 px-4 rounded-xl bg-canvas border border-border-subtle flex items-center justify-between font-mono text-xs text-text-primary select-all">
@@ -303,12 +328,12 @@ export const DeliveryPage: React.FC = () => {
                 {copiedField === 'password' ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-status-success" />
-                    <span className="text-status-success">Đã chép</span>
+                    <span className="text-status-success">Copied</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5" />
-                    <span>Sao chép</span>
+                    <span>Copy</span>
                   </>
                 )}
               </button>
@@ -318,7 +343,7 @@ export const DeliveryPage: React.FC = () => {
           {/* Row 3: 2FA Backup Secret */}
           <div>
             <label className="block text-xs font-medium text-text-secondary mb-1">
-              Mã Phục Hồi / 2FA Secret Key (Nếu có):
+              Recovery Code / 2FA Secret Key (if any):
             </label>
             <div className="flex items-center gap-2">
               <div className="flex-1 h-11 px-4 rounded-xl bg-canvas border border-border-subtle flex items-center font-mono text-xs text-text-primary select-all">
@@ -332,12 +357,12 @@ export const DeliveryPage: React.FC = () => {
                 {copiedField === 'token' ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-status-success" />
-                    <span className="text-status-success">Đã chép</span>
+                    <span className="text-status-success">Copied</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5" />
-                    <span>Sao chép</span>
+                    <span>Copy</span>
                   </>
                 )}
               </button>
@@ -353,7 +378,7 @@ export const DeliveryPage: React.FC = () => {
             rel="noreferrer"
             className="flex-1 min-w-[200px] h-12 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center justify-center gap-2 glow-blue-button transition-all"
           >
-            <span>🚀 Mở Ứng Dụng Ngay (Open Tool)</span>
+            <span>🚀 Open Tool Now</span>
             <ExternalLink className="w-4 h-4" />
           </a>
 
@@ -363,7 +388,7 @@ export const DeliveryPage: React.FC = () => {
             className="h-12 px-4 rounded-xl bg-surface hover:bg-elevated border border-border-subtle text-xs font-semibold text-text-primary flex items-center gap-2 transition-colors"
           >
             <Download className="w-4 h-4 text-accent-cyan" />
-            <span>Tải file .json</span>
+            <span>Download .json</span>
           </button>
 
           <button
@@ -372,7 +397,7 @@ export const DeliveryPage: React.FC = () => {
             className="h-12 px-4 rounded-xl bg-surface hover:bg-elevated border border-border-subtle text-xs font-semibold text-text-primary flex items-center gap-2 transition-colors"
           >
             <Copy className="w-4 h-4 text-primary-blue" />
-            <span>{copiedField === 'markdown' ? '✓ Đã sao chép MD' : 'Copy Markdown'}</span>
+            <span>{copiedField === 'markdown' ? '✓ Markdown Copied' : 'Copy Markdown'}</span>
           </button>
         </div>
       </div>
@@ -382,17 +407,17 @@ export const DeliveryPage: React.FC = () => {
         <div>
           <h3 className="font-bold text-sm text-text-primary flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-status-success" />
-            Kiểm Tra Tự Động Trạng Thái Tài Khoản
+            Automatic Account Health Check
           </h3>
           <p className="text-xs text-text-muted mt-0.5">
-            Xác nhận cookie, hạn ngạch Pro và kết nối trực tiếp với API nhà phát hành.
+            Verifies cookies, Pro quota, and direct connectivity to the provider's API.
           </p>
         </div>
 
         {healthStatus === 'active' ? (
           <span className="px-3.5 py-2 rounded-xl text-xs font-bold font-mono bg-status-success/15 text-status-success border border-status-success/30 flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4" />
-            🟢 Active 100% - Đã Sẵn Sàng
+            🟢 Active 100% - Ready to Go
           </span>
         ) : (
           <button
@@ -402,7 +427,7 @@ export const DeliveryPage: React.FC = () => {
             className="px-4 py-2.5 rounded-xl bg-surface hover:bg-elevated border border-border-focus text-xs font-semibold text-text-primary flex items-center gap-2 transition-all"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${healthStatus === 'testing' ? 'animate-spin text-accent-cyan' : ''}`} />
-            <span>{healthStatus === 'testing' ? 'Đang test kết nối API...' : 'Kiểm tra tài khoản ngay'}</span>
+            <span>{healthStatus === 'testing' ? 'Testing API connection...' : 'Check account now'}</span>
           </button>
         )}
       </div>
@@ -411,15 +436,15 @@ export const DeliveryPage: React.FC = () => {
       <div className="p-6 rounded-2xl bg-surface border border-border-subtle mb-8">
         <h3 className="font-bold text-sm text-text-primary mb-1 flex items-center gap-2">
           <Key className="w-4 h-4 text-accent-cyan" />
-          Tự Động Tạo Mật Khẩu Tra Cứu (Tùy Chọn)
+          Set a Lookup Password (Optional)
         </h3>
         <p className="text-xs text-text-secondary mb-4">
-          Để lần sau tra cứu lại tài khoản hoặc đổi bảo hành mà không cần mã OTP, bạn có thể đặt nhanh một mật khẩu:
+          To look up your account later or request a warranty replacement without an OTP code, you can quickly set a password:
         </p>
 
         {passwordSaved ? (
           <div className="p-3 rounded-xl bg-status-success/10 border border-status-success/30 text-xs text-status-success font-semibold flex items-center gap-2">
-            <Check className="w-4 h-4" /> Đã lưu mật khẩu tra cứu thành công! Bạn có thể dùng email và mật khẩu này tại trang Tra Cứu.
+            <Check className="w-4 h-4" /> Lookup password saved successfully! You can use this email and password on the Lookup page.
           </div>
         ) : (
           <div className="flex items-center gap-3">
@@ -427,7 +452,7 @@ export const DeliveryPage: React.FC = () => {
               type="password"
               value={mgmtPassword}
               onChange={(e) => setMgmtPassword(e.target.value)}
-              placeholder="Nhập mật khẩu quản lý (tối thiểu 8 ký tự)..."
+              placeholder="Enter a management password (minimum 8 characters)..."
               className="flex-1 h-11 px-4 rounded-xl bg-canvas border border-border-subtle text-xs text-text-primary focus:border-border-focus focus:outline-none"
             />
             <button
@@ -440,7 +465,7 @@ export const DeliveryPage: React.FC = () => {
               }}
               className="h-11 px-5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-semibold shrink-0"
             >
-              Lưu mật khẩu
+              Save password
             </button>
           </div>
         )}
@@ -448,24 +473,24 @@ export const DeliveryPage: React.FC = () => {
 
       {/* 5. DEVELOPER SETUP GUIDE & SUPPORT */}
       <div className="p-6 rounded-2xl bg-surface border border-border-subtle">
-        <h3 className="font-bold text-sm text-text-primary mb-3">Hướng Dẫn Kích Hoạt Nhanh</h3>
+        <h3 className="font-bold text-sm text-text-primary mb-3">Quick Activation Guide</h3>
         <ol className="space-y-2 text-xs text-text-secondary list-decimal list-inside leading-relaxed mb-6">
-          <li>Đăng xuất tài khoản cũ trên ứng dụng Cursor hoặc trình duyệt của bạn.</li>
-          <li>Đăng nhập bằng tài khoản và mật khẩu được cung cấp trong License Vault ở trên.</li>
-          <li>Vào mục <span className="font-mono text-accent-cyan">Settings &gt; Subscription</span> để xác nhận hạn mức Pro đã sẵn sàng.</li>
+          <li>Log out of the old account in the Cursor app or your browser.</li>
+          <li>Log in with the account and password provided in the License Vault above.</li>
+          <li>Go to <span className="font-mono text-accent-cyan">Settings &gt; Subscription</span> to confirm your Pro quota is ready.</li>
         </ol>
 
         <div className="p-4 rounded-xl bg-canvas border border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 text-text-muted">
             <ShieldCheck className="w-4 h-4 text-status-success" />
-            <span>Gặp sự cố kích hoạt? Bảo hành 1-đổi-1 tự động trong 60 giây.</span>
+            <span>Activation issue? Automatic 1-to-1 exchange warranty within 60 seconds.</span>
           </div>
           <button
             type="button"
             onClick={() => openTelegramSupport(orderId)}
             className="text-primary-blue hover:underline font-semibold shrink-0"
           >
-            [Liên hệ Kỹ thuật viên Telegram 24/7]
+            [Contact a Telegram Support Engineer 24/7]
           </button>
         </div>
       </div>

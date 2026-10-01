@@ -43,7 +43,7 @@ export const AdminUsersPage: React.FC = () => {
       const data = await adminApi.getAllUsers(token);
       setUsers(data);
     } catch (err: any) {
-      setError(err.message || 'Không thể tải danh sách thành viên từ database.');
+      setError(err.message || 'Unable to load the member list from the database.');
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ export const AdminUsersPage: React.FC = () => {
       await adminApi.updateUserRole(token, u.id, nextRole);
       setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, role: nextRole } : x)));
     } catch (err: any) {
-      alert(err.message || 'Không thể đổi vai trò.');
+      alert(err.message || 'Unable to change the role.');
     } finally {
       setBusyId(null);
     }
@@ -88,7 +88,7 @@ export const AdminUsersPage: React.FC = () => {
       await adminApi.addUserBalance(token, u.id, amount);
       setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, balanceVND: x.balanceVND + amount } : x)));
     } catch (err: any) {
-      alert(err.message || 'Không thể nạp số dư.');
+      alert(err.message || 'Unable to add balance.');
     } finally {
       setBusyId(null);
     }
@@ -103,7 +103,7 @@ export const AdminUsersPage: React.FC = () => {
       await adminApi.updateUserStatus(token, u.id, nextStatus);
       setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, status: nextStatus } : x)));
     } catch (err: any) {
-      alert(err.message || 'Không thể cập nhật trạng thái tài khoản.');
+      alert(err.message || 'Unable to update the account status.');
     } finally {
       setBusyId(null);
     }
@@ -114,10 +114,10 @@ export const AdminUsersPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-sans">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-text-primary uppercase tracking-tight">
-            Quản Lý Thành Viên &amp; Phân Quyền
+            Member Management &amp; Role Control
           </h1>
           <p className="text-xs text-text-secondary mt-1">
-            Dữ liệu realtime từ bảng <span className="font-mono text-accent-cyan">public.users</span> — PostgreSQL.
+            Realtime data from the <span className="font-mono text-accent-cyan">public.users</span> table — PostgreSQL.
           </p>
         </div>
         <button
@@ -125,7 +125,7 @@ export const AdminUsersPage: React.FC = () => {
           className="px-3 py-2 rounded-xl bg-surface hover:bg-elevated border border-border-subtle text-xs font-semibold text-text-primary flex items-center gap-1.5"
         >
           <RefreshCw className={`w-3.5 h-3.5 text-accent-cyan ${loading ? 'animate-spin' : ''}`} />
-          <span>Tải lại</span>
+          <span>Reload</span>
         </button>
       </div>
 
@@ -137,14 +137,14 @@ export const AdminUsersPage: React.FC = () => {
       )}
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-[#0d0f14] p-4 rounded-2xl border border-border-subtle font-sans">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-4 rounded-2xl border border-border-subtle font-sans">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-text-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Tìm theo tên hoặc email thành viên..."
+            placeholder="Search by member name or email..."
             className="w-full pl-10 pr-4 py-2 bg-canvas border border-border-subtle rounded-xl text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-status-error font-mono"
           />
         </div>
@@ -160,24 +160,24 @@ export const AdminUsersPage: React.FC = () => {
                   : 'bg-canvas text-text-secondary hover:text-text-primary border border-border-subtle'
               }`}
             >
-              {role === 'all' ? 'Tất cả' : role}
+              {role === 'all' ? 'All' : role}
             </button>
           ))}
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-[#0d0f14] border border-border-subtle rounded-2xl overflow-hidden shadow-2xl">
+      <div className="bg-white border border-border-subtle rounded-2xl overflow-hidden shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-canvas border-b border-border-subtle text-text-muted uppercase text-[10px]">
               <tr>
-                <th className="py-3.5 px-4">Thành Viên</th>
-                <th className="py-3.5 px-4">Role / Cấp bậc</th>
-                <th className="py-3.5 px-4">Số Dư Ví</th>
-                <th className="py-3.5 px-4">Tổng Đơn / Chi Tiêu</th>
-                <th className="py-3.5 px-4">Trạng Thái</th>
-                <th className="py-3.5 px-4 text-right">Thao Tác Admin</th>
+                <th className="py-3.5 px-4">Member</th>
+                <th className="py-3.5 px-4">Role / Tier</th>
+                <th className="py-3.5 px-4">Wallet Balance</th>
+                <th className="py-3.5 px-4">Orders / Total Spent</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4 text-right">Admin Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle">
@@ -185,13 +185,13 @@ export const AdminUsersPage: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-text-muted font-sans">
                     <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-                    Đang tải thành viên từ database...
+                    Loading members from the database...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-text-muted font-sans">
-                    Không tìm thấy thành viên nào.
+                    No members found.
                   </td>
                 </tr>
               ) : (
@@ -222,7 +222,7 @@ export const AdminUsersPage: React.FC = () => {
                     </td>
 
                     <td className="py-4 px-4 font-mono">
-                      <span className="text-text-primary font-semibold">{u.ordersCount} đơn</span>
+                      <span className="text-text-primary font-semibold">{u.ordersCount} orders</span>
                       <span className="text-[10px] text-text-muted block">
                         ${(u.totalSpentVND / 25000).toFixed(2)}
                       </span>
@@ -236,7 +236,7 @@ export const AdminUsersPage: React.FC = () => {
                             : 'bg-status-error/15 text-status-error'
                         }`}
                       >
-                        {u.status === 'active' ? 'Hoạt động' : 'Bị khóa'}
+                        {u.status === 'active' ? 'Active' : 'Banned'}
                       </span>
                     </td>
 
@@ -246,8 +246,8 @@ export const AdminUsersPage: React.FC = () => {
                         <button
                           disabled={busyId === u.id}
                           onClick={() => handleAddBalance(u)}
-                          className="p-1.5 rounded-lg bg-canvas hover:bg-canvas-subtle border border-border-subtle text-status-success hover:border-status-success text-[11px] font-semibold disabled:opacity-40"
-                          title="Nạp thưởng +200k (ghi vào DB)"
+                          className="p-1.5 rounded-lg bg-canvas hover:bg-surface-subtle border border-border-subtle text-status-success hover:border-status-success text-[11px] font-semibold disabled:opacity-40"
+                          title="Add $8 bonus credit (writes to DB)"
                         >
                           +$8
                         </button>
@@ -255,10 +255,10 @@ export const AdminUsersPage: React.FC = () => {
                         <button
                           disabled={busyId === u.id}
                           onClick={() => handleToggleRole(u)}
-                          className="p-1.5 rounded-lg bg-canvas hover:bg-canvas-subtle border border-border-subtle text-text-secondary hover:text-text-primary text-[11px] font-semibold disabled:opacity-40"
-                          title="Đổi vai trò (ghi vào DB)"
+                          className="p-1.5 rounded-lg bg-canvas hover:bg-surface-subtle border border-border-subtle text-text-secondary hover:text-text-primary text-[11px] font-semibold disabled:opacity-40"
+                          title="Change role (writes to DB)"
                         >
-                          {u.role === 'admin' ? 'Hạ Member' : 'Lên Admin'}
+                          {u.role === 'admin' ? 'Demote to Member' : 'Promote to Admin'}
                         </button>
 
                         <button
@@ -269,9 +269,9 @@ export const AdminUsersPage: React.FC = () => {
                               ? 'bg-status-error/10 border-status-error/30 text-status-error hover:bg-status-error/20'
                               : 'bg-status-success/10 border-status-success/30 text-status-success'
                           }`}
-                          title="Khóa / Mở khóa (ghi vào DB)"
+                          title="Ban / Unban (writes to DB)"
                         >
-                          {u.status === 'active' ? 'Khóa' : 'Mở'}
+                          {u.status === 'active' ? 'Ban' : 'Unban'}
                         </button>
                       </div>
                     </td>

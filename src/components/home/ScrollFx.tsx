@@ -34,7 +34,7 @@ export const ScrollProgress: React.FC = () => {
     <div
       ref={barRef}
       aria-hidden="true"
-      className="fixed top-0 left-0 right-0 h-[3px] origin-left z-[60] bg-gradient-to-r from-primary-blue via-accent-cyan to-[#8B5CF6] shadow-[0_0_12px_rgba(0,240,255,0.45)]"
+      className="fixed top-0 left-0 right-0 h-[3px] origin-left z-[60] bg-gradient-to-r from-primary-blue via-accent-cyan to-[#8B5CF6] shadow-[0_0_12px_rgba(0,212,255,0.25)]"
       style={{ transform: 'scaleX(0)' }}
     />
   );

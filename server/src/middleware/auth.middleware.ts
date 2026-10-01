@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { env } from '../config/env.js';
 
 export interface AuthUserPayload {
   id: string;
@@ -15,7 +16,8 @@ declare global {
   }
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'aipro_super_secret_jwt_encryption_key_2025_prod';
+// zod-validated env — the process refuses to boot without JWT_SECRET, no fallback
+const JWT_SECRET = env.JWT_SECRET;
 
 export const authenticateToken = (
   req: Request,
@@ -28,7 +30,7 @@ export const authenticateToken = (
   if (!token) {
     res.status(401).json({
       success: false,
-      message: 'Yêu cầu đăng nhập để truy cập tài nguyên này (Missing Bearer Token).',
+      message: 'You must be logged in to access this resource (Missing Bearer Token).',
     });
     return;
   }
@@ -40,7 +42,7 @@ export const authenticateToken = (
   } catch (err) {
     res.status(403).json({
       success: false,
-      message: 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ.',
+      message: 'Your session has expired or is invalid.',
     });
   }
 };
@@ -76,7 +78,7 @@ export const requireAdmin = (
   if (!req.user || req.user.role !== 'admin') {
     res.status(403).json({
       success: false,
-      message: 'Bạn không có quyền hạn Quản trị viên (Admin privileges required).',
+      message: 'Admin privileges required.',
     });
     return;
   }

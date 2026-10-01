@@ -13,7 +13,6 @@ import {
   Terminal,
   Check,
 } from 'lucide-react';
-import { UserRole } from '@/types';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -23,8 +22,6 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('member');
-  const [adminCode, setAdminCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,39 +41,30 @@ export const RegisterPage: React.FC = () => {
     setErrorMessage(null);
 
     if (!name || !email || !password || !confirmPassword) {
-      setErrorMessage('Vui lòng điền đầy đủ tất cả các trường.');
+      setErrorMessage('Please fill in all fields.');
       return;
     }
 
     if (password.length < 6) {
-      setErrorMessage('Mật khẩu phải có tối thiểu 6 ký tự.');
+      setErrorMessage('Password must be at least 6 characters.');
       return;
     }
 
     if (password !== confirmPassword) {
-      setErrorMessage('Mật khẩu xác nhận không khớp.');
-      return;
-    }
-
-    if (role === 'admin' && !adminCode.trim()) {
-      setErrorMessage('Vui lòng nhập Mã Ủy Quyền Quản Trị Viên.');
+      setErrorMessage('Passwords do not match.');
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await register(name, email, password, role, adminCode);
+      const res = await register(name, email, password);
       if (res.success) {
-        if (role === 'admin') {
-          navigate('/admin/dashboard');
-        } else {
-          navigate('/member/dashboard');
-        }
+        navigate('/member/dashboard');
       } else {
-        setErrorMessage(res.message || 'Đăng ký không thành công.');
+        setErrorMessage(res.message || 'Registration was not successful.');
       }
     } catch {
-      setErrorMessage('Có lỗi xảy ra trong quá trình đăng ký.');
+      setErrorMessage('An error occurred during registration.');
     } finally {
       setIsLoading(false);
     }
@@ -94,15 +82,15 @@ export const RegisterPage: React.FC = () => {
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary-blue to-accent-cyan flex items-center justify-center shadow-lg shadow-primary-blue/25 group-hover:scale-105 transition-transform">
             <Terminal className="w-5 h-5 text-white" />
           </div>
-          <span className="font-mono text-xl font-bold tracking-tight text-white">
-            AIPro<span className="text-accent-cyan">.dev</span>
+          <span className="font-mono text-xl font-bold tracking-tight text-text-primary">
+            AgentLab
           </span>
         </Link>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
-          Tạo tài khoản mới
+          Create a new account
         </h2>
         <p className="mt-2 text-sm text-text-secondary">
-          Tặng ngay <span className="text-status-success font-semibold">$2</span> vào số dư ví cho thành viên mới!
+          Get an instant <span className="text-status-success font-semibold">$2</span> wallet credit as a new member!
         </p>
       </div>
 
@@ -116,59 +104,10 @@ export const RegisterPage: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Role Selection */}
-            <div>
-              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-                Loại tài khoản
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRole('member')}
-                  className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                    role === 'member'
-                      ? 'bg-primary-blue/15 border-primary-blue text-white ring-1 ring-primary-blue'
-                      : 'bg-canvas border-border-subtle text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  {role === 'member' && <Check className="w-3.5 h-3.5 text-accent-cyan" />}
-                  <span>Thành viên Developer</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('admin')}
-                  className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                    role === 'admin'
-                      ? 'bg-status-error/15 border-status-error text-status-error ring-1 ring-status-error'
-                      : 'bg-canvas border-border-subtle text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  {role === 'admin' && <Check className="w-3.5 h-3.5 text-status-error" />}
-                  <span>Quản trị viên (Admin)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Admin Security Passcode field if admin chosen */}
-            {role === 'admin' && (
-              <div className="p-3 rounded-xl bg-status-error/5 border border-status-error/30">
-                <label className="block text-[11px] font-semibold text-status-error uppercase mb-1">
-                  Mã Ủy Quyền Quản Trị Viên (Root Key)
-                </label>
-                <input
-                  type="password"
-                  value={adminCode}
-                  onChange={(e) => setAdminCode(e.target.value)}
-                  placeholder="Nhập mã ủy quyền quản trị viên"
-                  className="w-full px-3 py-2 bg-canvas border border-status-error/40 rounded-lg text-xs text-text-primary font-mono focus:outline-none focus:ring-1 focus:ring-status-error"
-                />
-              </div>
-            )}
-
             {/* Name */}
             <div>
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-                Họ và Tên
+                Full name
               </label>
               <div className="relative rounded-xl">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
@@ -179,7 +118,7 @@ export const RegisterPage: React.FC = () => {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Nguyễn Văn A"
+                  placeholder="Nguyen Van A"
                   className="w-full pl-10 pr-4 py-2.5 bg-canvas border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue transition-colors"
                 />
               </div>
@@ -188,7 +127,7 @@ export const RegisterPage: React.FC = () => {
             {/* Email */}
             <div>
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-                Địa chỉ Email
+                Email address
               </label>
               <div className="relative rounded-xl">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
@@ -208,7 +147,7 @@ export const RegisterPage: React.FC = () => {
             {/* Password */}
             <div>
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-                Mật khẩu
+                Password
               </label>
               <div className="relative rounded-xl">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
@@ -219,7 +158,7 @@ export const RegisterPage: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Tối thiểu 6 ký tự"
+                  placeholder="At least 6 characters"
                   className="w-full pl-10 pr-10 py-2.5 bg-canvas border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue transition-colors"
                 />
                 <button
@@ -235,7 +174,7 @@ export const RegisterPage: React.FC = () => {
             {/* Confirm Password */}
             <div>
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">
-                Xác nhận Mật khẩu
+                Confirm password
               </label>
               <div className="relative rounded-xl">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
@@ -246,7 +185,7 @@ export const RegisterPage: React.FC = () => {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Nhập lại mật khẩu"
+                  placeholder="Re-enter your password"
                   className="w-full pl-10 pr-4 py-2.5 bg-canvas border border-border-subtle rounded-xl text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue transition-colors"
                 />
               </div>
@@ -254,19 +193,19 @@ export const RegisterPage: React.FC = () => {
 
             <div className="p-3 rounded-xl bg-status-success/10 border border-status-success/20 flex items-center gap-2 text-xs text-status-success">
               <Gift className="w-4 h-4 flex-shrink-0" />
-              <span>Nhận ngay $2 nạp sẵn vào số dư tài khoản khi đăng ký thành công.</span>
+              <span>Receive $2 preloaded into your account balance upon successful registration.</span>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 mt-2 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan text-white text-sm font-bold shadow-lg shadow-primary-blue/25 hover:shadow-primary-blue/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3 px-4 mt-2 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-sm font-bold shadow-lg shadow-primary-blue/25 hover:shadow-primary-blue/40 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>Hoàn tất Đăng ký</span>
+                  <span>Complete Registration</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -275,9 +214,9 @@ export const RegisterPage: React.FC = () => {
 
           <div className="mt-6 pt-6 border-t border-border-subtle text-center">
             <p className="text-xs text-text-secondary">
-              Đã có tài khoản AIPro?{' '}
+              Already have an AgentLab account?{' '}
               <Link to="/login" className="font-semibold text-primary-blue hover:text-accent-cyan transition-colors">
-                Đăng nhập ngay
+                Sign in now
               </Link>
             </p>
           </div>

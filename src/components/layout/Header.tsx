@@ -39,12 +39,12 @@ export const Header: React.FC = () => {
       <div className="max-w-[1240px] h-full mx-auto px-4 sm:px-6 flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-surface border border-border-subtle group-hover:border-accent-cyan group-hover:shadow-[0_0_12px_rgba(0,240,255,0.3)] transition-all">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-surface border border-border-subtle group-hover:border-primary-blue group-hover:shadow-[0_2px_8px_rgba(99,91,255,0.25)] transition-all">
             <span className="font-mono font-bold text-accent-cyan text-sm">&gt;_</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-mono font-bold text-lg tracking-tight text-text-primary group-hover:text-white flex items-center gap-1.5">
-              AIPro<span className="text-primary-blue group-hover:text-accent-cyan transition-colors">.dev</span>
+            <span className="font-mono font-bold text-lg tracking-tight text-text-primary group-hover:text-primary-blue flex items-center gap-1.5">
+              AgentLab
             </span>
           </div>
         </Link>
@@ -100,7 +100,7 @@ export const Header: React.FC = () => {
               >
                 <ShoppingBag className="w-4 h-4 text-accent-cyan group-hover:scale-110 transition-transform" />
                 {totalCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary-blue text-white text-[10px] font-bold font-mono flex items-center justify-center shadow-[0_0_8px_rgba(0,102,255,0.6)] animate-pulse">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary-blue text-white text-[10px] font-bold font-mono flex items-center justify-center shadow-[0_0_8px_rgba(99,91,255,0.3)] animate-pulse">
                     {totalCount}
                   </span>
                 )}
@@ -142,7 +142,7 @@ export const Header: React.FC = () => {
                         <span className="text-[11px] text-text-muted font-mono block truncate">{user.email}</span>
                         {user.role === 'member' && (
                           <div className="mt-1 text-[11px] font-mono text-status-success font-semibold">
-                            Ví: {formatPrice(user.balanceVND, user.balanceUSD)}
+                            Wallet: {formatPrice(user.balanceVND, user.balanceUSD)}
                           </div>
                         )}
                       </div>

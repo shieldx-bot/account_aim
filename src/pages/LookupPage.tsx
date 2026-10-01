@@ -24,10 +24,10 @@ type WarrantyReason = 'out_of_pro' | 'wrong_password' | 'device_limit' | 'other'
 type ReplacementPhase = 'idle' | 'checking' | 'verifying' | 'allocating' | 'completed';
 
 const REASON_LABEL: Record<WarrantyReason, string> = {
-  out_of_pro: 'Bị out gói Pro / Mất Pro',
-  wrong_password: 'Sai mật khẩu đăng nhập',
-  device_limit: 'Bị giới hạn thiết bị',
-  other: 'Sự cố khác',
+  out_of_pro: 'Out of Pro quota / Lost Pro',
+  wrong_password: 'Wrong login password',
+  device_limit: 'Device limit reached',
+  other: 'Other issue',
 };
 
 export const LookupPage: React.FC = () => {
@@ -96,7 +96,7 @@ export const LookupPage: React.FC = () => {
       const order = data.order ?? null;
       const sub = data.subscription ?? null;
       if (!order) {
-        setErrorMsg('Không tìm thấy đơn hàng khớp với thông tin tra cứu.');
+        setErrorMsg('No order found matching the lookup information.');
         return false;
       }
       setMatchedOrder(order);
@@ -113,7 +113,7 @@ export const LookupPage: React.FC = () => {
       void refreshQuota(contactEmail);
       return true;
     } catch (err: any) {
-      setErrorMsg(err.message || 'Không thể kết nối máy chủ tra cứu đơn hàng.');
+      setErrorMsg(err.message || 'Unable to connect to the order lookup server.');
       return false;
     }
   };
@@ -121,7 +121,7 @@ export const LookupPage: React.FC = () => {
   // Handle OTP send — server issues a real bcrypt-hashed OTP bound to the order
   const handleSendOtp = async () => {
     if (!emailInput.includes('@')) {
-      setErrorMsg('Vui lòng nhập địa chỉ email hợp lệ');
+      setErrorMsg('Please enter a valid email address');
       return;
     }
     setErrorMsg('');
@@ -136,10 +136,10 @@ export const LookupPage: React.FC = () => {
       const res = await ordersApi.requestLookupOtp(emailInput, orderId);
       setOtpSent(true);
       setOtpCooldown(60);
-      setDevOtpHint(res.devCode ? `Mã test (dev): ${res.devCode}` : '');
+      setDevOtpHint(res.devCode ? `Test code (dev): ${res.devCode}` : '');
       trackEvent('otp_requested', { email: emailInput, order_id: orderId });
     } catch (err: any) {
-      setErrorMsg(err.message || 'Không thể gửi mã OTP. Vui lòng thử lại.');
+      setErrorMsg(err.message || 'Failed to send OTP code. Please try again.');
     }
   };
 
@@ -180,7 +180,7 @@ export const LookupPage: React.FC = () => {
     const targetOrderId = matchedOrder?.orderId ?? orderIdInput.trim().toUpperCase();
     const targetEmail = emailInput || matchedOrder?.guestEmail || '';
     if (!targetOrderId || !targetEmail) {
-      setErrorMsg('Thiếu thông tin đơn hàng để xác thực OTP.');
+      setErrorMsg('Missing order information for OTP verification.');
       return;
     }
     setOtpVerifying(true);
@@ -198,7 +198,7 @@ export const LookupPage: React.FC = () => {
       // Sync daily replacement quota from warranty_tickets (DB source of truth)
       void refreshQuota(targetEmail);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Mã OTP không đúng hoặc đã hết hạn.');
+      setErrorMsg(err.message || 'The OTP code is incorrect or has expired.');
       setOtpValues(['', '', '', '', '', '']);
       otpInputsRef.current[0]?.focus();
     } finally {
@@ -217,7 +217,7 @@ export const LookupPage: React.FC = () => {
   const handleOrderLookup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderIdInput.trim()) {
-      setErrorMsg('Vui lòng nhập mã đơn hàng');
+      setErrorMsg('Please enter your order ID');
       return;
     }
     setErrorMsg('');
@@ -230,14 +230,14 @@ export const LookupPage: React.FC = () => {
       setOtpSent(false);
       setOtpValues(['', '', '', '', '', '']);
       setErrorMsg(
-        `Tìm thấy đơn ${orderIdInput.trim().toUpperCase()}. Vì lý do bảo mật, thông tin đăng nhập cần xác thực OTP — vui lòng nhập/maintain email và bấm "Gửi mã OTP".`
+        `Order ${orderIdInput.trim().toUpperCase()} found. For security reasons, login credentials require OTP verification — please confirm your email and click "Send OTP code".`
       );
       trackEvent('order_lookup_match', { lookup_method: 'order_id', orderId: orderIdInput.trim() });
     }
   };
 
   // Trigger automated replacement flow — creates a REAL ticket in warranty_tickets table.
-  // Daily quota (2 lần/ngày) is enforced server-side; client just reflects DB state.
+  // Daily quota (2 per day) is enforced server-side; client just reflects DB state.
   const handleStartReplacement = async () => {
     if (!matchedOrder || replacementPhase !== 'idle') return;
 
@@ -256,14 +256,14 @@ export const LookupPage: React.FC = () => {
       const ticket = await warrantyApi.createTicket({
         orderId: matchedOrder.orderId,
         customerEmail: claimantEmail,
-        tool: matchedOrder.productName || subscription?.productName || 'AIPro',
+        tool: matchedOrder.productName || subscription?.productName || 'AgentLab',
         reason: REASON_LABEL[selectedReason],
       });
       ticketOk = true;
       if (ticket?.attempts != null) createdAttempts = Number(ticket.attempts);
     } catch (err: any) {
       setReplacementPhase('idle');
-      setErrorMsg(err.message || 'Không thể ghi nhận khiếu nại bảo hành. Vui lòng thử lại hoặc liên hệ Telegram hỗ trợ.');
+      setErrorMsg(err.message || 'Failed to submit the warranty claim. Please try again or contact Telegram support.');
       // If the server rejected due to quota, resync the counter from DB
       void refreshQuota(claimantEmail);
       return;
@@ -289,7 +289,7 @@ export const LookupPage: React.FC = () => {
     ? Math.max(0, Math.ceil((new Date(matchedOrder.warrantyExpireDate).getTime() - Date.now()) / 86400000))
     : subscription?.daysRemaining ?? 0;
   const purchaseDateStr = matchedOrder?.createdAt
-    ? new Date(matchedOrder.createdAt).toLocaleDateString('vi-VN')
+    ? new Date(matchedOrder.createdAt).toLocaleDateString('en-US')
     : '—';
 
   return (
@@ -297,10 +297,10 @@ export const LookupPage: React.FC = () => {
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary">
-          Tra Cứu Đơn Hàng &amp; Kích Hoạt Bảo Hành
+          Order Lookup &amp; Warranty Activation
         </h1>
         <p className="text-xs text-text-secondary mt-1 max-w-md mx-auto">
-          Quản lý License Vault và tự phục hồi tài khoản 1-đổi-1 tự động trong 60 giây không cần mật khẩu.
+          Manage your License Vault and self-heal accounts with automatic 1-to-1 replacement in 60 seconds — no password required.
         </p>
       </div>
 
@@ -319,7 +319,7 @@ export const LookupPage: React.FC = () => {
                 activeTab === 'email_otp' ? 'bg-primary-blue text-white shadow-sm' : 'text-text-muted hover:text-text-primary'
               }`}
             >
-              Tra cứu theo Email (Mã OTP)
+              Lookup by Email (OTP code)
             </button>
             <button
               type="button"
@@ -331,7 +331,7 @@ export const LookupPage: React.FC = () => {
                 activeTab === 'order_id' ? 'bg-primary-blue text-white shadow-sm' : 'text-text-muted hover:text-text-primary'
               }`}
             >
-              Mã Đơn Hàng (#AIPRO-XXXX)
+              Order ID (#AGTLAB-XXXX)
             </button>
           </div>
 
@@ -346,7 +346,7 @@ export const LookupPage: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1">
-                  Email đã dùng khi thanh toán:
+                  Email used at checkout:
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -362,7 +362,7 @@ export const LookupPage: React.FC = () => {
                     onClick={handleSendOtp}
                     className="h-11 px-4 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-semibold shrink-0 disabled:opacity-50"
                   >
-                    {otpCooldown > 0 ? `Gửi lại (${otpCooldown}s)` : 'Gửi mã OTP'}
+                    {otpCooldown > 0 ? `Resend (${otpCooldown}s)` : 'Send OTP code'}
                   </button>
                 </div>
               </div>
@@ -370,7 +370,7 @@ export const LookupPage: React.FC = () => {
               {otpSent && (
                 <div className="pt-3 border-t border-border-subtle/50 animate-fadeIn">
                   <span className="block text-xs text-text-muted mb-2 text-center">
-                    Nhập mã 6 số vừa được gửi về email của bạn (hiệu lực 5 phút):
+                    Enter the 6-digit code just sent to your email (valid for 5 minutes):
                   </span>
                   {devOtpHint && (
                     <p className="mb-2 text-center text-[11px] font-mono text-accent-cyan bg-accent-cyan/10 border border-accent-cyan/20 rounded-lg py-1">
@@ -395,7 +395,7 @@ export const LookupPage: React.FC = () => {
                   </div>
                   {otpVerifying && (
                     <p className="mt-2 flex items-center justify-center gap-2 text-xs text-text-muted">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Đang xác thực OTP với máy chủ...
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Verifying OTP with the server...
                     </p>
                   )}
                 </div>
@@ -408,13 +408,13 @@ export const LookupPage: React.FC = () => {
             <form onSubmit={handleOrderLookup} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-text-secondary mb-1">
-                  Mã đơn hàng:
+                  Order ID:
                 </label>
                 <input
                   type="text"
                   value={orderIdInput}
                   onChange={(e) => setOrderIdInput(e.target.value)}
-                  placeholder="Ví dụ: AIPRO-94820"
+                  placeholder="e.g. AGTLAB-94820"
                   className="w-full h-11 px-4 rounded-xl bg-canvas border border-border-subtle font-mono text-xs text-text-primary focus:border-border-focus focus:outline-none uppercase"
                 />
               </div>
@@ -422,7 +422,7 @@ export const LookupPage: React.FC = () => {
                 type="submit"
                 className="w-full h-11 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold"
               >
-                Tra cứu tức thì
+                Instant lookup
               </button>
             </form>
           )}
@@ -435,13 +435,13 @@ export const LookupPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border-subtle/60">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-text-primary">Đơn Hàng #{displayOrderId}</h2>
+                  <h2 className="text-lg font-bold text-text-primary">Order #{displayOrderId}</h2>
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-status-success/15 text-status-success border border-status-success/30">
-                    🟢 Đang Bảo Hành (Còn {warrantyDaysLeft} ngày)
+                    🟢 Under Warranty ({warrantyDaysLeft} days left)
                   </span>
                 </div>
                 <p className="text-xs text-text-muted mt-1">
-                  Gói: {matchedOrder?.productName ?? '—'} &bull; Ngày mua: {purchaseDateStr}
+                  Plan: {matchedOrder?.productName ?? '—'} &bull; Purchase date: {purchaseDateStr}
                 </p>
               </div>
 
@@ -459,21 +459,21 @@ export const LookupPage: React.FC = () => {
                 }}
                 className="text-xs text-text-muted hover:text-text-primary self-start sm:self-auto underline"
               >
-                Đăng xuất phiên tra cứu
+                End lookup session
               </button>
             </div>
 
             {/* Current Credentials — released only after server-side OTP verification */}
             <div className="mt-5 space-y-3">
               <span className="text-xs font-bold text-text-secondary uppercase tracking-wider block">
-                Thông Tin Đăng Nhập Hiện Tại:
+                Current Login Credentials:
               </span>
 
               {!credentialsUnlocked ? (
                 <div className="p-4 rounded-xl bg-status-warning/10 border border-status-warning/30 text-xs text-status-warning flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 shrink-0" />
                   <span>
-                    Phiên tra cứu chưa được xác thực OTP. Bấm "Đăng xuất phiên tra cứu" và hoàn tất nhập mã 6 số gửi về email để mở khóa thông tin đăng nhập.
+                    This lookup session has not been OTP-verified. Click "End lookup session" and complete the 6-digit code sent to your email to unlock login credentials.
                   </span>
                 </div>
               ) : (
@@ -511,19 +511,19 @@ export const LookupPage: React.FC = () => {
           </div>
 
           {/* SELF-SERVICE AUTO-REPLACEMENT BOT CARD */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-surface border border-accent-cyan/30 shadow-[0_0_30px_rgba(0,240,255,0.05)]">
+          <div className="p-6 sm:p-8 rounded-2xl bg-surface border border-accent-cyan/30 shadow-[0_0_30px_rgba(0,212,255,0.05)]">
             <div className="flex items-center justify-between pb-4 border-b border-border-subtle/60 mb-6">
               <div>
                 <h3 className="font-bold text-base text-text-primary flex items-center gap-2">
                   <Zap className="w-5 h-5 text-accent-cyan" />
-                  Trung Tâm Tự Phục Vụ Bảo Hành (Self-Service Bot)
+                  Warranty Self-Service Center (Self-Service Bot)
                 </h3>
                 <p className="text-xs text-text-muted mt-0.5">
-                  Tự động cấp đổi 1 tài khoản mới tinh trong 60 giây nếu phát sinh lỗi kỹ thuật.
+                  Automatically provisions a brand-new replacement account in 60 seconds if a technical issue occurs.
                 </p>
               </div>
               <span className="text-xs font-mono text-text-muted">
-                Đã đổi: <span className="text-accent-cyan font-bold">{replacementCount}</span>/2 lần hôm nay
+                Replaced: <span className="text-accent-cyan font-bold">{replacementCount}</span>/2 today
               </span>
             </div>
 
@@ -531,31 +531,31 @@ export const LookupPage: React.FC = () => {
             {replacementPhase !== 'idle' && (
               <div className="mb-6 p-4 rounded-xl bg-canvas border border-border-focus animate-fadeIn">
                 <div className="flex items-center justify-between text-xs font-semibold mb-3">
-                  <span className="text-text-primary">Tiến trình khôi phục tự động:</span>
+                  <span className="text-text-primary">Automatic recovery progress:</span>
                   <span className="text-accent-cyan font-mono capitalize">{replacementPhase}...</span>
                 </div>
 
                 <div className="space-y-2 text-xs">
                   <div className={`flex items-center gap-2 ${replacementPhase === 'checking' ? 'text-accent-cyan font-bold' : 'text-status-success'}`}>
                     <Check className="w-3.5 h-3.5" />
-                    <span>[01s] Kiểm tra tình trạng kết nối trên hệ thống Cursor...</span>
+                    <span>[01s] Checking connectivity status on the Cursor system...</span>
                   </div>
                   {(replacementPhase === 'verifying' || replacementPhase === 'allocating' || replacementPhase === 'completed') && (
                     <div className={`flex items-center gap-2 ${replacementPhase === 'verifying' ? 'text-accent-cyan font-bold' : 'text-status-success'}`}>
                       <Check className="w-3.5 h-3.5" />
-                      <span>[03s] Xác nhận lỗi hợp lệ theo điều khoản cam kết SLA 1-đổi-1...</span>
+                      <span>[03s] Confirming the issue is valid under the 1-to-1 SLA commitment terms...</span>
                     </div>
                   )}
                   {(replacementPhase === 'allocating' || replacementPhase === 'completed') && (
                     <div className={`flex items-center gap-2 ${replacementPhase === 'allocating' ? 'text-accent-cyan font-bold' : 'text-status-success'}`}>
                       <Check className="w-3.5 h-3.5" />
-                      <span>[06s] Trích xuất tài khoản dự phòng mới tinh từ kho...</span>
+                      <span>[06s] Extracting a brand-new backup account from the vault...</span>
                     </div>
                   )}
                   {replacementPhase === 'completed' && (
                     <div className="flex items-center gap-2 text-status-success font-bold">
                       <Check className="w-4 h-4 stroke-[3]" />
-                      <span>[08s] Hoàn tất! Khiếu nại đã được ghi nhận vào hệ thống SLA. Kỹ thuật viên sẽ duyệt cấp tài khoản thay thế từ kho dự phòng trong ít phút.</span>
+                      <span>[08s] Done! Your claim has been logged into the SLA system. An engineer will approve a replacement account from the backup vault within minutes.</span>
                     </div>
                   )}
                 </div>
@@ -567,7 +567,7 @@ export const LookupPage: React.FC = () => {
               <>
                 <div className="mb-6">
                   <span className="block text-xs font-semibold text-text-secondary mb-3">
-                    Bạn đang gặp vấn đề gì với tài khoản này?
+                    What issue are you experiencing with this account?
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                     <label className={`p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-colors ${
@@ -580,7 +580,7 @@ export const LookupPage: React.FC = () => {
                         onChange={() => setSelectedReason('out_of_pro')}
                         className="text-primary-blue"
                       />
-                      <span>Bị out gói Pro / Mất Pro</span>
+                      <span>Out of Pro quota / Lost Pro</span>
                     </label>
 
                     <label className={`p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-colors ${
@@ -593,7 +593,7 @@ export const LookupPage: React.FC = () => {
                         onChange={() => setSelectedReason('wrong_password')}
                         className="text-primary-blue"
                       />
-                      <span>Sai mật khẩu đăng nhập</span>
+                      <span>Wrong login password</span>
                     </label>
 
                     <label className={`p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-colors ${
@@ -606,7 +606,7 @@ export const LookupPage: React.FC = () => {
                         onChange={() => setSelectedReason('device_limit')}
                         className="text-primary-blue"
                       />
-                      <span>Bị giới hạn thiết bị</span>
+                      <span>Device limit reached</span>
                     </label>
                   </div>
                 </div>
@@ -615,17 +615,17 @@ export const LookupPage: React.FC = () => {
                   <div className="p-4 rounded-xl bg-status-warning/10 border border-status-warning/30 text-xs text-status-warning flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>
-                      Bạn đã sử dụng tối đa 2 lần đổi tự động trong 24 giờ để bảo vệ đơn hàng. Vui lòng bấm liên hệ Kỹ thuật viên Telegram bên dưới để được kiểm tra trực tiếp.
+                      You have used the maximum of 2 automatic replacements in 24 hours to protect your order. Please contact a Telegram support engineer below for a direct review.
                     </span>
                   </div>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setShowConfirmModal(true)}
-                    className="w-full h-12 rounded-xl bg-gradient-to-r from-primary-blue to-[#257CFF] hover:brightness-110 text-white text-xs font-bold flex items-center justify-center gap-2 glow-blue-button transition-all"
+                    className="w-full h-12 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center justify-center gap-2 glow-blue-button transition-all"
                   >
-                    <Zap className="w-4 h-4 text-accent-cyan fill-accent-cyan" />
-                    <span>⚡ KÍCH HOẠT ĐỔI MỚI TÀI KHOẢN TỰ ĐỘNG (60S)</span>
+                    <Zap className="w-4 h-4 text-white fill-white" />
+                    <span>⚡ ACTIVATE AUTOMATIC ACCOUNT REPLACEMENT (60S)</span>
                   </button>
                 )}
               </>
@@ -633,13 +633,13 @@ export const LookupPage: React.FC = () => {
 
             {/* Escalation hotline */}
             <div className="mt-6 pt-4 border-t border-border-subtle/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
-              <span>Sự cố phức tạp hơn cần hỗ trợ riêng?</span>
+              <span>Need help with a more complex issue?</span>
               <button
                 type="button"
                 onClick={() => openTelegramSupport(displayOrderId, { reason: selectedReason })}
                 className="text-primary-blue hover:underline font-semibold"
               >
-                [Kết nối Kỹ thuật viên Telegram 24/7]
+                [Connect to a Telegram Support Engineer 24/7]
               </button>
             </div>
           </div>
@@ -653,9 +653,9 @@ export const LookupPage: React.FC = () => {
             <div className="w-12 h-12 rounded-full bg-status-warning/10 text-status-warning mx-auto mb-4 flex items-center justify-center">
               <ShieldAlert className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-text-primary text-center">Xác Nhận Đổi Mới Tài Khoản</h3>
+            <h3 className="text-base font-bold text-text-primary text-center">Confirm Account Replacement</h3>
             <p className="text-xs text-text-secondary mt-2 text-center leading-relaxed">
-              Hệ thống sẽ thu hồi tài khoản cũ và trích xuất ngay 1 tài khoản Cursor Pro mới tinh từ kho dự phòng lên màn hình của bạn. Bạn có chắc chắn muốn thực hiện?
+              The system will revoke the old account and instantly provision a brand-new Cursor Pro account from the backup vault onto your screen. Are you sure you want to proceed?
             </p>
 
             <div className="mt-6 flex items-center gap-3">
@@ -664,14 +664,14 @@ export const LookupPage: React.FC = () => {
                 onClick={() => setShowConfirmModal(false)}
                 className="flex-1 h-10 rounded-xl bg-canvas border border-border-subtle text-xs font-semibold text-text-secondary hover:text-text-primary"
               >
-                Hủy bỏ
+                Cancel
               </button>
               <button
                 type="button"
                 onClick={handleStartReplacement}
                 className="flex-1 h-10 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold"
               >
-                Xác nhận đổi ngay
+                Replace now
               </button>
             </div>
           </div>

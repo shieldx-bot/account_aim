@@ -123,7 +123,7 @@ export const App: React.FC = () => {
               {/* Invite Landing — destination of every personal referral link /r/:CODE */}
               <Route path="/r/:code" element={<ReferralLandingPage />} />
 
-              {/* Dedicated Member Portal (Giao diện riêng của Thành viên) */}
+              {/* Dedicated Member Portal (Separate interface for Members) */}
               <Route
                 path="/member"
                 element={
@@ -140,7 +140,7 @@ export const App: React.FC = () => {
                 <Route path="profile" element={<MemberProfilePage />} />
               </Route>
 
-              {/* Dedicated Admin Portal (Giao diện riêng của Quản trị viên) */}
+              {/* Dedicated Admin Portal (Separate interface for Administrators) */}
               <Route
                 path="/admin"
                 element={

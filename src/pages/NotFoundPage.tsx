@@ -6,7 +6,7 @@ export const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
   const [cmdInput, setCmdInput] = useState('');
   const [history, setHistory] = useState<string[]>([
-    'aipro:~$ curl -I https://aipro.dev' + (typeof window !== 'undefined' ? window.location.pathname : '/404'),
+    'agentlab:~$ curl -I ${window.location.origin}' + (typeof window !== 'undefined' ? window.location.pathname : '/404'),
     'HTTP/2 404 Not Found',
     'Error: The requested route does not exist on this server.',
     "Type 'help' to see available navigation commands or click below.",
@@ -17,7 +17,7 @@ export const NotFoundPage: React.FC = () => {
     const cmd = cmdInput.trim().toLowerCase();
     if (!cmd) return;
 
-    const newHistory = [...history, `aipro:~$ ${cmdInput}`];
+    const newHistory = [...history, `agentlab:~$ ${cmdInput}`];
 
     if (cmd === 'help') {
       newHistory.push(
@@ -42,7 +42,7 @@ export const NotFoundPage: React.FC = () => {
       navigate('/docs');
       return;
     } else if (cmd === 'clear') {
-      setHistory(['aipro:~$ [Terminal cleared]']);
+      setHistory(['agentlab:~$ [Terminal cleared]']);
       setCmdInput('');
       return;
     } else {
@@ -55,7 +55,7 @@ export const NotFoundPage: React.FC = () => {
 
   return (
     <div className="w-full max-w-[800px] mx-auto px-4 sm:px-6 py-16 font-mono text-xs">
-      <div className="p-6 rounded-2xl bg-[#090C10] border border-border-subtle shadow-2xl space-y-4">
+      <div className="p-6 rounded-2xl bg-surface border border-border-subtle shadow-2xl space-y-4">
         {/* Terminal Header */}
         <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
           <div className="flex items-center gap-2">
@@ -65,7 +65,7 @@ export const NotFoundPage: React.FC = () => {
             <span className="text-text-muted text-[11px] ml-2">bash - 404 Route Not Found</span>
           </div>
           <Link to="/" className="text-primary-blue hover:underline text-[11px] flex items-center gap-1">
-            <ArrowLeft className="w-3 h-3" /> Về trang chủ
+            <ArrowLeft className="w-3 h-3" /> Back to home
           </Link>
         </div>
 
@@ -74,7 +74,7 @@ export const NotFoundPage: React.FC = () => {
           {history.map((line, idx) => (
             <div
               key={idx}
-              className={line.startsWith('HTTP/2 404') ? 'text-status-error font-bold' : line.startsWith('aipro:') ? 'text-text-primary' : ''}
+              className={line.startsWith('HTTP/2 404') ? 'text-status-error font-bold' : line.startsWith('agentlab:') ? 'text-text-primary' : ''}
             >
               {line}
             </div>

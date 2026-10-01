@@ -6,13 +6,7 @@ import { authApi } from '@/services/api';
 interface AuthContextType extends AuthState {
   token: string | null;
   login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
-  register: (
-    name: string,
-    email: string,
-    pass: string,
-    role?: UserRole,
-    adminCode?: string
-  ) => Promise<{ success: boolean; message?: string }>;
+  register: (name: string, email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   updateUser: (patch: Partial<User>) => void;
   addBalance: (vnd: number, usd: number) => void;
@@ -20,7 +14,7 @@ interface AuthContextType extends AuthState {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_STORAGE_KEY = 'aipro_auth_session';
+const AUTH_STORAGE_KEY = 'agentlab_auth_session';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>(() => {
@@ -106,13 +100,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         trackEvent('user_login', { role: res.user.role, email: res.user.email });
         return { success: true };
       }
-      return { success: false, message: res.message || 'Đăng nhập không thành công.' };
+      return { success: false, message: res.message || 'Login failed.' };
     } catch (err: any) {
       // No demo fallback in production — return the real error
       console.error('[Auth] Backend API login failed:', err.message);
       return {
         success: false,
-        message: 'Không thể kết nối máy chủ. Vui lòng thử lại sau.',
+        message: 'Could not connect to the server. Please try again later.',
       };
     }
   };
@@ -120,28 +114,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const register = async (
     name: string,
     email: string,
-    pass: string,
-    role: UserRole = 'member',
-    adminCode?: string
+    pass: string
   ): Promise<{ success: boolean; message?: string }> => {
     try {
       const res = await authApi.register({
         name,
         email,
         password: pass,
-        role,
-        adminCode,
       });
 
       if (res.success && res.user && res.token) {
         saveSession(res.user, res.token);
-        trackEvent('user_registered', { role, email: res.user.email });
+        trackEvent('user_registered', { role: 'member', email: res.user.email });
         return { success: true, message: res.message };
       }
-      return { success: false, message: res.message || 'Đăng ký không thành công.' };
+      return { success: false, message: res.message || 'Registration failed.' };
     } catch (err: any) {
       console.warn('[Auth] Backend API register failed:', err.message);
-      return { success: false, message: err.message || 'Có lỗi xảy ra khi kết nối máy chủ.' };
+      return { success: false, message: err.message || 'An error occurred while connecting to the server.' };
     }
   };
 

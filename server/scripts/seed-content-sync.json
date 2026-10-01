@@ -1,0 +1,784 @@
+{
+"prod_cursor_pro": {
+"name": "Cursor Pro",
+"badge": "🔥 Recommended for Devs",
+"platformSubtext": "VS Code Fork, Windows / macOS / Linux",
+"quotaFeatures": [
+"500 Fast Premium Requests / month",
+"Unlimited Claude Sonnet 5 & GPT-5.6",
+"Options: pre-issued email or upgrade your own",
+"Automatic 1-to-1 warranty within 30-90 days"
+],
+"specs": {
+"fastQuota": "500 Fast Requests/mo",
+"contextWindow": "200K Tokens",
+"models": "GPT-5.6, Claude Sonnet 5, Composer 2.5",
+"multiDevice": "Sync on 3 devices at once"
+}
+},
+"prod_claude_pro": {
+"name": "Claude Pro",
+"badge": "⚡ Sonnet 5 Ready",
+"platformSubtext": "Web Interface, Claude Desktop, Artifacts",
+"quotaFeatures": [
+"Claude Sonnet 5 with 64K Extended Thinking",
+"Request limit 5x higher than the Free plan",
+"Interactive Claude Projects & Artifacts support",
+"Activate with your own email or a pre-issued one"
+],
+"specs": {
+"fastQuota": "5x the Free quota (~45 msgs / 5 hours)",
+"contextWindow": "200K Tokens Context Window",
+"models": "Claude Sonnet 5, Opus 5.5 (limited)",
+"multiDevice": "Synced Web & Desktop App"
+}
+},
+"prod_chatgpt_plus": {
+"name": "ChatGPT Plus",
+"badge": "GPT-5.6 & Canvas",
+"platformSubtext": "Web, iOS, Android, macOS & Windows App",
+"quotaFeatures": [
+"Access to GPT-5.6, GPT-5.6 models",
+"Canvas feature for coding & in-depth writing",
+"Advanced Voice Mode with natural speech",
+"DALL-E 3 image generation & real-time Web Search"
+],
+"specs": {
+"fastQuota": "80 msgs / 3 hours with GPT-5.6",
+"contextWindow": "128K Tokens",
+"models": "GPT-5.6, GPT-5.6 Thinking",
+"multiDevice": "Web, Mobile, Desktop"
+}
+},
+"prod_github_copilot": {
+"name": "GitHub Copilot Pro",
+"badge": "Native IDE Plugin",
+"platformSubtext": "VS Code, JetBrains, Visual Studio, Neovim",
+"quotaFeatures": [
+"Real-time inline autocomplete code suggestions",
+"In-IDE Copilot Chat to explain & refactor",
+"Model options: GPT-5.6, Claude Sonnet 5",
+"Upgrade directly on your personal GitHub account"
+],
+"specs": {
+"fastQuota": "Unlimited code Autocomplete",
+"contextWindow": "Entire workspace codebase",
+"models": "GPT-5.6, Claude Sonnet 5",
+"multiDevice": "Synced via GitHub account"
+}
+},
+"prod_midjourney_pro": {
+"name": "Midjourney Standard",
+"badge": "15h Fast GPU",
+"platformSubtext": "Discord Bot & Web Gallery Creator",
+"quotaFeatures": [
+"15 hours of Fast GPU image generation per month",
+"Unlimited Relax GPU image generation",
+"Full commercial rights to all generated works",
+"100% private pre-issued Discord account"
+],
+"specs": {
+"fastQuota": "15 Fast GPU Hours / mo",
+"contextWindow": "Model V8.1 & Niji 6",
+"models": "Midjourney V8.1",
+"multiDevice": "Private Discord Server"
+}
+},
+"prod_jetbrains_ai": {
+"name": "JetBrains AI Pro",
+"badge": "IntelliJ / WebStorm",
+"platformSubtext": "IntelliJ IDEA, PyCharm, WebStorm, PhpStorm",
+"quotaFeatures": [
+"Native integration with the JetBrains IDEs ecosystem",
+"Automatic Unit Test & Documentation writing",
+"Refactoring support and runtime error analysis",
+"Delivered with an activation key for your JetBrains Account"
+],
+"specs": {
+"fastQuota": "Unlimited standard quota",
+"contextWindow": "Full project AST analysis",
+"models": "Mellona AI & OpenAI models",
+"multiDevice": "Activated via JetBrains Hub"
+}
+},
+"prod_gemini_advanced": {
+"name": "Google Gemini Advanced",
+"badge": "1M Context Window",
+"platformSubtext": "Web, Google Workspace (Docs, Gmail)",
+"quotaFeatures": [
+"Massive 1,000,000-token context window",
+"Gemini 3.1 Pro analyzes large documents and videos",
+"Built-in integration with Google Docs, Sheets, Gmail",
+"Includes 2TB of secure Google Drive storage"
+],
+"specs": {
+"fastQuota": "Priority speed for the 1.5 Pro model",
+"contextWindow": "1.000.000 Tokens (1 Hour Video / 700K Words)",
+"models": "Gemini 3.1 Pro, 3.8 Flash",
+"multiDevice": "All devices on your Google Account"
+}
+},
+"prod_claude_team": {
+"name": "Claude Team Workspace",
+"badge": "🏢 Enterprise",
+"platformSubtext": "Dedicated Workspace cho Team Dev / Startup",
+"quotaFeatures": [
+"Higher quota than the standard Claude Pro plan",
+"Share internal Custom Prompt Templates with your team",
+"Admin role management, SOC 2 Type II security",
+"Committed to never training AI on your code data"
+],
+"specs": {
+"fastQuota": "2x the Pro quota (~90 msgs / 5 hours)",
+"contextWindow": "200K Tokens Context Window",
+"models": "Claude Sonnet 5, Opus 5.5",
+"multiDevice": "Centralized management via Team Console"
+}
+},
+"prod_perplexity_pro": {
+"name": "Perplexity Pro",
+"badge": "🔍 Deep Research 2026",
+"platformSubtext": "Web, iOS, Android, Mac & Chrome Extension",
+"quotaFeatures": [
+"300+ Pro Searches / day with Claude Sonnet 5 & GPT-5.6",
+"Deep Research feature that automatically analyzes 100+ sources",
+"Unlimited PDF, Code and Dataset uploads for analysis",
+"$5 in API credits each month for Developers"
+],
+"specs": {
+"fastQuota": "300+ Pro Queries/day",
+"contextWindow": "128K Tokens",
+"models": "GPT-5.6, Claude Sonnet 5, Gemini 3.1 Pro",
+"multiDevice": "Web, Mobile, Desktop App"
+}
+},
+"prod_v0_dev": {
+"name": "v0.dev Premium",
+"badge": "⚡ React / Tailwind UI",
+"platformSubtext": "In-Browser Fullstack UI Code Generator",
+"quotaFeatures": [
+"5,000 credits to generate React / Next.js / Tailwind components",
+"1-Click export of source code to GitHub or CodeSandbox",
+"Visually edit the UI using natural language",
+"Upgrade directly on your personal Vercel account"
+],
+"specs": {
+"fastQuota": "5000 Premium Credits/mo",
+"contextWindow": "Full Next.js / Shadcn Codebases",
+"models": "v0-large, Claude Sonnet 5",
+"multiDevice": "Web browser with integrated Vercel"
+}
+},
+"prod_deepseek_r1": {
+"name": "DeepSeek V4 Pro Suite",
+"badge": "🧠 Open Reasoning #1",
+"platformSubtext": "Web Interface & Dedicated API Access",
+"quotaFeatures": [
+"Math & coding reasoning on par with OpenAI GPT-5.6",
+"Ultra-fast token generation at 60+ tokens/second",
+"Unlimited standard messages throughout the day",
+"Secure pre-issued account or Dedicated API Key"
+],
+"specs": {
+"fastQuota": "Unlimited standard usage",
+"contextWindow": "64K Tokens Context",
+"models": "DeepSeek V4-Pro, V4.1-Flash",
+"multiDevice": "Web App & API Endpoint"
+}
+},
+"prod_grok_super": {
+"name": "SuperGrok (Grok 4.5)",
+"badge": "🚀 Realtime X Data",
+"platformSubtext": "Web, Mobile & X Premium+ Suite",
+"quotaFeatures": [
+"Grok 4.5 model on the Colossus supercomputer with 100K H100s",
+"Query real-time breaking news & data from X",
+"Uncensored hyper-realistic image generation via Aurora Image Gen",
+"Includes an X Verified badge for your account"
+],
+"specs": {
+"fastQuota": "Unlimited Grok queries",
+"contextWindow": "128K Tokens",
+"models": "Grok 4.5, Grok 4.7",
+"multiDevice": "X Web & Mobile App"
+}
+},
+"prod_elevenlabs_pro": {
+"name": "ElevenLabs Creator AI",
+"badge": "🎙️ Voice Clone #1",
+"platformSubtext": "Studio Web, Voice Lab, API Access",
+"quotaFeatures": [
+"100,000 characters of high-quality Studio voiceover per month",
+"Ultra-realistic Instant Voice Cloning",
+"Supports 32+ natural languages including Vietnamese",
+"Full commercial rights to all exported audio files"
+],
+"specs": {
+"fastQuota": "100K Characters/mo",
+"contextWindow": "High Fidelity 44.1kHz Audio",
+"models": "Eleven Multilingual v2 & Turbo v2.5",
+"multiDevice": "Web Studio & API"
+}
+},
+"prod_suno_ai": {
+"name": "Suno AI Music Pro",
+"badge": "🎵 Music Generation v4",
+"platformSubtext": "Web & Mobile App Creator",
+"quotaFeatures": [
+"2,500 credits per month (~500 complete songs)",
+"Suno v4 model with studio-grade stereo sound",
+"Own commercial rights to publish to Spotify / YouTube",
+"Upgrade directly on your own email or a pre-issued one"
+],
+"specs": {
+"fastQuota": "2500 Credits/mo (500 Songs)",
+"contextWindow": "Full Song (4 Minutes+)",
+"models": "Suno v4.5",
+"multiDevice": "Web & iOS/Android App"
+}
+},
+"prod_lovable_pro": {
+"name": "Lovable.dev Pro Engineer",
+"badge": "⚡ AI Fullstack Builder",
+"platformSubtext": "Web Interface, GitHub Sync, Supabase",
+"quotaFeatures": [
+"Build a complete web app from an idea in 60 seconds",
+"Native Supabase database & Authentication integration",
+"Two-way sync with your GitHub Repository",
+"Unlimited deployments to a custom domain"
+],
+"specs": {
+"fastQuota": "100+ Fullstack Prompts/day",
+"contextWindow": "Full Project Architecture",
+"models": "Lovable Code Engine + Claude Sonnet 5",
+"multiDevice": "Web Browser"
+}
+},
+"prod_bolt_new": {
+"name": "Bolt.new Developer Pro",
+"badge": "💻 WebContainers VM",
+"platformSubtext": "Fullstack Browser Node.js Dev Environment",
+"quotaFeatures": [
+"10 million tokens of in-browser fullstack code generation per month",
+"Run Node.js, Vite and Next.js directly in the browser",
+"1-Click Deploy to Netlify / Cloudflare Pages",
+"Delivered as a pre-issued account or upgrade your own email"
+],
+"specs": {
+"fastQuota": "10M Tokens/mo",
+"contextWindow": "128K Tokens Context",
+"models": "Claude Sonnet 5 & GPT-5.6",
+"multiDevice": "Web Browser"
+}
+},
+"prod_windsurf_pro": {
+"name": "Windsurf Pro",
+"badge": "⚡ Best Cursor Alternative",
+"platformSubtext": "Cascade Agent, Windows / macOS / Linux",
+"quotaFeatures": [
+"600 premium credits / month",
+"Cascade agent with full-codebase memory",
+"Unlimited tab autocomplete",
+"Top models: Claude Sonnet 5 & GPT-5.6"
+],
+"specs": {
+"fastQuota": "600 credits/mo",
+"contextWindow": "128K Tokens",
+"models": "Claude Sonnet 5, GPT-5.6, DeepSeek V4",
+"multiDevice": "1 device"
+}
+},
+"prod_replit_core": {
+"name": "Replit Core",
+"badge": "🤖 Agent Included",
+"platformSubtext": "Replit Agent, Browser IDE + Mobile",
+"quotaFeatures": [
+"$25 of monthly agent credits",
+"Replit Agent builds full apps from prompts",
+"Private projects & autoscale deployments",
+"Unlimited checkpoints & history"
+],
+"specs": {
+"fastQuota": "3,000 checkpoints/mo",
+"contextWindow": "128K Tokens",
+"models": "Claude Sonnet 5, GPT-5.6",
+"multiDevice": "Unlimited devices (browser)"
+}
+},
+"prod_zed_pro": {
+"name": "Zed Pro",
+"badge": "⚡ 120 FPS Editor",
+"platformSubtext": "Rust-native editor, macOS / Linux",
+"quotaFeatures": [
+"300 AI edits / month",
+"GPU-accelerated Rust core — fastest editor",
+"Agentic editing with Edit Predictions",
+"Top models: Claude, GPT-5.6, Gemini"
+],
+"specs": {
+"fastQuota": "300 edits/mo",
+"contextWindow": "200K Tokens",
+"models": "Claude Sonnet 5, GPT-5.6, Gemini 3.1 Pro",
+"multiDevice": "Up to 3 devices"
+}
+},
+"prod_augment_code": {
+"name": "Augment Code Developer",
+"badge": "🏢 Large-Codebase AI",
+"platformSubtext": "VS Code, JetBrains, Vim",
+"quotaFeatures": [
+"600 chat requests + agent completions",
+"Codebase retrieval engine for 500K+ files",
+"Agent mode: multi-file refactors",
+"Works inside VS Code & JetBrains"
+],
+"specs": {
+"fastQuota": "600 requests/mo",
+"contextWindow": "500K-file index",
+"models": "Claude Sonnet 5, GPT-5.6",
+"multiDevice": "1 seat, unlimited devices"
+}
+},
+"prod_tabnine_dev": {
+"name": "Tabnine Dev Pro",
+"badge": "🔒 Private-Code AI",
+"platformSubtext": "VS Code, JetBrains, Eclipse",
+"quotaFeatures": [
+"Unlimited AI completions",
+"Private models — your code never trains others",
+"Personalized to your team codebase",
+"Chat, test generation & PR descriptions"
+],
+"specs": {
+"fastQuota": "Unlimited completions",
+"contextWindow": "32K Tokens",
+"models": "Tabnine Pro models, GPT-5.6",
+"multiDevice": "Unlimited devices"
+}
+},
+"prod_chatgpt_pro": {
+"name": "ChatGPT Pro",
+"badge": "👑 Maximum Reasoning",
+"platformSubtext": "Web, iOS, Android, macOS",
+"quotaFeatures": [
+"Unlimited GPT-5.6 Pro & GPT-5.6 Thinking access",
+"5x more compute on hard reasoning tasks",
+"Sora video generation included",
+"Advanced Voice, Deep Research & Operator"
+],
+"specs": {
+"fastQuota": "Unlimited premium requests",
+"contextWindow": "256K Tokens",
+"models": "GPT-5.6 Pro, GPT-5.6 Thinking",
+"multiDevice": "Sync unlimited devices"
+}
+},
+"prod_claude_max": {
+"name": "Claude Max 5x",
+"badge": "🔥 Power-User Tier",
+"platformSubtext": "Web, Desktop, Claude Code Terminal",
+"quotaFeatures": [
+"5x the usage of Claude Pro",
+"Priority access to newest Sonnet models",
+"Claude Code terminal agent included",
+"Projects, Artifacts & extended thinking"
+],
+"specs": {
+"fastQuota": "225 premium requests / 5h",
+"contextWindow": "200K Tokens",
+"models": "Claude Opus 5.5, Claude Sonnet 5",
+"multiDevice": "Web + Desktop + Terminal"
+}
+},
+"prod_ms_copilot_pro": {
+"name": "Microsoft Copilot Pro",
+"badge": "🪟 Office-Native AI",
+"platformSubtext": "Word, Excel, PowerPoint, Outlook",
+"quotaFeatures": [
+"Copilot inside Word, Excel & PowerPoint",
+"Priority model access at peak times",
+"Image Creator with 100 boosts / day",
+"Copilot GPT builder included"
+],
+"specs": {
+"fastQuota": "Unlimited chat",
+"contextWindow": "128K Tokens",
+"models": "GPT-5.6, DALL·E 3",
+"multiDevice": "5 PCs simultaneously"
+}
+},
+"prod_mistral_pro": {
+"name": "Le Chat Pro",
+"badge": "🇪🇺 EU Sovereign AI",
+"platformSubtext": "Web + Mobile app",
+"quotaFeatures": [
+"Unlimited Mistral Medium 3 access",
+"Fastest inference in class (1,000 tok/s)",
+"Web search, code interpreter & canvas",
+"EU data residency — GDPR compliant"
+],
+"specs": {
+"fastQuota": "Unlimited messages",
+"contextWindow": "128K Tokens",
+"models": "Mistral Large 3, Medium 3.5",
+"multiDevice": "Unlimited devices"
+}
+},
+"prod_qwen_max": {
+"name": "Qwen Chat Max",
+"badge": "🌏 Asia-Pacific Leader",
+"platformSubtext": "Web, iOS, Android",
+"quotaFeatures": [
+"Unlimited Qwen-Max access",
+"Top-tier coding & math benchmarks",
+"Vision, image generation & video",
+"1M-token long-context mode"
+],
+"specs": {
+"fastQuota": "Unlimited messages",
+"contextWindow": "1M Tokens (long mode)",
+"models": "Qwen3.8-Max",
+"multiDevice": "Unlimited devices"
+}
+},
+"prod_kimi_pro": {
+"name": "Kimi K2 Membership",
+"badge": "🌙 Long-Context Champion",
+"platformSubtext": "Web + Mobile app",
+"quotaFeatures": [
+"Unlimited Kimi K2 chat",
+"2M-character document analysis",
+"Agentic web research & report export",
+"Priority queue at peak hours"
+],
+"specs": {
+"fastQuota": "Unlimited messages",
+"contextWindow": "2M characters",
+"models": "Kimi K3, K2.6",
+"multiDevice": "Unlimited devices"
+}
+},
+"prod_huggingface_pro": {
+"name": "Hugging Face PRO",
+"badge": "🤗 500K Open Models",
+"platformSubtext": "Hub, Spaces, Inference Endpoints",
+"quotaFeatures": [
+"1,000 inference credits / month",
+"Private Spaces with Dev Mode",
+"ZeroGPU prioritized compute",
+"Early access to new open models"
+],
+"specs": {
+"fastQuota": "1,000 credits/mo",
+"contextWindow": "Model-dependent",
+"models": "Llama 4, Qwen3.8, DeepSeek V4, FLUX",
+"multiDevice": "Unlimited devices"
+}
+},
+"prod_manus_pro": {
+"name": "Manus Starter (AI Agent)",
+"badge": "🦾 Autonomous Agent",
+"platformSubtext": "Web + Desktop app",
+"quotaFeatures": [
+"4,000 agent credits / month",
+"Autonomous multi-step task execution",
+"Cloud browser, terminal & code sandbox",
+"Scheduled & parallel agent sessions"
+],
+"specs": {
+"fastQuota": "4,000 credits/mo",
+"contextWindow": "Agent-native",
+"models": "Claude Sonnet 5, Qwen3.8-Max",
+"multiDevice": "Web + Desktop"
+}
+},
+"prod_perplexity_max": {
+"name": "Perplexity Max",
+"badge": "🔎 Research-Grade",
+"platformSubtext": "Web, iOS, Android, Comet browser",
+"quotaFeatures": [
+"Unlimited Pro searches & Labs access",
+"Priority access to o3 & Claude Opus",
+"Comet AI browser included",
+"Dedicated maximum-intelligence mode"
+],
+"specs": {
+"fastQuota": "Unlimited Pro searches",
+"contextWindow": "Model-dependent",
+"models": "GPT-5.6 Pro, Claude Opus 5.5, Gemini 3.1 Pro",
+"multiDevice": "Unlimited devices"
+}
+},
+"prod_youcom_pro": {
+"name": "You.com Pro",
+"badge": "🧩 Custom AI Agents",
+"platformSubtext": "Web + API",
+"quotaFeatures": [
+"Unlimited Premium AI queries",
+"Choose models: GPT-5.6, Claude, Llama",
+"Custom AI agents & team sharing",
+"File upload with citations"
+],
+"specs": {
+"fastQuota": "Unlimited queries",
+"contextWindow": "128K Tokens",
+"models": "GPT-5.6, Claude Sonnet 5, Llama 4",
+"multiDevice": "Unlimited devices"
+}
+},
+"prod_phind_pro": {
+"name": "Phind Pro",
+"badge": "👨‍💻 Dev-First Search",
+"platformSubtext": "Web + VS Code extension",
+"quotaFeatures": [
+"Unlimited Pro searches daily",
+"Best-in-class developer answer quality",
+"VS Code extension with codebase context",
+"Custom links & domain filters"
+],
+"specs": {
+"fastQuota": "Unlimited searches",
+"contextWindow": "32K Tokens",
+"models": "GPT-5.6, Claude Sonnet 5",
+"multiDevice": "Unlimited devices"
+}
+},
+"prod_figma_pro": {
+"name": "Figma Professional (AI)",
+"badge": "🎨 Design + AI Make",
+"platformSubtext": "Web, macOS, Windows",
+"quotaFeatures": [
+"Figma Make: AI prototype generation",
+"First Draft AI & auto-rename layers",
+"Unlimited files & version history",
+"Dev Mode handoff included"
+],
+"specs": {
+"fastQuota": "Unlimited files",
+"contextWindow": "N/A (design AI)",
+"models": "Figma AI models",
+"multiDevice": "3 editing seats"
+}
+},
+"prod_canva_pro": {
+"name": "Canva Pro",
+"badge": "✨ Magic Studio",
+"platformSubtext": "Web, iOS, Android, Desktop",
+"quotaFeatures": [
+"Magic Studio AI suite (write, edit, design)",
+"100M+ premium photos & templates",
+"Unlimited Background Remover & Magic Eraser",
+"1TB cloud storage + Brand Kit"
+],
+"specs": {
+"fastQuota": "500 Magic uses/mo",
+"contextWindow": "N/A",
+"models": "Canva AI, DALL·E 3",
+"multiDevice": "6 devices"
+}
+},
+"prod_firefly_pro": {
+"name": "Adobe Firefly Pro",
+"badge": "🖼️ Commercially Safe",
+"platformSubtext": "Web + Photoshop integration",
+"quotaFeatures": [
+"2,000 generative credits / month",
+"Firefly Image 4 & Vector generation",
+"Commercially-safe trained models",
+"Generative Fill inside Photoshop"
+],
+"specs": {
+"fastQuota": "2,000 credits/mo",
+"contextWindow": "N/A",
+"models": "Firefly Image 4, Vector",
+"multiDevice": "Unlimited devices"
+}
+},
+"prod_sora_2": {
+"name": "Sora 2 (Invite)",
+"badge": "🎬 Flagship Video AI",
+"platformSubtext": "Web + iOS app",
+"quotaFeatures": [
+"Text-to-video up to 1080p",
+"Storyboard editor & remix feed",
+"Cameos: insert yourself with consent",
+"Priority generation queue"
+],
+"specs": {
+"fastQuota": "Up to 20s clips @ 1080p",
+"contextWindow": "N/A",
+"models": "Sora 2",
+"multiDevice": "Web + iOS"
+}
+},
+"prod_runway_standard": {
+"name": "Runway Standard",
+"badge": "🎥 Gen-4 Video",
+"platformSubtext": "Web",
+"quotaFeatures": [
+"625 credits / month",
+"Gen-4 image-to-video & video-to-video",
+"Green screen & inpainting tools",
+"Commercial use license"
+],
+"specs": {
+"fastQuota": "625 credits/mo",
+"contextWindow": "N/A",
+"models": "Gen-4, Gen-3 Alpha",
+"multiDevice": "Web"
+}
+},
+"prod_kling_standard": {
+"name": "Kling AI Standard",
+"badge": "🐉 Physics-Real Motion",
+"platformSubtext": "Web + Mobile app",
+"quotaFeatures": [
+"660 credits / month",
+"Kling 4.0 Master text-to-video",
+"1080p, up to 10s per clip",
+"Lip-sync & motion brush"
+],
+"specs": {
+"fastQuota": "660 credits/mo",
+"contextWindow": "N/A",
+"models": "Kling 4.0",
+"multiDevice": "Web + Mobile"
+}
+},
+"prod_pika_pro": {
+"name": "Pika Pro",
+"badge": "🪄 Viral FX Engine",
+"platformSubtext": "Web",
+"quotaFeatures": [
+"Unlimited standard generations",
+"Pikaffects: squash, explode, inflate",
+"Pikadditions: add objects to video",
+"1080p upscale & video extension"
+],
+"specs": {
+"fastQuota": "Unlimited standard gens",
+"contextWindow": "N/A",
+"models": "Pika 2.2",
+"multiDevice": "Web"
+}
+},
+"prod_leonardo_artisan": {
+"name": "Leonardo Artisan",
+"badge": "🦅 Game-Asset AI",
+"platformSubtext": "Web + API",
+"quotaFeatures": [
+"8,500 fast tokens / month",
+"Phoenix model + Elements control",
+"Realtime canvas & upscaling",
+"Model training for consistent characters"
+],
+"specs": {
+"fastQuota": "8,500 tokens/mo",
+"contextWindow": "N/A",
+"models": "Phoenix, Lightning XL",
+"multiDevice": "Web"
+}
+},
+"prod_ideogram_plus": {
+"name": "Ideogram Plus",
+"badge": "🔤 Typography King",
+"platformSubtext": "Web + iOS",
+"quotaFeatures": [
+"Unlimited standard generations",
+"Magic Prompt & style references",
+"Best-in-class text rendering in images",
+"4K upscale & private generations"
+],
+"specs": {
+"fastQuota": "Unlimited standard gens",
+"contextWindow": "N/A",
+"models": "Ideogram 3.0",
+"multiDevice": "Web + iOS"
+}
+},
+"prod_capcut_pro": {
+"name": "CapCut Pro",
+"badge": "✂️ Social Video Editor",
+"platformSubtext": "Desktop, Mobile, Web",
+"quotaFeatures": [
+"AI auto-captions in 30+ languages",
+"Script-to-video & AI avatars",
+"4K export + premium effects library",
+"100GB cloud storage"
+],
+"specs": {
+"fastQuota": "Unlimited exports",
+"contextWindow": "N/A",
+"models": "CapCut AI suite",
+"multiDevice": "10 devices"
+}
+},
+"prod_m365_copilot_business": {
+"name": "Microsoft 365 Copilot Business",
+"badge": "🏢 Full Office AI",
+"platformSubtext": "Word, Excel, Teams, Outlook",
+"quotaFeatures": [
+"Copilot across all M365 apps",
+"Enterprise data protection (GDPR)",
+"Copilot Studio agent building",
+"Teams meeting intelligence & recaps"
+],
+"specs": {
+"fastQuota": "Unlimited chat",
+"contextWindow": "128K Tokens",
+"models": "GPT-5.6 enterprise",
+"multiDevice": "5 users / team"
+}
+},
+"prod_google_ai_ultra": {
+"name": "Google AI Ultra",
+"badge": "💎 Maximum Google AI",
+"platformSubtext": "Web, Gemini app, Flow",
+"quotaFeatures": [
+"Highest Gemini 3.1 Pro limits",
+"Veo 3 cinematic video + Flow",
+"Project Mariner agentic browsing",
+"30TB storage + YouTube Premium"
+],
+"specs": {
+"fastQuota": "Unlimited Deep Research",
+"contextWindow": "2M Tokens",
+"models": "Gemini 3.1 Pro, Veo 3",
+"multiDevice": "Unlimited devices"
+}
+},
+"prod_notion_business": {
+"name": "Notion Business (AI)",
+"badge": "📚 Workspace AI",
+"platformSubtext": "Web, Desktop, Mobile",
+"quotaFeatures": [
+"Notion AI included (Q&A, autofill)",
+"AI Meeting Notes & transcription",
+"Unlimited blocks & version history",
+"Slack & Google Drive connectors"
+],
+"specs": {
+"fastQuota": "Unlimited AI queries",
+"contextWindow": "128K Tokens",
+"models": "GPT-5.6, Claude in Notion",
+"multiDevice": "Unlimited devices / 1 seat"
+}
+},
+"prod_grammarly_pro": {
+"name": "Grammarly Pro",
+"badge": "✍️ Writing Everywhere",
+"platformSubtext": "Browser, Desktop, Mobile",
+"quotaFeatures": [
+"Full rewrite & tone control",
+"Generative AI: 1,000 prompts / month",
+"Plagiarism & AI-detection reports",
+"Works in 500,000+ apps & sites"
+],
+"specs": {
+"fastQuota": "1,000 AI prompts/mo",
+"contextWindow": "N/A",
+"models": "Grammarly models, GPT-5.6",
+"multiDevice": "5 devices"
+}
+}
+}

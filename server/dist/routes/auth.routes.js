@@ -1,12 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.authRouter = void 0;
-const express_1 = require("express");
-const auth_controller_js_1 = require("../controllers/auth.controller.js");
-const auth_middleware_js_1 = require("../middleware/auth.middleware.js");
-const validate_middleware_js_1 = require("../middleware/validate.middleware.js");
-const auth_schema_js_1 = require("../schemas/auth.schema.js");
-exports.authRouter = (0, express_1.Router)();
+import { Router } from 'express';
+import { register, login, getMe } from '../controllers/auth.controller.js';
+import { authenticateToken } from '../middleware/auth.middleware.js';
+import { validate } from '../middleware/validate.middleware.js';
+import { registerSchema, loginSchema } from '../schemas/auth.schema.js';
+export const authRouter = Router();
 /**
  * @openapi
  * /api/auth/register:
@@ -17,7 +14,7 @@ exports.authRouter = (0, express_1.Router)();
  *       201:
  *         description: User registered successfully
  */
-exports.authRouter.post('/register', (0, validate_middleware_js_1.validate)(auth_schema_js_1.registerSchema), auth_controller_js_1.register);
+authRouter.post('/register', validate(registerSchema), register);
 /**
  * @openapi
  * /api/auth/login:
@@ -28,7 +25,7 @@ exports.authRouter.post('/register', (0, validate_middleware_js_1.validate)(auth
  *       200:
  *         description: Login successful
  */
-exports.authRouter.post('/login', (0, validate_middleware_js_1.validate)(auth_schema_js_1.loginSchema), auth_controller_js_1.login);
+authRouter.post('/login', validate(loginSchema), login);
 /**
  * @openapi
  * /api/auth/me:
@@ -41,4 +38,4 @@ exports.authRouter.post('/login', (0, validate_middleware_js_1.validate)(auth_sc
  *       200:
  *         description: Profile retrieved successfully
  */
-exports.authRouter.get('/me', auth_middleware_js_1.authenticateToken, auth_controller_js_1.getMe);
+authRouter.get('/me', authenticateToken, getMe);

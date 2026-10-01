@@ -42,10 +42,10 @@ export const CartPage: React.FC = () => {
   const [couponInput, setCouponInput] = useState('');
   const [couponFeedback, setCouponFeedback] = useState<{ success: boolean; message: string } | null>(null);
 
-  const handleApplyCoupon = (e: React.FormEvent) => {
+  const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!couponInput) return;
-    const res = applyCoupon(couponInput);
+    const res = await applyCoupon(couponInput);
     setCouponFeedback(res);
     setTimeout(() => setCouponFeedback(null), 3500);
   };
@@ -56,9 +56,9 @@ export const CartPage: React.FC = () => {
         <div className="w-20 h-20 rounded-3xl bg-surface border border-border-subtle flex items-center justify-center text-text-muted mx-auto">
           <ShoppingBag className="w-10 h-10 opacity-40" />
         </div>
-        <h1 className="text-2xl font-extrabold text-text-primary">Giỏ hàng của bạn đang trống</h1>
+        <h1 className="text-2xl font-extrabold text-text-primary">Your cart is empty</h1>
         <p className="text-xs sm:text-sm text-text-secondary max-w-md mx-auto">
-          Bạn chưa chọn gói tài khoản AI Pro nào. Hãy duyệt danh mục công cụ để tìm gói phù hợp với công việc!
+          You haven't selected any AgentLab account plans yet. Browse the catalog to find the right plan for your work!
         </p>
         <div className="pt-4">
           <Link
@@ -66,7 +66,7 @@ export const CartPage: React.FC = () => {
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold transition-all shadow-lg shadow-primary-blue/25"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Xem danh mục AI Pro</span>
+            <span>Browse AgentLab catalog</span>
           </Link>
         </div>
       </div>
@@ -77,10 +77,10 @@ export const CartPage: React.FC = () => {
     <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10 space-y-8">
       <div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary">
-          Giỏ Hàng Của Bạn
+          Your Cart
         </h1>
         <p className="text-xs sm:text-sm text-text-secondary mt-1">
-          Xem lại cấu hình tài khoản, thời hạn sử dụng và ưu đãi thành viên trước khi thanh toán.
+          Review your account configurations, usage periods, and member benefits before checking out.
         </p>
       </div>
 
@@ -88,12 +88,12 @@ export const CartPage: React.FC = () => {
         {/* Left: Cart Items List */}
         <div className="lg:col-span-8 space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-border-subtle text-xs text-text-muted">
-            <span>Danh sách mặt hàng ({items.length})</span>
+            <span>Items ({items.length})</span>
             <button
               onClick={clearCart}
               className="text-text-muted hover:text-status-error transition-colors"
             >
-              Xóa tất cả
+              Clear all
             </button>
           </div>
 
@@ -113,12 +113,12 @@ export const CartPage: React.FC = () => {
                     <h3 className="text-sm font-bold text-text-primary">{item.product.name}</h3>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-canvas border border-border-subtle text-accent-cyan">
-                        Gói {item.duration.label}
+                        {item.duration.label} plan
                       </span>
                       <span className="text-[11px] text-text-muted">
                         {item.provisioningType === 'invite_email'
-                          ? `Gán email: ${item.targetEmail || 'Email chính chủ'}`
-                          : 'Tài khoản cấp sẵn'}
+                          ? `Assigned email: ${item.targetEmail || 'Owner email'}`
+                          : 'Pre-created account'}
                       </span>
                     </div>
                   </div>
@@ -153,7 +153,7 @@ export const CartPage: React.FC = () => {
                       )}
                     </span>
                     <span className="text-[10px] text-text-muted">
-                      {formatPrice(item.unitPriceVND, item.unitPriceUSD)}/gói
+                      {formatPrice(item.unitPriceVND, item.unitPriceUSD)}/plan
                     </span>
                   </div>
 
@@ -175,7 +175,7 @@ export const CartPage: React.FC = () => {
               className="inline-flex items-center gap-2 text-xs font-semibold text-accent-cyan hover:underline"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Thêm sản phẩm khác vào giỏ</span>
+              <span>Add more products to cart</span>
             </Link>
           </div>
         </div>
@@ -184,7 +184,7 @@ export const CartPage: React.FC = () => {
         <div className="lg:col-span-4 space-y-5">
           <div className="bg-surface border border-border-subtle rounded-2xl p-6 shadow-xl space-y-5">
             <h3 className="text-base font-bold text-text-primary pb-3 border-b border-border-subtle">
-              Tóm tắt đơn hàng
+              Order Summary
             </h3>
 
             {/* Member Tier badge callout */}
@@ -192,10 +192,10 @@ export const CartPage: React.FC = () => {
               <div className="p-3 rounded-xl bg-primary-blue/15 border border-primary-blue/30 text-xs">
                 <div className="flex items-center gap-1.5 text-accent-cyan font-bold mb-1">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Ưu đãi thành viên {user.tier}</span>
+                  <span>{user.tier} member discount</span>
                 </div>
                 <p className="text-[11px] text-text-secondary">
-                  Tài khoản của bạn được tự động giảm thêm {tierDiscountPercent}% trên tổng giá trị giỏ hàng.
+                  Your account automatically gets an extra {tierDiscountPercent}% off the total cart value.
                 </p>
               </div>
             )}
@@ -203,7 +203,7 @@ export const CartPage: React.FC = () => {
             {/* Voucher input */}
             <form onSubmit={handleApplyCoupon} className="space-y-2">
               <label className="block text-xs font-semibold text-text-secondary uppercase">
-                Mã giảm giá (Coupon)
+                Coupon code
               </label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -218,9 +218,9 @@ export const CartPage: React.FC = () => {
                 </div>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-canvas hover:bg-canvas-subtle border border-border-subtle text-xs font-bold text-text-primary hover:text-accent-cyan transition-colors"
+                  className="px-4 py-2 rounded-xl bg-canvas hover:bg-surface-subtle border border-border-subtle text-xs font-bold text-text-primary hover:text-accent-cyan transition-colors"
                 >
-                  Áp dụng
+                  Apply
                 </button>
               </div>
 
@@ -237,7 +237,7 @@ export const CartPage: React.FC = () => {
 
               {couponCode && (
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-status-success/10 border border-status-success/30 text-xs font-mono text-status-success">
-                  <span>Mã {couponCode} (-{couponDiscountPercent}%)</span>
+                  <span>Code {couponCode} (-{couponDiscountPercent}%)</span>
                   <button onClick={removeCoupon} className="hover:text-status-error ml-1">
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -248,19 +248,19 @@ export const CartPage: React.FC = () => {
             {/* Calculations */}
             <div className="space-y-2.5 text-xs font-mono pt-3 border-t border-border-subtle">
               <div className="flex justify-between text-text-secondary">
-                <span>Tạm tính ({items.length} gói):</span>
+                <span>Subtotal ({items.length} plans):</span>
                 <span>{formatPrice(subtotalVND, subtotalUSD)}</span>
               </div>
 
               {(tierDiscountPercent > 0 || couponDiscountPercent > 0) && (
                 <div className="flex justify-between text-status-success">
-                  <span>Tổng chiết khấu:</span>
+                  <span>Total discount:</span>
                   <span>-{formatPrice(discountVND, discountUSD)}</span>
                 </div>
               )}
 
               <div className="flex justify-between items-baseline pt-3 border-t border-border-subtle text-text-primary font-bold">
-                <span className="font-sans text-sm">Thanh toán:</span>
+                <span className="font-sans text-sm">Total:</span>
                 <span className="text-xl text-accent-cyan font-mono">
                   {formatPrice(finalTotalVND, finalTotalUSD)}
                 </span>
@@ -276,15 +276,15 @@ export const CartPage: React.FC = () => {
                 }
                 navigate('/checkout');
               }}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-blue/25 hover:shadow-primary-blue/40 transition-all hover:scale-[1.01]"
+              className="w-full py-3.5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-blue/25 hover:shadow-primary-blue/40 transition-all hover:scale-[1.01]"
             >
-              <span>Tiến hành thanh toán</span>
+              <span>Proceed to checkout</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
             <div className="flex items-center justify-center gap-2 text-[11px] text-text-muted">
               <ShieldCheck className="w-3.5 h-3.5 text-status-success" />
-              <span>Bảo mật SSL 256-bit &bull; Bảo hành 1-đổi-1</span>
+              <span>256-bit SSL encryption &bull; 1-to-1 exchange warranty</span>
             </div>
           </div>
         </div>

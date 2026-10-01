@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { pool } from '../config/db.js';
 import { catchAsync } from '../utils/catch-async.js';
 import { BadRequestError, NotFoundError } from '../utils/app-error.js';
+import { encryptSecret, decryptSecret } from '../services/crypto.service.js';
 
 /**
  * Format an inventory account row (snake_case → camelCase)
@@ -11,7 +12,7 @@ export const formatInventoryRow = (row: any) => ({
   tool: row.tool,
   productId: row.product_id,
   email: row.email,
-  pass: row.password,
+  pass: decryptSecret(row.password),
   pool: row.pool,
   status: row.status,
   assignedOrderId: row.assigned_order_id,
@@ -90,7 +91,7 @@ export const bulkImportInventory = catchAsync(async (req: Request, res: Response
   const { items, pool: targetPool } = req.body;
 
   if (!Array.isArray(items) || items.length === 0) {
-    throw new BadRequestError('Danh sách tài khoản nhập kho rỗng hoặc sai định dạng.');
+    throw new BadRequestError('The account import list is empty or malformed.');
   }
 
   const target = targetPool === 'buffer' ? 'buffer' : 'active';
@@ -115,7 +116,7 @@ export const bulkImportInventory = catchAsync(async (req: Request, res: Response
          VALUES ($1, $2, $3, $4, $5, $6, 'available')
          ON CONFLICT (email) DO UPDATE SET pool = EXCLUDED.pool, updated_at = CURRENT_TIMESTAMP
          RETURNING *`,
-        [id, item.tool.trim(), prodRes.rows[0]?.id ?? null, String(item.email).trim().toLowerCase(), item.pass, target]
+        [id, item.tool.trim(), prodRes.rows[0]?.id ?? null, String(item.email).trim().toLowerCase(), encryptSecret(item.pass), target]
       );
       inserted.push(formatInventoryRow(result.rows[0]));
     }
@@ -123,7 +124,7 @@ export const bulkImportInventory = catchAsync(async (req: Request, res: Response
     await client.query('COMMIT');
     res.status(201).json({
       success: true,
-      message: `Đã nhập ${inserted.length} tài khoản vào kho "${target}" trong PostgreSQL.`,
+      message: `Imported ${inserted.length} accounts into the "${target}" pool in PostgreSQL.`,
       data: inserted,
     });
   } catch (err) {
@@ -136,7 +137,7 @@ export const bulkImportInventory = catchAsync(async (req: Request, res: Response
 
 /**
  * PATCH /api/admin/inventory/:id/pool
- * Move an account between Kho bán (active) and Kho dự phòng (buffer)
+ * Move an account between the Sales pool (active) and Buffer pool (buffer)
  */
 export const moveInventoryPool = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -149,11 +150,11 @@ export const moveInventoryPool = catchAsync(async (req: Request, res: Response) 
     [id]
   );
 
-  if (result.rows.length === 0) throw new NotFoundError('Không tìm thấy tài khoản trong kho.');
+  if (result.rows.length === 0) throw new NotFoundError('Account not found in inventory.');
 
   res.status(200).json({
     success: true,
-    message: `Đã chuyển tài khoản ${id} sang kho "${result.rows[0].pool}".`,
+    message: `Moved account ${id} to the "${result.rows[0].pool}" pool.`,
     data: formatInventoryRow(result.rows[0]),
   });
 });
@@ -165,11 +166,11 @@ export const deleteInventoryAccount = catchAsync(async (req: Request, res: Respo
   const { id } = req.params;
   const result = await pool.query('DELETE FROM inventory_accounts WHERE id = $1 RETURNING id, email', [id]);
 
-  if (result.rows.length === 0) throw new NotFoundError('Không tìm thấy tài khoản để xóa.');
+  if (result.rows.length === 0) throw new NotFoundError('Account not found for deletion.');
 
   res.status(200).json({
     success: true,
-    message: `Đã xóa tài khoản ${result.rows[0].email} khỏi kho dữ liệu.`,
+    message: `Deleted account ${result.rows[0].email} from the inventory.`,
   });
 });
 
@@ -209,13 +210,13 @@ export const createWarrantyTicket = catchAsync(async (req: Request, res: Respons
   const { orderId, customerEmail, tool, reason } = req.body;
 
   if (!orderId || !customerEmail || !tool || !reason) {
-    throw new BadRequestError('Vui lòng cung cấp đủ Mã đơn, Email, Công cụ và Mô tả sự cố.');
+    throw new BadRequestError('Please provide Order ID, Email, Tool and Issue Description.');
   }
 
   const email = String(customerEmail).trim().toLowerCase();
 
   const orderCheck = await pool.query('SELECT id FROM orders WHERE id = $1', [orderId]);
-  if (orderCheck.rows.length === 0) throw new NotFoundError('Không tìm thấy đơn hàng tương ứng.');
+  if (orderCheck.rows.length === 0) throw new NotFoundError('Matching order not found.');
 
   // ── Server-enforced daily replacement quota (source of truth = DB, not localStorage) ──
   const todayCount = await pool.query(
@@ -228,7 +229,7 @@ export const createWarrantyTicket = catchAsync(async (req: Request, res: Respons
   const usedToday: number = todayCount.rows[0]?.count ?? 0;
   if (usedToday >= MAX_REPLACEMENTS_PER_DAY) {
     throw new BadRequestError(
-      `Bạn đã sử dụng hết ${MAX_REPLACEMENTS_PER_DAY} lượt đổi tài khoản hôm nay. Vui lòng liên hệ hỗ trợ Telegram.`
+      `You have used all ${MAX_REPLACEMENTS_PER_DAY} account replacements for today. Please contact Telegram support.`
     );
   }
 
@@ -241,7 +242,7 @@ export const createWarrantyTicket = catchAsync(async (req: Request, res: Respons
 
   res.status(201).json({
     success: true,
-    message: 'Đã ghi nhận khiếu nại bảo hành vào hệ thống. Bot SLA sẽ phản hồi trong 30 phút.',
+    message: 'Warranty claim has been recorded in the system. The SLA bot will respond within 30 minutes.',
     data: formatWarrantyRow(result.rows[0]),
   });
 });
@@ -253,7 +254,7 @@ export const createWarrantyTicket = catchAsync(async (req: Request, res: Respons
  */
 export const getWarrantyQuota = catchAsync(async (req: Request, res: Response) => {
   const email = String(req.query.email || '').trim().toLowerCase();
-  if (!email) throw new BadRequestError('Thiếu email để tra cứu hạn mức bảo hành.');
+  if (!email) throw new BadRequestError('Email is required to look up warranty quota.');
 
   const result = await pool.query(
     `SELECT COUNT(*)::int AS used,
@@ -288,7 +289,7 @@ export const resolveWarrantyTicket = catchAsync(async (req: Request, res: Respon
     await client.query('BEGIN');
 
     const ticketRes = await client.query('SELECT * FROM warranty_tickets WHERE id = $1 FOR UPDATE', [id]);
-    if (ticketRes.rows.length === 0) throw new NotFoundError('Không tìm thấy phiếu khiếu nại.');
+    if (ticketRes.rows.length === 0) throw new NotFoundError('Warranty ticket not found.');
     const ticket = ticketRes.rows[0];
 
     // Take one available account from buffer pool of the same tool
@@ -321,8 +322,8 @@ export const resolveWarrantyTicket = catchAsync(async (req: Request, res: Respon
     res.status(200).json({
       success: true,
       message: replacement
-        ? `Đã duyệt đổi mới: cấp tài khoản ${replacement.email} từ Buffer Pool cho khiếu nại ${id}.`
-        : `Đã đánh dấu khiếu nại ${id} là resolved (Buffer Pool đang trống cùng công cụ).`,
+        ? `Replacement approved: issued account ${replacement.email} from the Buffer Pool for claim ${id}.`
+        : `Claim ${id} marked as resolved (the Buffer Pool has no accounts for this tool).`,
       data: {
         ticket: { id, status: 'resolved' },
         replacementAccount: replacement,

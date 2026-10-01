@@ -18,12 +18,12 @@ interface FilterPillsBarProps {
 }
 
 const CATEGORIES: { id: ProductCategory; label: string }[] = [
-  { id: 'all', label: 'Tất cả' },
-  { id: 'coding', label: '💻 AI Coding' },
-  { id: 'llm', label: '🧠 LLMs & Chat' },
-  { id: 'search', label: '🔍 AI Search & Research' },
-  { id: 'design', label: '🎨 Design & Audio' },
-  { id: 'enterprise', label: '🏢 Enterprise' },
+  { id: 'all', label: 'All' },
+  { id: 'coding', label: 'AI Coding' },
+  { id: 'llm', label: 'LLMs & Chat' },
+  { id: 'search', label: 'AI Search & Research' },
+  { id: 'design', label: 'Design & Audio' },
+  { id: 'enterprise', label: 'Enterprise' },
 ];
 
 export const FilterPillsBar: React.FC<FilterPillsBarProps> = ({
@@ -54,7 +54,7 @@ export const FilterPillsBar: React.FC<FilterPillsBarProps> = ({
                 onClick={() => onSelectCategory(cat.id)}
                 className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                   isActive
-                    ? 'bg-primary-blue text-white border border-primary-blue shadow-[0_0_15px_rgba(0,102,255,0.4)]'
+                    ? 'bg-primary-blue text-white border border-primary-blue shadow-button'
                     : 'bg-surface text-text-secondary border border-border-subtle hover:border-border-focus hover:text-text-primary'
                 }`}
               >
@@ -81,10 +81,10 @@ export const FilterPillsBar: React.FC<FilterPillsBarProps> = ({
                 ? 'bg-canvas text-accent-cyan shadow-sm border border-border-subtle font-bold'
                 : 'text-text-muted hover:text-text-primary'
             }`}
-            title="Dạng lưới 3 cột"
+            title="3-column grid view"
           >
             <LayoutGrid className="w-4 h-4" />
-            <span className="text-[11px] pr-1">Lưới</span>
+            <span className="text-[11px] pr-1">Grid</span>
           </button>
           <button
             type="button"
@@ -94,10 +94,10 @@ export const FilterPillsBar: React.FC<FilterPillsBarProps> = ({
                 ? 'bg-canvas text-accent-cyan shadow-sm border border-border-subtle font-bold'
                 : 'text-text-muted hover:text-text-primary'
             }`}
-            title="Dạng danh sách so sánh"
+            title="Compact list view"
           >
             <ListFilter className="w-4 h-4" />
-            <span className="text-[11px] pr-1">Thu gọn</span>
+            <span className="text-[11px] pr-1">Compact</span>
           </button>
         </div>
       </div>
@@ -111,7 +111,7 @@ export const FilterPillsBar: React.FC<FilterPillsBarProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Tìm theo tên, hãng (Cursor, Claude, GPT...)"
+            placeholder="Search by name, brand (Cursor, Claude, GPT...)"
             className="w-full h-10 pl-9 pr-8 rounded-xl bg-canvas border border-border-subtle focus:border-border-focus focus:outline-none text-xs text-text-primary placeholder:text-text-muted transition-all"
           />
           {searchQuery && (
@@ -128,22 +128,22 @@ export const FilterPillsBar: React.FC<FilterPillsBarProps> = ({
         {/* Results Counter & Sort Selector */}
         <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
           <span className="text-xs text-text-muted font-mono whitespace-nowrap">
-            Hiển thị <span className="font-bold text-accent-cyan">{totalFilteredCount}</span> sản phẩm
+            Showing <span className="font-bold text-accent-cyan">{totalFilteredCount}</span> products
           </span>
 
           <div className="flex items-center gap-1.5 bg-canvas px-3 py-1.5 rounded-xl border border-border-subtle shrink-0">
             <ArrowUpDown className="w-3.5 h-3.5 text-text-muted" />
-            <span className="text-[11px] text-text-muted hidden md:inline">Sắp xếp:</span>
+            <span className="text-[11px] text-text-muted hidden md:inline">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => onSortChange(e.target.value as SortOption)}
               className="bg-transparent text-xs text-text-primary font-semibold focus:outline-none cursor-pointer"
             >
-              <option value="popular" className="bg-[#0e1117] text-white">Khuyên dùng / Phổ biến</option>
-              <option value="price_asc" className="bg-[#0e1117] text-white">Giá: Thấp đến Cao</option>
-              <option value="price_desc" className="bg-[#0e1117] text-white">Giá: Cao đến Thấp</option>
-              <option value="discount" className="bg-[#0e1117] text-white">Ưu đãi % lớn nhất</option>
-              <option value="stock" className="bg-[#0e1117] text-white">Tồn kho nhiều nhất</option>
+              <option value="popular" className="bg-white text-[#0A2540]">Recommended / Most popular</option>
+              <option value="price_asc" className="bg-white text-[#0A2540]">Price: Low to High</option>
+              <option value="price_desc" className="bg-white text-[#0A2540]">Price: High to Low</option>
+              <option value="discount" className="bg-white text-[#0A2540]">Biggest discount %</option>
+              <option value="stock" className="bg-white text-[#0A2540]">Most in stock</option>
             </select>
           </div>
         </div>

@@ -56,7 +56,7 @@ export interface ConfigurationState {
   guestEmail: string;
 }
 
-export type PaymentMethod = 'vietqr' | 'stripe_card' | 'crypto_usdt' | 'paypal';
+export type PaymentMethod = 'vietqr' | 'card_via_paypal' | 'crypto_usdt' | 'paypal';
 
 export interface VietQRData {
   bankName: string;

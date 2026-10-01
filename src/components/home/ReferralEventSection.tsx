@@ -19,20 +19,20 @@ import { setPendingReferral } from '@/utils/referral';
 
 /**
  * ============================================================
- * CHIẾN DỊCH "MỜI BẠN MUA – NHẬN NGAY TÀI KHOẢN ĐÃ THANH TOÁN"
+ * "INVITE A FRIEND TO BUY — GET A PAID ACCOUNT FOR FREE" CAMPAIGN
  * Referral-to-Unlock Event Section (Frontend + Ads optimized)
  * ============================================================
  *
- * MECHANICS (vòng lặp viral):
- *  1. User nhận link invite cá nhân hóa (?ref=CODE&utm_source=channel)
- *  2. Gửi bạn bè → bạn mua & thanh toán đơn hợp lệ (FAB = First Paid Booking)
- *  3. Hệ thống tự unlock + giao NGAY tài khoản premium đã được chi trả
- *     cho người mời (provisioning type: pre_created)
+ * MECHANICS (viral loop):
+ *  1. User receives a personalized invite link (?ref=CODE&utm_source=channel)
+ *  2. They share it with friends → a friend buys & pays for a valid order (FAB = First Paid Booking)
+ *  3. The system auto-unlocks + delivers a PREMIUM ACCOUNT already paid for
+ *     to the inviter (provisioning type: pre_created)
  *
  * ADS / GROWTH KPIs:
- *  - CTR nút CTA (>3.5%), Conversion từ landing → first invite send (>25%)
- *  - K-factor = (invites/user) × (paid conversion/friend) — mục tiêu ≥ 0.4
- *  - Toàn bộ funnel được instrument qua dataLayer (GA4/Pinterest/Meta events)
+ *  - CTA button CTR (>3.5%), landing → first invite send conversion (>25%)
+ *  - K-factor = (invites/user) x (paid conversion/friend) — target ≥ 0.4
+ *  - Entire funnel instrumented via dataLayer (GA4/Pinterest/Meta events)
  */
 
 // Invite links resolve on our own origin so the /r/:code landing route can
@@ -57,7 +57,7 @@ export const ReferralEventSection: React.FC = () => {
       try {
         const { code } = await ordersApi.issueCode(undefined, token || undefined);
         if (cancelled) return;
-        sessionStorage.setItem('aipro_ref_code', code);
+        sessionStorage.setItem('agentlab_ref_code', code);
         setRefCode(code);
         setPendingReferral(code); // own-session attribution harmless; overwritten by last-click
       } catch {
@@ -99,7 +99,7 @@ export const ReferralEventSection: React.FC = () => {
   const handleShare = (channel: 'facebook' | 'zalo' | 'messenger') => {
     if (!inviteLink) return;
     const text = encodeURIComponent(
-      'Mình đang dùng tài khoản AI xịn mà không tốn tiền 💸 Bạn mua gói Claude/Cursor, hệ thống tặng NGAY tài khoản đã thanh toán cho mình — cùng có lợi! Nhận ưu đãi tại:',
+      'I\'m using premium AI accounts without paying a dime 💸 When you buy a Claude/Cursor plan, the system instantly gifts me an account that\'s already paid for — we both win! Grab the deal here:',
     );
     const url = encodeURIComponent(inviteLink);
     const shareUrls: Record<typeof channel, string> = {
@@ -130,20 +130,20 @@ export const ReferralEventSection: React.FC = () => {
   const steps = [
     {
       icon: <Users className="w-6 h-6 text-accent-cyan" />,
-      title: 'Bước 1 — Gửi lời mời',
-      desc: 'Chia sẻ link mời cá nhân hóa của bạn cho bạn bè qua Facebook, Zalo, Messenger hoặc copy 1 chạm.',
+      title: 'Step 1 — Send your invite',
+      desc: 'Share your personalized invite link with friends via Facebook, Zalo, Messenger, or one-tap copy.',
       kpiLabel: 'Target: ≥ 3 invites / user',
     },
     {
       icon: <Zap className="w-6 h-6 text-accent-cyan" />,
-      title: 'Bước 2 — Bạn thanh toán',
-      desc: 'Bạn của bạn mua gói tài khoản AI bất kỳ (Claude Pro, Cursor, ChatGPT Plus…) và hoàn tất đơn hợp lệ.',
-      kpiLabel: 'FAB validation: anti-fraud 3 lớp',
+      title: 'Step 2 — Your friend pays',
+      desc: 'Your friend purchases any AI account plan (Claude Pro, Cursor, ChatGPT Plus…) and completes a valid order.',
+      kpiLabel: 'FAB validation: 3-layer anti-fraud',
     },
     {
       icon: <Gift className="w-6 h-6 text-accent-cyan" />,
-      title: 'Bước 3 — Nhận ngay tài khoản',
-      desc: 'Hệ thống tự động unlock và bàn giao TÀI KHOẢN ĐÃ ĐƯỢC THANH TOÁN vào kho quà của bạn trong ≤ 30 giây.',
+      title: 'Step 3 — Get your account instantly',
+      desc: 'The system automatically unlocks and delivers a PAID-FOR PREMIUM ACCOUNT to your gift vault within ≤ 30 seconds.',
       kpiLabel: 'Delivery SLA: instant provisioning',
     },
   ];
@@ -160,19 +160,19 @@ export const ReferralEventSection: React.FC = () => {
           <div data-section-header className="max-w-3xl space-y-4 mb-10">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-blue/15 border border-primary-blue/40 text-accent-cyan text-xs font-mono font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>SỰ KIỆN GIỚI HẠN · #InviteToPay · K-Factor Loop</span>
+              <span>LIMITED-TIME EVENT · #InviteToPay · K-Factor Loop</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-text-primary tracking-tight leading-tight">
-              Mời bạn mua tài khoản AI —{' '}
+              Invite a friend to buy an AI account —{' '}
               <span className="bg-gradient-to-r from-primary-blue to-accent-cyan bg-clip-text text-transparent">
-                Nhận ngay tài khoản đã được thanh toán
+                Get a paid-for account instantly
               </span>
             </h2>
             <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
-              Mỗi khi một người bạn của bạn hoàn tất đơn hàng, hệ thống tự động{' '}
-              <strong className="text-text-primary">unlock quà tặng</strong> là tài khoản premium{' '}
-              <strong className="text-text-primary">đã được chi trả</strong> dành cho bạn. Không rút gọn,
-              không chờ duyệt thủ công — bàn giao tức thì qua email chính chủ.
+              Every time one of your friends completes an order, the system automatically{' '}
+              <strong className="text-text-primary">unlocks your gift</strong>: a premium account{' '}
+              <strong className="text-text-primary">already paid for</strong>, just for you. No reduced plans,
+              no manual approval waits — instant delivery to your own email.
             </p>
           </div>
 
@@ -207,7 +207,7 @@ export const ReferralEventSection: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2 text-accent-cyan text-xs font-mono font-semibold mb-3">
                   <Gift className="w-4 h-4" />
-                  <span>QUÀ TẶNG UNLOCK MỖI LỜI MỜI HỢP LỆ</span>
+                  <span>GIFT UNLOCKED PER VALID INVITE</span>
                 </div>
                 {prizeProduct ? (
                   <>
@@ -234,21 +234,21 @@ export const ReferralEventSection: React.FC = () => {
                   </>
                 ) : (
                   <p className="text-sm text-text-secondary">
-                    Gói tài khoản cao nhất trong catalog sẽ được chọn làm phần thưởng unlock.
+                    The highest-priced plan in the catalog will be picked as the unlock reward.
                   </p>
                 )}
               </div>
               <div className="mt-6 pt-4 border-t border-primary-blue/25 font-mono text-[11px] text-text-secondary">
-                Giá trị giải thưởng do AI Pro chi trả 100% · Anti-abuse: 1 reward / FAB hợp lệ
+                Prize value covered 100% by AgentLab · Anti-abuse: 1 reward per valid FAB
               </div>
             </div>
 
             {/* Invite console */}
             <div className="lg:col-span-3 rounded-2xl bg-surface border border-border-subtle p-6 sm:p-8 shadow-lg">
-              <h3 className="text-lg font-bold text-text-primary mb-1">Link mời cá nhân hóa của bạn</h3>
+              <h3 className="text-lg font-bold text-text-primary mb-1">Your personalized invite link</h3>
               <p className="text-xs text-text-secondary mb-5">
-                Định danh <span className="font-mono text-accent-cyan">{refCode}</span> — mọi đơn hàng từ link này
-                đều tự động quy kết cho bạn (attribution 30 ngày, last-click).
+                Your ID is <span className="font-mono text-accent-cyan">{refCode}</span> — every order from this link
+                is automatically attributed to you (30-day attribution, last-click).
               </p>
 
               {/* Link input + copy */}
@@ -258,9 +258,9 @@ export const ReferralEventSection: React.FC = () => {
                   <input
                     readOnly
                     disabled={!inviteLink}
-                    value={issuing || !inviteLink ? 'Đang tạo link mời cá nhân hóa…' : inviteLink}
+                    value={issuing || !inviteLink ? 'Generating your personalized invite link…' : inviteLink}
                     onFocus={(e) => e.target.select()}
-                    aria-label="Link mời cá nhân"
+                    aria-label="Personal invite link"
                     className="w-full bg-transparent px-2 py-3.5 text-sm font-mono text-text-primary outline-none"
                   />
                   <button
@@ -269,11 +269,11 @@ export const ReferralEventSection: React.FC = () => {
                     className={`m-1.5 mr-1.5 px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                       copied
                         ? 'bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/40'
-                        : 'bg-primary-blue text-white hover:bg-primary-blue/90 shadow-md shadow-primary-blue/30'
+                        : 'bg-primary-blue text-white hover:bg-primary-hover shadow-button'
                     }`}
                   >
                     {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copied ? 'Đã copy!' : 'Copy link'}</span>
+                    <span>{copied ? 'Copied!' : 'Copy link'}</span>
                   </button>
                 </div>
               </div>
@@ -282,13 +282,13 @@ export const ReferralEventSection: React.FC = () => {
               <div className="flex flex-wrap gap-2 mb-6">
                 <button
                   onClick={() => handleShare('facebook')}
-                  className="px-4 py-2 rounded-lg bg-[#1877F2]/10 border border-[#1877F2]/40 text-[#4a9eff] text-xs font-semibold hover:bg-[#1877F2]/20 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 rounded-lg bg-[#1877F2]/10 border border-[#1877F2]/40 text-[#1877F2] text-xs font-semibold hover:bg-[#1877F2]/20 transition-colors flex items-center gap-2"
                 >
                   <MessageCircle className="w-3.5 h-3.5" /> Facebook
                 </button>
                 <button
                   onClick={() => handleShare('zalo')}
-                  className="px-4 py-2 rounded-lg bg-[#0068FF]/10 border border-[#0068FF]/40 text-[#5aa2ff] text-xs font-semibold hover:bg-[#0068FF]/20 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 rounded-lg bg-[#0068FF]/10 border border-[#0068FF]/40 text-[#0068FF] text-xs font-semibold hover:bg-[#0068FF]/20 transition-colors flex items-center gap-2"
                 >
                   <MessageCircle className="w-3.5 h-3.5" /> Zalo
                 </button>
@@ -303,7 +303,7 @@ export const ReferralEventSection: React.FC = () => {
               {/* Email capture → funnel into checkout with attribution */}
               <form onSubmit={handleSubmit} className="space-y-3">
                 <label htmlFor="referral-email" className="block text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                  Hoặc nhập email để khóa quyền lợi & tiến thẳng Checkout
+                  Or enter your email to lock in your reward & head straight to Checkout
                 </label>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
@@ -317,16 +317,16 @@ export const ReferralEventSection: React.FC = () => {
                   />
                   <button
                     type="submit"
-                    className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-primary-blue to-accent-cyan text-white text-sm font-bold shadow-xl shadow-primary-blue/30 hover:shadow-primary-blue/50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                    className="px-6 py-3.5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-sm font-bold shadow-button hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                   >
                     <Zap className="w-4 h-4 fill-white" />
-                    <span>Nhận tài khoản quà</span>
+                    <span>Claim my free account</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
                 <p className="text-[11px] text-text-secondary/80 leading-relaxed">
-                  🔒 Chúng tôi chỉ dùng email để bàn giao quà & chống gian lận (device fingerprint + velocity check).
-                  Bạn của bạn vẫn nhận ưu đãi giảm giá riêng khi mua qua link — win-win loop.
+                  🔒 We only use your email to deliver your gift & prevent fraud (device fingerprint + velocity check).
+                  Your friend still gets their own exclusive discount when buying via your link — a win-win loop.
                 </p>
               </form>
             </div>

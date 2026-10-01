@@ -39,17 +39,17 @@ export class ErrorBoundary extends Component<Props, State> {
             <AlertTriangle className="w-6 h-6" />
           </div>
           <h3 className="text-lg font-bold text-text-primary mb-1">
-            {this.props.fallbackTitle || 'Một phần giao diện tạm thời gặp sự cố'}
+            {this.props.fallbackTitle || 'Part of the interface is temporarily unavailable'}
           </h3>
           <p className="text-sm text-text-secondary max-w-md mx-auto mb-4">
-            Lỗi đã được cô lập an toàn để không làm ảnh hưởng đến các chức năng khác của bạn.
+            The error was safely isolated so it won't affect any of your other features.
           </p>
           <button
             onClick={this.handleReset}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary-blue hover:bg-primary-hover rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
-            Tải lại phần này
+            Reload this section
           </button>
         </div>
       );

@@ -12,6 +12,9 @@ import { statusRouter } from './routes/status.routes.js';
 import { ordersRouter, subscriptionsRouter, adminRouter } from './routes/orders.routes.js';
 import { inventoryAdminRouter, warrantyAdminRouter, warrantyPublicRouter } from './routes/inventory-warranty.routes.js';
 import { referralRouter } from './routes/referral.routes.js';
+import { paymentRouter } from './controllers/payment.controller.js';
+import { supportChatRouter } from './controllers/support-chat.controller.js';
+import { couponRouter } from './controllers/coupon.controller.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { ensureSeedProducts } from './controllers/product.controller.js';
 import { pool } from './config/db.js';
@@ -19,9 +22,13 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = env.PORT;
+
+// Behind a reverse proxy (Railway, nginx...): use X-Forwarded-For for correct client IPs
+app.set('trust proxy', 1);
 
 // Security Middleware
 app.use(helmet());
@@ -52,17 +59,29 @@ const authLimiter = rateLimit({
   message: { status: 429, message: 'Too many authentication attempts, please try again later.' },
 });
 
-// Swagger Documentation
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Swagger Documentation — dev convenience only, never expose the API surface in production
+if (!env.isProd) {
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
 
-// Health Check endpoint
-app.get('/api/health', (_req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'healthy',
-    service: 'AIPro Backend API',
-    timestamp: new Date().toISOString(),
-    postgres: 'connected',
-  });
+// Health Check endpoint — actually verifies DB connectivity
+app.get('/api/health', async (_req: Request, res: Response) => {
+  try {
+    await pool.query('SELECT 1');
+    res.status(200).json({
+      status: 'healthy',
+      service: 'AgentLab Backend API',
+      timestamp: new Date().toISOString(),
+      postgres: 'connected',
+    });
+  } catch {
+    res.status(503).json({
+      status: 'unhealthy',
+      service: 'AgentLab Backend API',
+      timestamp: new Date().toISOString(),
+      postgres: 'disconnected',
+    });
+  }
 });
 
 // Routes
@@ -77,54 +96,57 @@ app.use('/api/referral', referralRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/admin/inventory', inventoryAdminRouter);
 app.use('/api/admin/warranty', warrantyAdminRouter);
+app.use('/api/payments', paymentRouter);
+app.use('/api/coupons', couponRouter);
+app.use('/api/support', supportChatRouter);
 
 // Error handling middleware (must be last)
 app.use(errorMiddleware);
 
 /**
- * Run DB migrations to ensure all tables exist
+ * Run DB migrations: init.sql first, then every numbered migration in db/migrations/.
+ * In production a failed migration is fatal — booting without the schema would
+ * corrupt order/payment state, so the process exits instead of limping on.
  */
 const runMigrations = async () => {
-  try {
-    const sqlPath = path.join(__dirname, 'db', 'init.sql');
-    const sql = fs.readFileSync(sqlPath, 'utf-8');
-    await pool.query(sql);
+  const dbDir = path.join(__dirname, 'db');
+  const scripts: string[] = [path.join(dbDir, 'init.sql')];
 
-    // Production tables: inventory_accounts & warranty_tickets (migration 002)
-    const prodSqlPath = path.join(__dirname, 'db', 'migrations', '002_production_tables.sql');
-    if (fs.existsSync(prodSqlPath)) {
-      const prodSql = fs.readFileSync(prodSqlPath, 'utf-8');
-      await pool.query(prodSql);
+  const migrationsDir = path.join(dbDir, 'migrations');
+  if (fs.existsSync(migrationsDir)) {
+    for (const f of fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort()) {
+      scripts.push(path.join(migrationsDir, f));
     }
-
-    // Server-issued lookup OTPs (migration 003)
-    const otpSqlPath = path.join(__dirname, 'db', 'migrations', '003_lookup_otp.sql');
-    if (fs.existsSync(otpSqlPath)) {
-      const otpSql = fs.readFileSync(otpSqlPath, 'utf-8');
-      await pool.query(otpSql);
-    }
-
-    // Referral / #InviteToPay system (migration 004)
-    const refSqlPath = path.join(__dirname, 'db', 'migrations', '004_referral_system.sql');
-    if (fs.existsSync(refSqlPath)) {
-      const refSql = fs.readFileSync(refSqlPath, 'utf-8');
-      await pool.query(refSql);
-    }
-
-    console.log('[DB] Schema migrations applied successfully.');
-  } catch (err) {
-    console.error('[DB] Migration warning (tables may already exist):', (err as any).message);
   }
+
+  for (const scriptPath of scripts) {
+    if (!fs.existsSync(scriptPath)) {
+      if (env.isProd) throw new Error(`Missing required SQL script: ${scriptPath}`);
+      console.warn(`[DB] Skipping missing script: ${scriptPath}`);
+      continue;
+    }
+    const sql = fs.readFileSync(scriptPath, 'utf-8');
+    await pool.query(sql);
+  }
+
+  console.log('[DB] Schema migrations applied successfully.');
 };
 
 // Start server
 app.listen(PORT, async () => {
-  console.log(`🚀 [AIPro Backend] Server running on http://localhost:${PORT} (${env.NODE_ENV})`);
-  console.log(`📖 [AIPro Backend] Swagger docs at http://localhost:${PORT}/api/docs`);
+  console.log(`🚀 [AgentLab Backend] Server running on http://localhost:${PORT} (${env.NODE_ENV})`);
+  if (!env.isProd) {
+    console.log(`📖 [AgentLab Backend] Swagger docs at http://localhost:${PORT}/api/docs`);
+  }
   // Run DB schema migrations (creates orders, subscriptions tables if not exist)
-  await runMigrations();
+  try {
+    await runMigrations();
+  } catch (err) {
+    console.error('[DB] Migration failed — aborting boot:', (err as Error).message);
+    process.exit(1);
+  }
   // Seed demo accounts only outside production — real signups own the DB in prod
-  if (env.NODE_ENV !== 'production') {
+  if (!env.isProd) {
     await ensureSeedUsers();
   }
   // Seed initial AI products catalog (idempotent upsert)

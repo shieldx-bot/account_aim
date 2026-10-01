@@ -57,7 +57,7 @@ export const AdminInventoryPage: React.FC = () => {
       setAccounts(res.accounts || []);
       setStockSummary(res.stockSummary || []);
     } catch (err: any) {
-      setError(err.message || 'Không thể tải kho tài khoản từ database.');
+      setError(err.message || 'Unable to load account inventory from the database.');
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export const AdminInventoryPage: React.FC = () => {
     setShowPassMap((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // POST /api/admin/inventory/bulk -> INSERT vào PostgreSQL
+  // POST /api/admin/inventory/bulk -> INSERT into PostgreSQL
   const handleBulkImport = async () => {
     if (!token || !importText.trim()) return;
     const lines = importText.trim().split('\n');
@@ -87,7 +87,7 @@ export const AdminInventoryPage: React.FC = () => {
       .filter((i) => i.tool && i.email && i.pass);
 
     if (items.length === 0) {
-      alert('Không có dòng hợp lệ. Định dạng mỗi dòng: Công cụ,Email,Mật khẩu');
+      alert('No valid lines found. Format per line: Tool,Email,Password');
       return;
     }
 
@@ -98,13 +98,13 @@ export const AdminInventoryPage: React.FC = () => {
       setImportText('');
       await fetchInventory();
     } catch (err: any) {
-      alert(err.message || 'Nhập hàng thất bại.');
+      alert(err.message || 'Bulk import failed.');
     } finally {
       setImporting(false);
     }
   };
 
-  // PATCH /api/admin/inventory/:id/pool -> UPDATE trong PostgreSQL
+  // PATCH /api/admin/inventory/:id/pool -> UPDATE in PostgreSQL
   const handleMovePool = async (acc: AccountRow) => {
     if (!token) return;
     setBusyId(acc.id);
@@ -114,22 +114,22 @@ export const AdminInventoryPage: React.FC = () => {
         prev.map((a) => (a.id === acc.id ? { ...a, pool: a.pool === 'active' ? 'buffer' : 'active' } : a))
       );
     } catch (err: any) {
-      alert(err.message || 'Không thể chuyển kho.');
+      alert(err.message || 'Unable to move the account to another pool.');
     } finally {
       setBusyId(null);
     }
   };
 
-  // DELETE /api/admin/inventory/:id -> DELETE trong PostgreSQL
+  // DELETE /api/admin/inventory/:id -> DELETE in PostgreSQL
   const handleDelete = async (acc: AccountRow) => {
     if (!token) return;
-    if (!confirm(`Xóa vĩnh viễn tài khoản ${acc.email} khỏi database?`)) return;
+    if (!confirm(`Permanently delete account ${acc.email} from the database?`)) return;
     setBusyId(acc.id);
     try {
       await inventoryApi.deleteAccount(token, acc.id);
       setAccounts((prev) => prev.filter((a) => a.id !== acc.id));
     } catch (err: any) {
-      alert(err.message || 'Không thể xóa tài khoản.');
+      alert(err.message || 'Unable to delete the account.');
     } finally {
       setBusyId(null);
     }
@@ -149,7 +149,7 @@ export const AdminInventoryPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-extrabold text-text-primary mt-1 flex items-center gap-2.5">
             <Layers className="w-6 h-6 text-primary-blue" />
-            Quản Trị Kho Tài Khoản &amp; Tồn Kho Tự Động
+            Account Inventory &amp; Automated Stock Management
           </h1>
         </div>
 
@@ -158,7 +158,7 @@ export const AdminInventoryPage: React.FC = () => {
             type="button"
             onClick={fetchInventory}
             className="p-2 rounded-lg bg-surface border border-border-subtle text-text-muted hover:text-text-primary"
-            title="Tải lại từ Database"
+            title="Reload from database"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -168,7 +168,7 @@ export const AdminInventoryPage: React.FC = () => {
             className="px-4 py-2 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center gap-2"
           >
             <Upload className="w-4 h-4" />
-            <span>Nhập Hàng Hàng Loạt (CSV / JSON)</span>
+            <span>Bulk Import (CSV / JSON)</span>
           </button>
         </div>
       </div>
@@ -176,7 +176,7 @@ export const AdminInventoryPage: React.FC = () => {
       {/* Error banner */}
       {error && (
         <div className="p-4 rounded-xl bg-status-error/10 border border-status-error/30 text-status-error text-xs font-semibold my-6">
-          ⚠️ {error} — kiểm tra kết nối backend PostgreSQL.
+          ⚠️ {error} — check the PostgreSQL backend connection.
         </div>
       )}
 
@@ -185,11 +185,11 @@ export const AdminInventoryPage: React.FC = () => {
         {loading ? (
           <div className="sm:col-span-3 p-8 rounded-2xl bg-surface border border-border-subtle text-center text-text-muted text-xs">
             <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-            Đang tổng hợp tồn kho từ database...
+            Aggregating stock from the database...
           </div>
         ) : stockSummary.length === 0 ? (
           <div className="sm:col-span-3 p-8 rounded-2xl bg-surface border border-border-subtle text-center text-text-muted text-xs">
-            Kho đang trống — bấm "Nhập Hàng Hàng Loạt" để thêm tài khoản đầu tiên.
+            Inventory is empty — click "Bulk Import" to add the first account.
           </div>
         ) : (
           stockSummary.map((s) => {
@@ -201,7 +201,7 @@ export const AdminInventoryPage: React.FC = () => {
                 <div className="flex justify-between text-xs mb-2">
                   <span className="font-semibold text-text-primary">{s.tool}</span>
                   <span className={`font-mono font-bold ${lowStock ? 'text-status-warning' : 'text-status-success'}`}>
-                    {available} Khả dụng
+                    {available} Available
                   </span>
                 </div>
                 <div className="w-full h-2 bg-canvas rounded-full overflow-hidden mb-2">
@@ -209,8 +209,8 @@ export const AdminInventoryPage: React.FC = () => {
                 </div>
                 <span className={`text-[11px] ${lowStock ? 'text-status-warning' : 'text-text-muted'}`}>
                   {lowStock
-                    ? '⚠️ Cảnh báo tồn kho thấp (dưới mức 10)'
-                    : `Kho Bán: ${s.activeAvailable} • Kho Dự Phòng 1-Đổi-1: ${s.bufferAvailable}`}
+                    ? '⚠️ Low stock warning (below 10)'
+                    : `Sales Pool: ${s.activeAvailable} • 1-for-1 Backup Pool: ${s.bufferAvailable}`}
                 </span>
               </div>
             );
@@ -231,10 +231,10 @@ export const AdminInventoryPage: React.FC = () => {
                 }`}
               >
                 {p === 'all'
-                  ? `Tất Cả (${accounts.length})`
+                  ? `All (${accounts.length})`
                   : p === 'active'
-                  ? 'Kho Bán Trực Tiếp'
-                  : 'Kho Dự Phòng 1-Đổi-1'}
+                  ? 'Sales Pool'
+                  : '1-for-1 Backup Pool'}
               </button>
             ))}
           </div>
@@ -245,12 +245,12 @@ export const AdminInventoryPage: React.FC = () => {
             <thead className="bg-canvas/80 text-[11px] font-semibold text-text-muted uppercase border-b border-border-subtle">
               <tr>
                 <th className="p-4">ID</th>
-                <th className="p-4">Công Cụ</th>
-                <th className="p-4">Email Đăng Nhập</th>
-                <th className="p-4">Mật Khẩu</th>
-                <th className="p-4">Phân Loại Kho</th>
-                <th className="p-4">Trạng Thái</th>
-                <th className="p-4 text-right">Thao Tác</th>
+                <th className="p-4">Tool</th>
+                <th className="p-4">Login Email</th>
+                <th className="p-4">Password</th>
+                <th className="p-4">Pool</th>
+                <th className="p-4">Status</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle/50">
@@ -258,13 +258,13 @@ export const AdminInventoryPage: React.FC = () => {
                 <tr>
                   <td colSpan={7} className="p-10 text-center text-text-muted">
                     <Loader2 className="w-5 h-5 animate-spin inline mr-2" />
-                    Đang tải kho tài khoản từ database...
+                    Loading account inventory from the database...
                   </td>
                 </tr>
               ) : filteredAccounts.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-10 text-center text-text-muted">
-                    Chưa có tài khoản nào trong kho này.
+                    No accounts in this pool yet.
                   </td>
                 </tr>
               ) : (
@@ -285,28 +285,28 @@ export const AdminInventoryPage: React.FC = () => {
                     <td className="p-4">
                       {acc.pool === 'active' ? (
                         <span className="px-2 py-0.5 rounded text-[10px] bg-primary-blue/10 text-primary-blue border border-primary-blue/30 font-medium">
-                          Kho Bán
+                          Sales Pool
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded text-[10px] bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/30 font-medium">
-                          Kho Dự Phòng
+                          Backup Pool
                         </span>
                       )}
                     </td>
                     <td className="p-4">
                       {acc.status === 'available' && (
                         <span className="px-2 py-0.5 rounded-full text-[10px] bg-status-success/15 text-status-success font-semibold flex items-center gap-1 w-fit">
-                          <CheckCircle2 className="w-3 h-3" /> Sẵn sàng
+                          <CheckCircle2 className="w-3 h-3" /> Available
                         </span>
                       )}
                       {acc.status === 'assigned' && (
                         <span className="px-2 py-0.5 rounded-full text-[10px] bg-canvas text-text-muted border border-border-subtle font-semibold">
-                          Đã gán đơn
+                          Assigned to order
                         </span>
                       )}
                       {acc.status === 'compromised' && (
                         <span className="px-2 py-0.5 rounded-full text-[10px] bg-status-error/15 text-status-error font-semibold flex items-center gap-1 w-fit">
-                          <AlertTriangle className="w-3 h-3" /> Lỗi/Hack
+                          <AlertTriangle className="w-3 h-3" /> Compromised
                         </span>
                       )}
                     </td>
@@ -317,14 +317,14 @@ export const AdminInventoryPage: React.FC = () => {
                         onClick={() => handleMovePool(acc)}
                         className="text-xs text-primary-blue hover:underline mr-3 disabled:opacity-40"
                       >
-                        Chuyển kho
+                        Move pool
                       </button>
                       <button
                         disabled={busyId === acc.id}
                         onClick={() => handleDelete(acc)}
                         className="text-xs text-status-error hover:underline disabled:opacity-40"
                       >
-                        Xóa
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -339,11 +339,11 @@ export const AdminInventoryPage: React.FC = () => {
       {showImportModal && (
         <div className="fixed inset-0 z-50 bg-canvas/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="p-6 rounded-2xl bg-surface border border-border-focus max-w-lg w-full space-y-4 shadow-2xl">
-            <h3 className="text-lg font-bold text-text-primary">Nhập Hàng Hàng Loạt (Bulk Account Import)</h3>
+            <h3 className="text-lg font-bold text-text-primary">Bulk Import (Bulk Account Import)</h3>
             <p className="text-xs text-text-secondary">
-              Nhập theo định dạng mỗi dòng 1 tài khoản:{' '}
-              <code className="font-mono text-accent-cyan">Công cụ,Email,Mật khẩu</code>. Dữ liệu được ghi trực tiếp
-              vào bảng <span className="font-mono">inventory_accounts</span>.
+              Enter one account per line in the format:{' '}
+              <code className="font-mono text-accent-cyan">Tool,Email,Password</code>. Data is written directly
+              to the <span className="font-mono">inventory_accounts</span> table.
             </p>
 
             <textarea
@@ -355,14 +355,14 @@ export const AdminInventoryPage: React.FC = () => {
             />
 
             <div className="flex items-center gap-4 text-xs">
-              <span className="text-text-secondary">Nhập vào kho:</span>
+              <span className="text-text-secondary">Import into pool:</span>
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <input type="radio" name="pool" checked={importPool === 'active'} onChange={() => setImportPool('active')} />
-                <span>Kho Bán Trực Tiếp</span>
+                <span>Sales Pool</span>
               </label>
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <input type="radio" name="pool" checked={importPool === 'buffer'} onChange={() => setImportPool('buffer')} />
-                <span>Kho Dự Phòng 1-Đổi-1</span>
+                <span>1-for-1 Backup Pool</span>
               </label>
             </div>
 
@@ -371,7 +371,7 @@ export const AdminInventoryPage: React.FC = () => {
                 onClick={() => setShowImportModal(false)}
                 className="flex-1 h-10 rounded-xl bg-canvas border border-border-subtle text-xs font-semibold text-text-secondary"
               >
-                Hủy
+                Cancel
               </button>
               <button
                 onClick={handleBulkImport}
@@ -379,7 +379,7 @@ export const AdminInventoryPage: React.FC = () => {
                 className="flex-1 h-10 rounded-xl bg-primary-blue hover:bg-primary-hover disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-1.5"
               >
                 {importing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Thêm vào kho ngay
+                Add to inventory now
               </button>
             </div>
           </div>

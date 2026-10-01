@@ -16,7 +16,7 @@ const FAQS = [
   },
   {
     q: 'Does the system collect or store my personal passwords?',
-    a: "Absolutely not. AIPro.dev adheres to the Zero Mandatory Sign-up philosophy. You don't need to create a password to make a purchase. For the primary upgrade package, we only send an upgrade invitation (Invite Link) to your mailbox, never requesting your email password.",
+    a: "Absolutely not. AgentLab adheres to the Zero Mandatory Sign-up philosophy. You don't need to create a password to make a purchase. For the primary upgrade package, we only send an upgrade invitation (Invite Link) to your mailbox, never requesting your email password.",
   },
   {
     q: 'What payment methods do you support?',

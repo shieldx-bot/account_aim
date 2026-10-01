@@ -4,54 +4,54 @@ import { Copy, Check, ExternalLink, Terminal, CheckSquare, Square, ThumbsUp, Thu
 const GUIDES = [
   {
     id: 'cursor-pro',
-    title: 'Hướng Dẫn Cấu Hình Cursor Pro & Session Cookie',
+    title: 'Cursor Pro Setup & Session Cookie Guide',
     steps: [
       {
         step: 1,
-        title: 'Đăng xuất tài khoản cũ trên Cursor',
-        desc: 'Mở Cursor > Bấm vào bánh răng Cài đặt góc trên bên phải > Chọn Sign Out tài khoản hiện tại.',
+        title: 'Log out of the old account in Cursor',
+        desc: 'Open Cursor > Click the Settings gear in the top-right corner > Select Sign Out for the current account.',
       },
       {
         step: 2,
-        title: 'Đăng nhập bằng tài khoản được cấp',
-        desc: 'Bấm Sign In và điền Email & Mật khẩu từ License Vault của bạn. Nếu hệ thống yêu cầu mã 2FA, mở Google Authenticator hoặc copy mã 2FA Secret được cấp.',
+        title: 'Log in with the provisioned account',
+        desc: 'Click Sign In and enter the Email & Password from your License Vault. If the system asks for a 2FA code, open Google Authenticator or copy the 2FA Secret provided.',
       },
       {
         step: 3,
-        title: 'Kiểm tra hạn ngạch Pro Quota',
-        desc: 'Vào Settings > Models > Kiểm tra mục "Pro Subscription Active: 500 Fast Requests". Hãy bật mô hình Claude 3.7 Sonnet và GPT-4o để trải nghiệm.',
+        title: 'Verify the Pro quota',
+        desc: 'Go to Settings > Models > Check the "Pro Subscription Active: 500 Fast Requests" section. Enable the Claude 3.7 Sonnet and GPT-4o models to try them out.',
       },
     ],
   },
   {
     id: 'claude-pro',
-    title: 'Hướng Dẫn Chấp Nhận Lời Mời Claude Team / Pro',
+    title: 'Accepting the Claude Team / Pro Invitation',
     steps: [
       {
         step: 1,
-        title: 'Mở hòm thư cá nhân',
-        desc: 'Tìm email có tiêu đề "Anthropic has invited you to Claude Team / Pro" (Kiểm tra cả hòm thư Spam/Promotions).',
+        title: 'Open your personal inbox',
+        desc: 'Find the email titled "Anthropic has invited you to Claude Team / Pro" (check your Spam/Promotions folders too).',
       },
       {
         step: 2,
-        title: 'Bấm "Accept Invitation"',
-        desc: 'Nhấn vào nút xác nhận trong email để liên kết trực tiếp vào tài khoản Claude sẵn có của bạn mà không mất lịch sử chat cũ.',
+        title: 'Click "Accept Invitation"',
+        desc: 'Press the confirmation button in the email to link directly to your existing Claude account without losing your previous chat history.',
       },
     ],
   },
   {
     id: 'github-copilot',
-    title: 'Kích Hoạt GitHub Copilot Trên VS Code & JetBrains',
+    title: 'Activating GitHub Copilot on VS Code & JetBrains',
     steps: [
       {
         step: 1,
-        title: 'Cài Extension GitHub Copilot',
-        desc: 'Mở Extensions Marketplace trên VS Code hoặc Plugin Marketplace trên IntelliJ > Tìm và cài đặt GitHub Copilot & GitHub Copilot Chat.',
+        title: 'Install the GitHub Copilot extension',
+        desc: 'Open the Extensions Marketplace on VS Code or the Plugin Marketplace on IntelliJ > Search for and install GitHub Copilot & GitHub Copilot Chat.',
       },
       {
         step: 2,
-        title: 'Đăng nhập tài khoản GitHub đã nâng cấp',
-        desc: 'Bấm vào biểu tượng tài khoản góc trái dưới cùng và chọn "Sign in with GitHub" để kích hoạt bản quyền Copilot Pro.',
+        title: 'Log in with the upgraded GitHub account',
+        desc: 'Click the account icon in the bottom-left corner and choose "Sign in with GitHub" to activate your Copilot Pro license.',
       },
     ],
   },
@@ -75,10 +75,10 @@ export const DocsPage: React.FC = () => {
           Developer Documentation
         </span>
         <h1 className="text-3xl font-extrabold text-text-primary mt-1">
-          Tài Liệu Hướng Dẫn Kích Hoạt &amp; Xử Lý Lỗi IDE
+          Activation &amp; IDE Troubleshooting Documentation
         </h1>
         <p className="text-xs text-text-secondary mt-1">
-          Từng bước cụ thể để lập trình viên cấu hình bản quyền vào Cursor, VS Code, JetBrains nhanh nhất.
+          Step-by-step instructions to set up your license in Cursor, VS Code, and JetBrains as quickly as possible.
         </p>
       </div>
 
@@ -130,7 +130,7 @@ export const DocsPage: React.FC = () => {
                     </button>
                     <div>
                       <h4 className={`text-xs font-bold ${isChecked ? 'text-status-success line-through' : 'text-text-primary'}`}>
-                        Bước {st.step}: {st.title}
+                        Step {st.step}: {st.title}
                       </h4>
                       <p className="text-xs text-text-secondary mt-1 leading-relaxed">{st.desc}</p>
                     </div>
@@ -142,16 +142,16 @@ export const DocsPage: React.FC = () => {
 
           {/* Feedback Widget */}
           <div className="pt-6 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-            <span className="text-text-muted">Tài liệu này có hữu ích cho bạn không?</span>
+            <span className="text-text-muted">Was this documentation helpful?</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setFeedback('yes')}
                 className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                  feedback === 'yes' ? 'bg-status-success text-black border-status-success' : 'bg-canvas border-border-subtle text-text-secondary'
+                  feedback === 'yes' ? 'bg-status-success text-white border-status-success' : 'bg-canvas border-border-subtle text-text-secondary'
                 }`}
               >
-                <ThumbsUp className="w-3.5 h-3.5" /> Có, rất hữu ích
+                <ThumbsUp className="w-3.5 h-3.5" /> Yes, very helpful
               </button>
               <button
                 type="button"
@@ -160,7 +160,7 @@ export const DocsPage: React.FC = () => {
                   feedback === 'no' ? 'bg-status-error text-white border-status-error' : 'bg-canvas border-border-subtle text-text-secondary'
                 }`}
               >
-                <ThumbsDown className="w-3.5 h-3.5" /> Chưa giải quyết được
+                <ThumbsDown className="w-3.5 h-3.5" /> Not solved yet
               </button>
             </div>
           </div>
