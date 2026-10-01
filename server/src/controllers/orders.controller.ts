@@ -116,6 +116,15 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
     referralCode,
   } = req.body;
 
+  // Payment gateway → settlement semantics (AIPRO-107/110):
+  // - Instant gateways (Stripe card charge, PayPal) settle at creation time -> status 'paid'.
+  // - Async reconciliation gateways (VietQR bank transfer via SePay/Casso webhook,
+  //   Crypto USDT on-chain confirmations) start as 'pending' and are flipped to 'paid'
+  //   by the webhook listener once amount + memo match.
+  const rawPaymentMethod = String(paymentMethod || 'paypal');
+  const ASYNC_RECONCILE_METHODS = ['vietqr', 'crypto_usdt'];
+  const initialStatus = ASYNC_RECONCILE_METHODS.includes(rawPaymentMethod) ? 'pending' : 'paid';
+
   // Validate required fields
   if (!productId || !productName || !productSlug || !guestEmail) {
     throw new BadRequestError('Thiếu thông tin đơn hàng bắt buộc.');
@@ -179,7 +188,7 @@ export const createOrder = catchAsync(async (req: Request, res: Response) => {
       currency || 'VND',
       paymentMethod || 'paypal',
       paymentGatewayRef || null,
-      'paid', // PayPal confirms payment before we create order
+      initialStatus, // Instant gateways settle as 'paid'; VietQR/Crypto start 'pending' (webhook flips to paid)
       couponCode || null,
       warrantyDate.toISOString().split('T')[0],
       String(referralCode || '').trim().toUpperCase() || null,

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -7,6 +7,9 @@ import { trackEvent } from '@/utils/telemetry';
 import { openTelegramSupport } from '@/utils/diagnostics';
 import { ordersApi } from '@/services/api';
 import { peekPendingReferral, consumePendingReferral, captureRefFromUrl } from '@/utils/referral';
+import { playSuccessChime } from '@/utils/sound';
+import { VietQRContainer } from '@/components/checkout/VietQRContainer';
+import type { PaymentMethod, VietQRData } from '@/types';
 import {
   Check,
   Clock,
@@ -17,19 +20,50 @@ import {
   ArrowRight,
   Shield,
   Sparkles,
+  RefreshCw,
+  Copy,
+  Bitcoin,
 } from 'lucide-react';
 
-const ORDER_DURATION_SECONDS = 600; // 10 minutes
+const ORDER_DURATION_SECONDS = 600; // 10 minutes (AIPRO-109)
+const TAB_STORAGE_KEY = 'aipro_checkout_tab';
+const USD_VND_RATE = 25500; // Tỷ giá USDT/VND cố định trong phiên (Spec Trang 3, Tab 3)
+
+// Stable test/demo banking info (SePay-style dynamic QR target account).
+const VIETQR_BANK = {
+  bankName: 'Ngân hàng TMCP Ngoại thương Việt Nam (Vietcombank)',
+  accountNumber: '0711000255888',
+  accountHolder: 'CONG TY TNHH AI PRO GLOBAL',
+};
+
+type CheckoutTab = Extract<PaymentMethod, 'vietqr' | 'stripe_card' | 'crypto_usdt'>;
+
+const isCheckoutTab = (v: unknown): v is CheckoutTab =>
+  v === 'vietqr' || v === 'stripe_card' || v === 'crypto_usdt';
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const { activeConfig, formatPrice, currency } = useApp();
+  const { activeConfig } = useApp();
   const { user, token } = useAuth();
   const { items, finalTotalVND, finalTotalUSD, discountVND, discountUSD, couponCode, clearCart } = useCart();
 
-  const [paymentSubMethod, setPaymentSubMethod] = useState<'card_visa' | 'paypal_wallet' | 'paypal_credit'>('card_visa');
+  // ── AIPRO-107: 3 payment tabs — VietQR (default) / Stripe / Crypto USDT ──
+  const [paymentTab, setPaymentTab] = useState<CheckoutTab>(() => {
+    try {
+      const saved = localStorage.getItem(TAB_STORAGE_KEY);
+      if (isCheckoutTab(saved)) return saved;
+    } catch { /* private mode */ }
+    return 'vietqr';
+  });
+
+  // Persist favourite tab (DoD AIPRO-107)
+  useEffect(() => {
+    try {
+      localStorage.setItem(TAB_STORAGE_KEY, paymentTab);
+    } catch { /* ignore */ }
+  }, [paymentTab]);
+
   const [timeLeft, setTimeLeft] = useState(ORDER_DURATION_SECONDS);
   const [isExpired, setIsExpired] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -37,28 +71,34 @@ export const CheckoutPage: React.FC = () => {
   const [processStage, setProcessStage] = useState<'idle' | 'authorizing' | 'capturing' | 'completed'>('idle');
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
+  // ── VietQR state (AIPRO-108) ──
+  const [qrLoading, setQrLoading] = useState(true);
+  const [vietqr, setVietqr] = useState<VietQRData | null>(null);
+
+  // ── Webhook/polling confirmation state (AIPRO-110) ──
+  const [awaitingTransfer, setAwaitingTransfer] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+
   // ── Referral attribution (#InviteToPay) ──
-  // Priority: router state (from ReferralEventSection) → ?ref= URL → pending localStorage.
   const [referralCode] = useState<string | null>(() => {
     const fromState = (location.state as any)?.referralCode as string | undefined;
     if (fromState) return String(fromState).toUpperCase();
     return captureRefFromUrl() ?? peekPendingReferral()?.code ?? null;
   });
 
-  // Visa / Card input form states
+  // Card inputs (Stripe Elements mock — dark-mode synced, Spec Tab 2)
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
   const [cardHolder, setCardHolder] = useState('');
-  const [cardError, setCardError] = useState('');
 
-  // Generate deterministic order id (will be replaced by server response)
-  const orderId = useRef(`AIPRO-${Math.floor(10000 + Math.random() * 90000)}`).current;
+  // Session-stable identifiers
+  const orderIdRef = useRef(`AIPRO${Math.floor(100000 + Math.random() * 900000)}`);
+  const cryptoAddressRef = useRef('TQn9Y2kcF6...iU7pRz'); // demo TRC-20 address, stable per session
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Determine if we're using cart mode or single-product mode
   const isCartMode = items.length > 0;
 
-  // Calculate pricing: prefer cart totals, then activeConfig (DB-driven)
   const totalAmountVND = isCartMode
     ? finalTotalVND
     : (activeConfig?.duration.monthlyEquivalentVND ?? 0) * (activeConfig?.duration.months ?? 0);
@@ -68,13 +108,14 @@ export const CheckoutPage: React.FC = () => {
 
   useEffect(() => {
     trackEvent('checkout_viewed', {
-      order_id: orderId,
+      order_id: orderIdRef.current,
       product: isCartMode ? `${items.length} items` : activeConfig?.product.name ?? 'unknown',
       amount_usd: totalAmountUSD,
       currency: 'USD',
-      gateway: 'paypal',
+      gateway: paymentTab,
     });
-  }, [orderId, activeConfig, totalAmountUSD, isCartMode, items.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Guard: no cart items and no DB-backed configuration → nothing to checkout
   useEffect(() => {
@@ -83,179 +124,280 @@ export const CheckoutPage: React.FC = () => {
     }
   }, [isCartMode, activeConfig, navigate]);
 
-  // 10-Minute Countdown Timer based on wall-clock delta
+  // ── AIPRO-109: 10-minute countdown, wall-clock based (survives tab switches) ──
   useEffect(() => {
     const startTime = Date.now();
     const interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const remaining = Math.max(0, ORDER_DURATION_SECONDS - elapsed);
       setTimeLeft(remaining);
-
       if (remaining === 0) {
         setIsExpired(true);
         clearInterval(interval);
-        trackEvent('checkout_timer_expired', { order_id: orderId });
+        trackEvent('checkout_timer_expired', { order_id: orderIdRef.current });
       }
     }, 1000);
-
     return () => clearInterval(interval);
-  }, [orderId]);
+  }, []);
+
+  // ── Build the dynamic VietQR payload for the current slot/memo ──
+  const generateVietqr = useCallback(() => {
+    setQrLoading(true);
+    // Simulate SePay dynamic-QR API latency (real integration replaces this fetch).
+    const t = setTimeout(() => {
+      setVietqr({
+        ...VIETQR_BANK,
+        amount: Math.round(totalAmountVND),
+        transferMemo: `AIPRO${orderIdRef.current.replace(/^AIPRO/, '')}`,
+        qrCodeUrl: '', // rendered client-side by VietQRContainer
+      });
+      setQrLoading(false);
+    }, 700);
+    return () => clearTimeout(t);
+  }, [totalAmountVND]);
+
+  useEffect(() => {
+    if (paymentTab === 'vietqr') return generateVietqr();
+  }, [paymentTab, generateVietqr]);
+
+  const handleRefreshQr = () => {
+    // "🔄 Làm mới mã thanh toán": new slot + new memo + restart timer (AIPRO-109 DoD)
+    orderIdRef.current = `AIPRO${Math.floor(100000 + Math.random() * 900000)}`;
+    setAwaitingTransfer(false);
+    setCreatedOrderId(null);
+    setIsExpired(false);
+    setTimeLeft(ORDER_DURATION_SECONDS);
+    setPaymentError(null);
+    generateVietqr();
+    trackEvent('vietqr_refreshed', { order_id: orderIdRef.current });
+  };
 
   // Format card number with spaces (#### #### #### ####)
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 16);
-    const formatted = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-    setCardNumber(formatted);
-    if (cardError) setCardError('');
+    setCardNumber(value.replace(/(\d{4})(?=\d)/g, '$1 '));
   };
 
   // Format expiry (MM/YY)
   const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-    if (value.length >= 2) {
-      setCardExpiry(`${value.slice(0, 2)}/${value.slice(2)}`);
-    } else {
-      setCardExpiry(value);
-    }
+    setCardExpiry(value.length >= 2 ? `${value.slice(0, 2)}/${value.slice(2)}` : value);
   };
 
-  // Detect card type (Visa starts with 4, Mastercard starts with 5)
   const detectedCardType = cardNumber.startsWith('4')
     ? 'visa'
     : cardNumber.startsWith('5')
     ? 'mastercard'
     : 'unknown';
 
-  // Process PayPal / Visa payment — calls real API to create order
-  const handleExecutePayment = async (methodType: 'card_visa' | 'paypal_wallet' | 'paypal_credit') => {
+  // ── Create the real order row in DB (shared by all gateways) ──
+  const createOrderInDb = async (method: PaymentMethod, gatewayRef: string): Promise<string> => {
+    if (!token) throw new Error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+    const base = {
+      guestEmail: user?.email ?? activeConfig?.guestEmail ?? '',
+      discountVND,
+      discountUSD,
+      totalVND: totalAmountVND,
+      totalUSD: totalAmountUSD,
+      currency: 'USD',
+      paymentMethod: method,
+      paymentGatewayRef: gatewayRef,
+      referralCode: consumePendingReferral() ?? referralCode ?? undefined,
+    };
+
+    let resultOrderId = orderIdRef.current;
+    if (isCartMode && items.length > 0) {
+      const firstItem = items[0];
+      const res = await ordersApi.create(token, {
+        productId: firstItem.product.id,
+        productName: firstItem.product.name,
+        productSlug: firstItem.product.slug,
+        planDurationMonths: firstItem.duration.months,
+        provisioningType: firstItem.provisioningType,
+        targetEmail: firstItem.targetEmail,
+        quantity: firstItem.quantity,
+        unitPriceVND: firstItem.unitPriceVND,
+        unitPriceUSD: firstItem.unitPriceUSD,
+        ...base,
+      });
+      if (res.data?.orderId) resultOrderId = res.data.orderId;
+      clearCart();
+    } else if (activeConfig) {
+      const res = await ordersApi.create(token, {
+        productId: activeConfig.product.id,
+        productName: activeConfig.product.name,
+        productSlug: activeConfig.product.slug,
+        planDurationMonths: activeConfig.duration.months,
+        provisioningType: activeConfig.provisioningType,
+        targetEmail: activeConfig.targetEmail,
+        quantity: 1,
+        unitPriceVND: activeConfig.duration.monthlyEquivalentVND * activeConfig.duration.months,
+        unitPriceUSD: activeConfig.duration.monthlyEquivalentUSD * activeConfig.duration.months,
+        ...base,
+      });
+      if (res.data?.orderId) resultOrderId = res.data.orderId;
+    }
+    return resultOrderId;
+  };
+
+  const finalizeSuccess = (orderId: string, method: PaymentMethod) => {
+    setProcessStage('completed');
+    setPaymentSuccess(true);
+    playSuccessChime(); // AIPRO-110: subtle success chime
+    trackEvent('purchase', {
+      transaction_id: orderId,
+      referral_code: referralCode ?? undefined,
+      value: totalAmountUSD,
+      currency: 'USD',
+      payment_method: method,
+      card_type: method === 'stripe_card' ? detectedCardType : undefined,
+      items: isCartMode
+        ? items.map((i) => ({ item_id: i.product.slug, item_name: i.product.name, quantity: i.quantity }))
+        : [{ item_id: activeConfig?.product.slug ?? '', item_name: activeConfig?.product.name ?? '', quantity: 1 }],
+    });
+    // Auto-redirect to Trang 4 after exactly 1.2s (DoD AIPRO-110)
+    setTimeout(() => navigate(`/order/success/${orderId}`), 1200);
+  };
+
+  // ── AIPRO-110: lightweight polling listener (2s) emulating the banking webhook ──
+  // When Backend confirms the transfer matched amount+memo → chime, ✓, redirect 1.2s.
+  const startWebhookPolling = (orderId: string) => {
+    setAwaitingTransfer(true);
+    setIsProcessing(false);
+    setProcessStage('idle');
+    if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+    let ticks = 0;
+    pollTimerRef.current = setInterval(() => {
+      ticks += 1;
+      // Demo behaviour: SePay/Casso webhook typically fires in 1.5–3s; simulate confirm at ~6s.
+      // Replace with real GET /api/orders/:id status check or WebSocket event when gateway live.
+      if (ticks >= 3 && !isExpired) {
+        if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+        finalizeSuccess(orderId, 'vietqr');
+      }
+    }, 2000);
+  };
+
+  useEffect(() => () => {
+    if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+  }, []);
+
+  // ── Tab 1: VietQR — create pending order, then listen for the bank transfer ──
+  const handleStartVietqrPayment = async () => {
     if (!user || !token) {
       navigate('/login', { state: { from: '/checkout' } });
       return;
     }
-
+    if (isExpired) {
+      handleRefreshQr();
+      return;
+    }
     setIsProcessing(true);
-    setProcessStage('authorizing');
     setPaymentError(null);
-
-    trackEvent('payment_initiated', {
-      order_id: orderId,
-      sub_method: methodType,
-      amount_usd: totalAmountUSD,
-    });
-
+    setProcessStage('authorizing');
+    trackEvent('payment_initiated', { order_id: orderIdRef.current, sub_method: 'vietqr', amount_vnd: totalAmountVND });
     try {
-      // Stage 1: Authorizing — real round-trip to the backend (replaces fake delay)
-      setProcessStage('authorizing');
       const health = await fetch(`${import.meta.env.VITE_API_BASE ?? '/api'}/health`).then((r) => r.json());
       if (health?.postgres !== 'connected') {
         throw new Error('Gateway tạm thời không sẵn sàng. Vui lòng thử lại.');
       }
-
-      // Stage 2: Capturing — create real order in DB via API
       setProcessStage('capturing');
-
-      let createdOrderId = orderId;
-
-      if (isCartMode && items.length > 0) {
-        // Cart mode: create an order for the first item (or handle multi-item)
-        const firstItem = items[0];
-        const result = await ordersApi.create(token, {
-          productId: firstItem.product.id,
-          productName: firstItem.product.name,
-          productSlug: firstItem.product.slug,
-          planDurationMonths: firstItem.duration.months,
-          provisioningType: firstItem.provisioningType,
-          targetEmail: firstItem.targetEmail,
-          guestEmail: user.email,
-          quantity: firstItem.quantity,
-          unitPriceVND: firstItem.unitPriceVND,
-          unitPriceUSD: firstItem.unitPriceUSD,
-          discountVND: discountVND,
-          discountUSD: discountUSD,
-          totalVND: finalTotalVND,
-          totalUSD: finalTotalUSD,
-          currency: 'USD',
-          paymentMethod: methodType === 'card_visa' ? 'paypal_card' : methodType === 'paypal_wallet' ? 'paypal_wallet' : 'paypal_credit',
-          paymentGatewayRef: `PAYPAL-${Date.now()}`,
-          couponCode: couponCode || undefined,
-          referralCode: consumePendingReferral() ?? referralCode ?? undefined,
-        });
-        if (result.data?.orderId) {
-          createdOrderId = result.data.orderId;
-        }
-        clearCart();
-      } else if (activeConfig) {
-        // Single product mode (activeConfig — sourced from DB catalog)
-        const result = await ordersApi.create(token, {
-          productId: activeConfig.product.id,
-          productName: activeConfig.product.name,
-          productSlug: activeConfig.product.slug,
-          planDurationMonths: activeConfig.duration.months,
-          provisioningType: activeConfig.provisioningType,
-          targetEmail: activeConfig.targetEmail,
-          guestEmail: activeConfig.guestEmail || user.email,
-          quantity: 1,
-          unitPriceVND: activeConfig.duration.monthlyEquivalentVND * activeConfig.duration.months,
-          unitPriceUSD: activeConfig.duration.monthlyEquivalentUSD * activeConfig.duration.months,
-          discountVND: 0,
-          discountUSD: 0,
-          totalVND: totalAmountVND,
-          totalUSD: totalAmountUSD,
-          currency: 'USD',
-          paymentMethod: methodType === 'card_visa' ? 'paypal_card' : methodType === 'paypal_wallet' ? 'paypal_wallet' : 'paypal_credit',
-          paymentGatewayRef: `PAYPAL-${Date.now()}`,
-          referralCode: consumePendingReferral() ?? referralCode ?? undefined,
-        });
-        if (result.data?.orderId) {
-          createdOrderId = result.data.orderId;
-        }
-      }
-
-      setProcessStage('completed');
-      setPaymentSuccess(true);
-
-      trackEvent('purchase', {
-        transaction_id: createdOrderId,
-        referral_code: referralCode ?? undefined,
-        value: totalAmountUSD,
-        currency: 'USD',
-        payment_method: 'paypal',
-        card_type: methodType === 'card_visa' ? detectedCardType : 'paypal_balance',
-        items: isCartMode
-          ? items.map((i) => ({ item_id: i.product.slug, item_name: i.product.name, quantity: i.quantity }))
-          : [{ item_id: activeConfig?.product.slug ?? '', item_name: activeConfig?.product.name ?? '', quantity: 1 }],
-      });
-
-      setTimeout(() => {
-        navigate(`/order/success/${createdOrderId}`);
-      }, 1200);
-
+      const oid = await createOrderInDb('vietqr', `SEPAY-${orderIdRef.current}`);
+      setCreatedOrderId(oid);
+      startWebhookPolling(oid);
     } catch (err: any) {
-      console.error('[Checkout] Payment/Order creation failed:', err);
+      console.error('[Checkout] VietQR order creation failed:', err);
+      setIsProcessing(false);
+      setProcessStage('idle');
+      setPaymentError(err.message || 'Không thể tạo đơn hàng. Vui lòng thử lại hoặc liên hệ hỗ trợ.');
+    }
+  };
+
+  // ── Tab 2: Stripe card charge (Elements-style flow) ──
+  const handleExecuteStripePayment = async () => {
+    if (!user || !token) {
+      navigate('/login', { state: { from: '/checkout' } });
+      return;
+    }
+    if (cardNumber.replace(/\s/g, '').length < 15 || cardExpiry.length < 4 || cardCvv.length < 3 || !cardHolder.trim()) {
+      setPaymentError('Vui lòng điền đầy đủ thông tin thẻ hợp lệ.');
+      return;
+    }
+    setPaymentError(null);
+    setIsProcessing(true);
+    setProcessStage('authorizing');
+    trackEvent('payment_initiated', { order_id: orderIdRef.current, sub_method: 'stripe_card', amount_usd: totalAmountUSD });
+    try {
+      const health = await fetch(`${import.meta.env.VITE_API_BASE ?? '/api'}/health`).then((r) => r.json());
+      if (health?.postgres !== 'connected') {
+        throw new Error('Gateway tạm thời không sẵn sàng. Vui lòng thử lại.');
+      }
+      setProcessStage('capturing');
+      const oid = await createOrderInDb('stripe_card', `STRIPE-${Date.now()}`);
+      finalizeSuccess(oid, 'stripe_card');
+    } catch (err: any) {
+      console.error('[Checkout] Stripe payment failed:', err);
       setIsProcessing(false);
       setProcessStage('idle');
       setPaymentError(err.message || 'Thanh toán thất bại. Vui lòng thử lại hoặc liên hệ hỗ trợ.');
     }
   };
 
+  // ── Tab 3: Crypto USDT — create pending order, then poll on-chain confirmation ──
+  const handleExecuteCryptoPayment = async () => {
+    if (!user || !token) {
+      navigate('/login', { state: { from: '/checkout' } });
+      return;
+    }
+    if (isExpired) {
+      handleRefreshQr();
+      return;
+    }
+    setPaymentError(null);
+    setIsProcessing(true);
+    setProcessStage('authorizing');
+    trackEvent('payment_initiated', { order_id: orderIdRef.current, sub_method: 'crypto_usdt', amount_usd: totalAmountUSD });
+    try {
+      const health = await fetch(`${import.meta.env.VITE_API_BASE ?? '/api'}/health`).then((r) => r.json());
+      if (health?.postgres !== 'connected') {
+        throw new Error('Gateway tạm thời không sẵn sàng. Vui lòng thử lại.');
+      }
+      setProcessStage('capturing');
+      const oid = await createOrderInDb('crypto_usdt', `USDTTRC20-${orderIdRef.current}`);
+      startWebhookPolling(oid);
+    } catch (err: any) {
+      console.error('[Checkout] Crypto order creation failed:', err);
+      setIsProcessing(false);
+      setProcessStage('idle');
+      setPaymentError(err.message || 'Không thể tạo đơn hàng. Vui lòng thử lại hoặc liên hệ hỗ trợ.');
+    }
+  };
+
+  const usdtAmount = (totalAmountUSD + Number.EPSILON).toFixed(2);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const timerString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   const timerProgress = (timeLeft / ORDER_DURATION_SECONDS) * 100;
 
+  const tabDefs: Array<{ id: CheckoutTab; label: string; note: string; logo: string }> = [
+    { id: 'vietqr', label: 'VietQR Tự Động', note: 'Khuyên dùng tại VN · Miễn phí', logo: '/assets/logos/logo_pay_vietqr.svg' },
+    { id: 'stripe_card', label: 'Thẻ Quốc Tế', note: 'Visa / MC / Apple Pay', logo: '/assets/logos/logo_pay_stripe.svg' },
+    { id: 'crypto_usdt', label: 'Crypto USDT', note: 'Web3 · Solana / Arbitrum', logo: '/assets/logos/logo_pay_usdt_crypto.svg' },
+  ];
+
   return (
     <div className="w-full max-w-[1100px] mx-auto px-4 sm:px-6 py-8">
-      {/* SUCCESS OVERLAY (When PayPal confirms payment) */}
+      {/* SUCCESS OVERLAY (Webhook confirmed payment — AIPRO-110) */}
       {paymentSuccess && (
         <div className="fixed inset-0 z-50 bg-canvas/90 backdrop-blur-md flex items-center justify-center animate-fadeIn">
           <div className="text-center p-8 rounded-2xl bg-surface border border-status-success/40 shadow-[0_0_50px_rgba(16,185,129,0.3)] max-w-md mx-4 animate-scaleUp">
             <div className="w-16 h-16 rounded-full bg-status-success/20 text-status-success mx-auto mb-4 flex items-center justify-center">
               <Check className="w-10 h-10 stroke-[3]" />
             </div>
-            <h2 className="text-2xl font-extrabold text-text-primary">THANH TOÁN THÀNH CÔNG!</h2>
+            <h2 className="text-2xl font-extrabold text-text-primary">✓ ĐÃ NHẬN THANH TOÁN</h2>
             <p className="text-xs text-text-secondary mt-2">
-              PayPal đã xác nhận giao dịch an toàn. Đang tự động chuyển tiếp đến License Vault...
+              Giao dịch đã được xác nhận an toàn. Đang tự động chuyển tiếp đến License Vault...
             </p>
             <div className="w-full h-1.5 bg-canvas rounded-full mt-6 overflow-hidden">
               <div className="h-full bg-status-success animate-[pulse_1s_infinite] w-full" />
@@ -266,7 +408,7 @@ export const CheckoutPage: React.FC = () => {
 
       {/* 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* LEFT COLUMN: 7 Cols (PayPal & Visa Gateway) */}
+        {/* LEFT COLUMN: 7 Cols (Multi-gateway checkout) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Referral Attribution Banner (#InviteToPay) */}
           {referralCode && (
@@ -289,7 +431,7 @@ export const CheckoutPage: React.FC = () => {
               <div>
                 <span className="text-xs text-text-muted block">Tài khoản &amp; bản quyền sẽ gửi về:</span>
                 <span className="text-xs font-semibold text-text-primary font-mono">
-                  {activeConfig?.guestEmail || 'Khách vãng lai (Chưa nhập mail)'}
+                  {activeConfig?.guestEmail || user?.email || 'Khách vãng lai (Chưa nhập mail)'}
                 </span>
               </div>
             </div>
@@ -301,328 +443,318 @@ export const CheckoutPage: React.FC = () => {
             </button>
           </div>
 
-          {/* MAIN DEDICATED PAYPAL CHECKOUT CARD */}
+          {/* MAIN CHECKOUT CARD */}
           <div className="p-6 rounded-2xl bg-surface border border-border-subtle shadow-card-hover space-y-6">
-            {/* Header: PayPal Logo + Supported Card Brands */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border-subtle">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-[#003087]/15 border border-[#003087]/30 flex items-center justify-center">
-                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.79.79 0 0 1 .78-.663h6.732c4.12 0 6.643 2.052 6.136 5.864-.47 3.528-2.977 5.564-6.536 5.564H9.55l-1.428 6.074a.8.8 0 0 1-.787.662l-.259.11z"
-                      fill="#003087"
-                    />
-                    <path
-                      d="M8.706 8.922h4.522c2.476 0 4.093 1.258 3.75 3.84-.36 2.705-2.28 4.266-5.008 4.266H8.72a.64.64 0 0 1-.632-.534L7.076 21.337h2.868l1.042-6.61a.64.64 0 0 1 .632-.535h2.368c3.559 0 6.066-2.036 6.536-5.564.507-3.812-2.016-5.864-6.136-5.864H7.654a.79.79 0 0 0-.78.663L4.944 20.597a.641.641 0 0 0 .633.74h1.5l1.629-10.35a2.06 2.06 0 0 1 2.06-1.745l-.06.68z"
-                      fill="#0079C1"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
-                    <span>Thanh Toán PayPal</span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#FFC439]/20 text-[#FFC439] border border-[#FFC439]/40 font-bold">
-                      Hỗ Trợ Visa &amp; Mastercard
-                    </span>
-                  </h2>
-                  <p className="text-xs text-text-muted mt-0.5">
-                    Cổng thanh toán quốc tế bảo mật hàng đầu thế giới
-                  </p>
-                </div>
+            {/* Header */}
+            <div className="flex items-center justify-between pb-5 border-b border-border-subtle">
+              <div>
+                <h2 className="text-base font-bold text-text-primary flex items-center gap-2">
+                  <span>Chọn Cổng Thanh Toán</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-accent-cyan/15 text-accent-cyan border border-accent-cyan/40 font-bold">
+                    TỰ ĐỘNG XÁC NHẬN
+                  </span>
+                </h2>
+                <p className="text-xs text-text-muted mt-0.5">
+                  Đa kênh phù hợp cho Dev Việt Nam lẫn Quốc tế
+                </p>
               </div>
-
-              {/* Supported Card Badges */}
-              <div className="flex items-center gap-1.5 self-start sm:self-auto bg-canvas px-3 py-1.5 rounded-xl border border-border-subtle">
-                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider mr-1">Chấp nhận:</span>
-                {/* VISA badge */}
-                <span className="px-2 py-0.5 rounded bg-blue-600/20 text-blue-400 font-extrabold text-[11px] font-mono border border-blue-500/30">
-                  VISA
-                </span>
-                {/* Mastercard badge */}
-                <span className="px-2 py-0.5 rounded bg-orange-600/20 text-orange-400 font-extrabold text-[11px] font-mono border border-orange-500/30">
-                  MC
-                </span>
-                {/* AMEX badge */}
-                <span className="px-2 py-0.5 rounded bg-cyan-600/20 text-cyan-400 font-extrabold text-[11px] font-mono border border-cyan-500/30">
-                  AMEX
-                </span>
-              </div>
+              <img src="/assets/logos/logo_aipro_main_dark.svg" alt="AIPro" className="h-7 hidden sm:block opacity-80" />
             </div>
 
-            {/* Price Conversion Banner */}
+            {/* ── AIPRO-107: 3 payment tabs ── */}
+            <div className="grid grid-cols-3 gap-2" role="tablist" aria-label="Phương thức thanh toán">
+              {tabDefs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={paymentTab === tab.id}
+                  onClick={() => setPaymentTab(tab.id)}
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer ${
+                    paymentTab === tab.id
+                      ? 'bg-elevated border-primary-blue shadow-[0_0_15px_rgba(0,102,255,0.25)]'
+                      : 'bg-canvas/60 border-border-subtle hover:border-border-focus'
+                  }`}
+                >
+                  <img src={tab.logo} alt={tab.label} className="h-5 w-auto object-contain" />
+                  <span className="text-[11px] sm:text-xs font-bold text-text-primary leading-tight">{tab.label}</span>
+                  <span className="text-[9px] sm:text-[10px] text-text-muted leading-tight">{tab.note}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Price banner */}
             <div className="p-4 rounded-xl bg-canvas border border-border-subtle flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <span className="text-xs text-text-muted block">Số tiền thanh toán qua PayPal:</span>
-                <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="text-2xl font-extrabold font-mono text-[#FFC439]">
-                    ${totalAmountUSD.toFixed(2)} USD
-                  </span>
-
+                <span className="text-xs text-text-muted block">Số tiền cần thanh toán:</span>
+                <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
+                  {paymentTab === 'stripe_card' ? (
+                    <span className="text-2xl font-extrabold font-mono text-[#FFC439]">${totalAmountUSD.toFixed(2)} USD</span>
+                  ) : paymentTab === 'crypto_usdt' ? (
+                    <span className="text-2xl font-extrabold font-mono text-[#26A17B]">{usdtAmount} USDT</span>
+                  ) : (
+                    <span className="text-2xl font-extrabold font-mono text-[#FFC439]">
+                      {Math.round(totalAmountVND).toLocaleString('vi-VN')} ₫
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="text-[11px] text-text-muted space-y-0.5 text-left sm:text-right">
                 <div className="flex items-center gap-1 sm:justify-end text-status-success font-medium">
                   <Shield className="w-3.5 h-3.5" />
-                  <span>Miễn phí giao dịch &amp; bảo hiểm 180 ngày</span>
+                  <span>{paymentTab === 'vietqr' ? 'Miễn phí giao dịch · Xác nhận tự động' : 'Bảo mật PCI-DSS · Buyer Protection'}</span>
                 </div>
-                <div>Billing currency: US Dollars (USD)</div>
+                <div>
+                  {paymentTab === 'crypto_usdt'
+                    ? `Tỷ giá phiên: 1 USDT ≈ ${USD_VND_RATE.toLocaleString('vi-VN')} ₫`
+                    : paymentTab === 'stripe_card'
+                    ? 'Billing currency: US Dollars (USD)'
+                    : 'Chuyển khoản ngân hàng chính xác từng đồng'}
+                </div>
               </div>
             </div>
 
-            {/* Method Sub-Tabs inside PayPal */}
-            <div className="space-y-3">
-              <label className="text-xs font-semibold text-text-secondary block uppercase tracking-wider">
-                Chọn hình thức thanh toán thuận tiện:
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                {/* Option 1: Visa / Mastercard via PayPal */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentSubMethod('card_visa')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer ${
-                    paymentSubMethod === 'card_visa'
-                      ? 'bg-elevated border-primary-blue shadow-[0_0_15px_rgba(0,102,255,0.25)]'
-                      : 'bg-canvas/60 border-border-subtle hover:border-border-focus'
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5 text-blue-400" />
-                  <span className="text-xs font-bold text-text-primary">Thẻ Visa / MC</span>
-                  <span className="text-[10px] text-status-success font-medium">Không cần acc PayPal</span>
-                </button>
-
-                {/* Option 2: PayPal Account Balance */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentSubMethod('paypal_wallet')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer ${
-                    paymentSubMethod === 'paypal_wallet'
-                      ? 'bg-elevated border-[#FFC439] shadow-[0_0_15px_rgba(255,196,57,0.25)]'
-                      : 'bg-canvas/60 border-border-subtle hover:border-border-focus'
-                  }`}
-                >
-                  <span className="text-sm font-extrabold text-[#FFC439] italic">PayPal</span>
-                  <span className="text-xs font-bold text-text-primary">Tài Khoản PayPal</span>
-                  <span className="text-[10px] text-text-muted">1-Click Đăng nhập</span>
-                </button>
-
-                {/* Option 3: PayPal Pay Later */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentSubMethod('paypal_credit')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer ${
-                    paymentSubMethod === 'paypal_credit'
-                      ? 'bg-elevated border-[#0079C1] shadow-[0_0_15px_rgba(0,121,193,0.25)]'
-                      : 'bg-canvas/60 border-border-subtle hover:border-border-focus'
-                  }`}
-                >
-                  <span className="text-xs font-bold text-[#0079C1] italic">Pay Later</span>
-                  <span className="text-xs font-bold text-text-primary">Trả Góp 4 Kỳ</span>
-                  <span className="text-[10px] text-[#FFC439] font-medium">0% Lãi suất</span>
-                </button>
+            {/* Error */}
+            {paymentError && (
+              <div className="p-3 rounded-xl bg-status-error/10 border border-status-error/40 text-xs text-status-error font-medium animate-fadeIn">
+                ⚠️ {paymentError}
               </div>
-            </div>
+            )}
 
-            {/* PROGRESS LOADING OVERLAY (During Payment) */}
-            {isProcessing ? (
+            {/* Processing overlay (Stripe) */}
+            {isProcessing && (
               <div className="p-6 rounded-2xl bg-canvas border border-[#FFC439]/40 space-y-4 text-center animate-fadeIn">
                 <div className="flex items-center justify-center gap-2 text-[#FFC439]">
                   <Loader2 className="w-6 h-6 animate-spin" />
                   <span className="text-sm font-bold">
-                    {processStage === 'authorizing' &&
-                      (paymentSubMethod === 'card_visa'
-                        ? 'Đang kết nối cổng thanh toán an toàn PayPal Card Gateway...'
-                        : 'Đang kết nối bảo mật với tài khoản PayPal...')}
+                    {processStage === 'authorizing' && 'Đang kết nối cổng thanh toán an toàn Stripe Gateway...'}
                     {processStage === 'capturing' &&
-                      (paymentSubMethod === 'card_visa'
+                      (paymentTab === 'stripe_card'
                         ? 'Đang xác thực bảo mật thẻ Visa / Mastercard 3D-Secure...'
-                        : 'Đang xác thực trừ tiền ví PayPal...')}
+                        : 'Đang khởi tạo đơn hàng chờ đối soát tự động...')}
                     {processStage === 'completed' && 'Thanh toán thành công! Đang tự động cấp bản quyền...'}
                   </span>
                 </div>
                 <div className="w-full bg-surface h-2 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-[#FFC439] to-status-success transition-all duration-700"
-                    style={{
-                      width:
-                        processStage === 'authorizing'
-                          ? '40%'
-                          : processStage === 'capturing'
-                          ? '80%'
-                          : '100%',
-                    }}
+                    style={{ width: processStage === 'authorizing' ? '40%' : processStage === 'capturing' ? '80%' : '100%' }}
                   />
                 </div>
                 <p className="text-[11px] text-text-muted">
                   Vui lòng không đóng trình duyệt hoặc tải lại trang trong khi hệ thống mã hóa giao dịch.
                 </p>
               </div>
-            ) : (
+            )}
+
+            {/* ════════ TAB PANELS ════════ */}
+            {!isProcessing && (
               <div>
-                {/* SUB-PANEL 1: VISA / MASTERCARD VIA PAYPAL GUEST CHECKOUT */}
-                {paymentSubMethod === 'card_visa' && (
+                {/* ── SUB-PANEL 1: VIETQR AUTO-VERIFY (AIPRO-108/110) ── */}
+                {paymentTab === 'vietqr' && (
+                  <div className="space-y-5">
+                    {awaitingTransfer ? (
+                      /* Webhook listening state */
+                      <div className="p-6 rounded-2xl bg-canvas border border-primary-blue/40 text-center space-y-4 animate-fadeIn">
+                        <div className="relative w-16 h-16 mx-auto">
+                          <span className="absolute inset-0 rounded-full border-2 border-primary-blue/60 animate-[radarPulse_1.8s_ease-out_infinite]" />
+                          <span className="absolute inset-0 rounded-full border-2 border-primary-blue/40 animate-[radarPulse_1.8s_ease-out_infinite_0.6s]" />
+                          <div className="absolute inset-0 rounded-full bg-primary-blue/10 flex items-center justify-center">
+                            <Clock className="w-7 h-7 text-primary-blue" />
+                          </div>
+                        </div>
+                        <p className="text-sm font-bold text-text-primary">
+                          Đang chờ Webhook ngân hàng xác nhận...
+                        </p>
+                        <p className="text-[11px] text-text-muted">
+                          Hệ thống phát hiện giao dịch khớp số tiền &amp; nội dung{' '}
+                          <span className="font-mono font-bold text-accent-cyan">{vietqr?.transferMemo}</span>. Không rời khỏi trang này.
+                        </p>
+                        <div className="w-full bg-surface h-1.5 rounded-full overflow-hidden">
+                          <div className="h-full w-1/3 bg-primary-blue animate-marquee rounded-full" />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <VietQRContainer
+                          data={vietqr}
+                          loading={qrLoading}
+                          isExpired={isExpired}
+                          onRefresh={handleRefreshQr}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleStartVietqrPayment}
+                          disabled={qrLoading || isExpired}
+                          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#0052CC] via-primary-blue to-[#0079C1] hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-blue/25 transition-all cursor-pointer"
+                        >
+                          <Lock className="w-4 h-4" />
+                          <span>Tôi đã chuyển khoản — Bắt đầu đối soát tự động</span>
+                          <ArrowRight className="w-4 h-4 ml-1" />
+                        </button>
+                        <p className="text-[11px] text-text-muted text-center">
+                          * Mở app ngân hàng, quét mã hoặc sao chép nội dung chuyển. Tiền về tới đâu, hệ thống xác nhận tới đó (1.5–3 giây).
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* ── SUB-PANEL 2: STRIPE CARD (Spec Tab 2 — Elements dark-mode) ── */}
+                {paymentTab === 'stripe_card' && (
                   <div className="space-y-4 p-5 rounded-2xl bg-canvas border border-border-subtle animate-fadeIn">
                     <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
                       <div className="flex items-center gap-2 text-xs font-semibold text-text-primary">
-                        <CreditCard className="w-4 h-4 text-primary-blue" />
-                        <span>Nhập thông tin thẻ Visa / Mastercard</span>
+                        <CreditCard className="w-4 h-4 text-[#635BFF]" />
+                        <span>Nhập thông tin thẻ (Stripe Secure)</span>
                       </div>
                       <span className="text-[11px] text-text-muted flex items-center gap-1">
                         <Lock className="w-3 h-3 text-status-success" />
-                        Bảo mật PCI-DSS bởi PayPal
+                        Bảo mật PCI-DSS bởi Stripe
                       </span>
                     </div>
 
-                    <div className="space-y-3">
-                      {/* Card Number Input */}
-                      <div>
-                        <label className="text-[11px] font-semibold text-text-muted block mb-1">
-                          Số thẻ Visa / Mastercard
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={cardNumber}
-                            onChange={handleCardNumberChange}
-                            placeholder="4242 •••• •••• 4242"
-                            className="w-full pl-3.5 pr-20 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue tracking-wider"
-                          />
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                            {detectedCardType === 'visa' && (
-                              <span className="px-1.5 py-0.5 rounded bg-blue-600/30 text-blue-400 font-extrabold text-[10px] font-mono">
-                                VISA
-                              </span>
-                            )}
-                            {detectedCardType === 'mastercard' && (
-                              <span className="px-1.5 py-0.5 rounded bg-orange-600/30 text-orange-400 font-extrabold text-[10px] font-mono">
-                                MC
-                              </span>
-                            )}
-                            {detectedCardType === 'unknown' && (
-                              <span className="text-[10px] text-text-muted font-mono">VISA / MC</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Expiry and CVV Row */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-[11px] font-semibold text-text-muted block mb-1">
-                            Hạn dùng (MM/YY)
-                          </label>
-                          <input
-                            type="text"
-                            value={cardExpiry}
-                            onChange={handleExpiryChange}
-                            placeholder="MM / YY"
-                            className="w-full px-3.5 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue text-center"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[11px] font-semibold text-text-muted block mb-1">
-                            Mã bảo mật CVV
-                          </label>
-                          <input
-                            type="password"
-                            value={cardCvv}
-                            onChange={(e) => setCardCvv(e.target.value.slice(0, 4))}
-                            placeholder="•••"
-                            maxLength={4}
-                            className="w-full px-3.5 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue text-center tracking-widest"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Cardholder Name */}
-                      <div>
-                        <label className="text-[11px] font-semibold text-text-muted block mb-1">
-                          Tên in trên thẻ (Không dấu)
-                        </label>
+                    <div>
+                      <label className="text-[11px] font-semibold text-text-muted block mb-1">Số thẻ Visa / Mastercard</label>
+                      <div className="relative">
                         <input
                           type="text"
-                          value={cardHolder}
-                          onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                          placeholder="NGUYEN VAN A"
-                          className="w-full px-3.5 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue uppercase"
+                          value={cardNumber}
+                          onChange={handleCardNumberChange}
+                          placeholder="4242 •••• •••• 4242"
+                          className="w-full pl-3.5 pr-20 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue tracking-wider"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                          {detectedCardType === 'visa' && (
+                            <span className="px-1.5 py-0.5 rounded bg-blue-600/30 text-blue-400 font-extrabold text-[10px] font-mono">VISA</span>
+                          )}
+                          {detectedCardType === 'mastercard' && (
+                            <span className="px-1.5 py-0.5 rounded bg-orange-600/30 text-orange-400 font-extrabold text-[10px] font-mono">MC</span>
+                          )}
+                          {detectedCardType === 'unknown' && (
+                            <span className="text-[10px] text-text-muted font-mono">VISA / MC</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-semibold text-text-muted block mb-1">Hạn dùng (MM/YY)</label>
+                        <input
+                          type="text"
+                          value={cardExpiry}
+                          onChange={handleExpiryChange}
+                          placeholder="MM / YY"
+                          className="w-full px-3.5 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue text-center"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-text-muted block mb-1">Mã bảo mật CVV</label>
+                        <input
+                          type="password"
+                          value={cardCvv}
+                          onChange={(e) => setCardCvv(e.target.value.slice(0, 4))}
+                          placeholder="•••"
+                          maxLength={4}
+                          className="w-full px-3.5 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue text-center tracking-widest"
                         />
                       </div>
                     </div>
 
-                    {/* Pay with Visa Button */}
+                    <div>
+                      <label className="text-[11px] font-semibold text-text-muted block mb-1">Tên in trên thẻ (Không dấu)</label>
+                      <input
+                        type="text"
+                        value={cardHolder}
+                        onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+                        placeholder="NGUYEN VAN A"
+                        className="w-full px-3.5 py-2.5 bg-surface border border-border-subtle rounded-xl text-xs font-mono text-text-primary focus:outline-none focus:border-primary-blue focus:ring-1 focus:ring-primary-blue uppercase"
+                      />
+                    </div>
+
                     <button
                       type="button"
-                      onClick={() => handleExecutePayment('card_visa')}
-                      className="w-full mt-2 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-primary-blue to-[#0079C1] hover:brightness-110 active:scale-[0.99] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary-blue/25 transition-all cursor-pointer"
+                      onClick={handleExecuteStripePayment}
+                      className="w-full mt-2 py-3.5 rounded-xl bg-[#635BFF] hover:brightness-110 active:scale-[0.99] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#635BFF]/25 transition-all cursor-pointer"
                     >
                       <Lock className="w-4 h-4" />
-                      <span>Thanh toán ${totalAmountUSD.toFixed(2)} USD bằng thẻ Visa / Mastercard</span>
+                      <span>Thanh toán ${totalAmountUSD.toFixed(2)} USD qua Stripe</span>
                       <ArrowRight className="w-4 h-4 ml-1" />
                     </button>
 
                     <p className="text-[11px] text-text-muted text-center">
-                      * Nhấn thanh toán để tự động điền thẻ test và mô phỏng giao dịch qua cổng an toàn PayPal.
+                      * Hỗ trợ Visa, Mastercard, Apple Pay &amp; Google Pay. Nhấn thanh toán để mô phỏng giao dịch 3D-Secure qua cổng Stripe.
                     </p>
                   </div>
                 )}
 
-                {/* SUB-PANEL 2: PAYPAL WALLET ACCOUNT */}
-                {paymentSubMethod === 'paypal_wallet' && (
-                  <div className="space-y-4 p-5 rounded-2xl bg-canvas border border-[#FFC439]/30 text-center animate-fadeIn">
-                    <p className="text-xs text-text-secondary max-w-sm mx-auto">
-                      Đăng nhập an toàn vào ví PayPal của bạn để thanh toán bằng số dư hoặc tài khoản ngân hàng liên kết.
-                    </p>
+                {/* ── SUB-PANEL 3: CRYPTO USDT (Spec Tab 3) ── */}
+                {paymentTab === 'crypto_usdt' && (
+                  <div className="space-y-4 p-5 rounded-2xl bg-canvas border border-[#26A17B]/30 animate-fadeIn">
+                    {awaitingTransfer ? (
+                      <div className="py-6 text-center space-y-3">
+                        <Bitcoin className="w-10 h-10 text-[#26A17B] mx-auto animate-pulse" />
+                        <p className="text-sm font-bold text-text-primary">Đang chờ xác nhận on-chain...</p>
+                        <p className="text-[11px] text-text-muted">
+                          Giao dịch USDT của bạn sẽ được đối soát tự động qua blockchain explorer webhook.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-xs text-text-secondary">
+                          Thanh toán bằng <span className="font-bold text-[#26A17B]">USDT (TRC-20 / Solana / Arbitrum)</span>. Tỷ giá USDT/VND được
+                          <span className="font-semibold text-text-primary"> cố định trong suốt phiên checkout</span> — không lo trượt giá.
+                        </p>
 
-                    <button
-                      type="button"
-                      onClick={() => handleExecutePayment('paypal_wallet')}
-                      className="w-full max-w-md mx-auto h-12 rounded-xl bg-[#FFC439] hover:bg-[#F2BA36] active:scale-[0.99] text-[#003087] font-bold text-sm flex items-center justify-center gap-2.5 shadow-[0_4px_14px_rgba(255,196,57,0.35)] transition-all cursor-pointer"
-                    >
-                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.79.79 0 0 1 .78-.663h6.732c4.12 0 6.643 2.052 6.136 5.864-.47 3.528-2.977 5.564-6.536 5.564H9.55l-1.428 6.074a.8.8 0 0 1-.787.662l-.259.11z"
-                          fill="#003087"
-                        />
-                        <path
-                          d="M8.706 8.922h4.522c2.476 0 4.093 1.258 3.75 3.84-.36 2.705-2.28 4.266-5.008 4.266H8.72a.64.64 0 0 1-.632-.534L7.076 21.337h2.868l1.042-6.61a.64.64 0 0 1 .632-.535h2.368c3.559 0 6.066-2.036 6.536-5.564.507-3.812-2.016-5.864-6.136-5.864H7.654a.79.79 0 0 0-.78.663L4.944 20.597a.641.641 0 0 0 .633.74h1.5l1.629-10.35a2.06 2.06 0 0 1 2.06-1.745l-.06.68z"
-                          fill="#0079C1"
-                        />
-                      </svg>
-                      <span className="italic font-extrabold tracking-tight text-base">PayPal</span>
-                      <span className="font-semibold text-xs text-[#003087]">
-                        - Trả ngay ${totalAmountUSD.toFixed(2)} USD
-                      </span>
-                    </button>
+                        <div className="p-3 bg-surface rounded-xl border border-border-subtle flex items-center justify-between text-xs font-mono">
+                          <span className="text-text-muted">Số tiền gửi chính xác:</span>
+                          <span className="font-bold text-[#26A17B]">{usdtAmount} USDT</span>
+                        </div>
 
-                    <div className="flex items-center justify-center gap-2 text-[11px] text-text-muted">
-                      <Lock className="w-3.5 h-3.5 text-status-success" />
-                      <span>Được bảo vệ bởi PayPal Buyer Protection 180 ngày</span>
-                    </div>
-                  </div>
-                )}
+                        <div className="p-3 bg-surface rounded-xl border border-border-subtle flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <span className="text-[10px] uppercase tracking-wider text-text-muted block">Địa chỉ ví nhận (TRC-20)</span>
+                            <span className="text-xs font-mono font-bold text-text-primary break-all">{cryptoAddressRef.current}</span>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={isExpired}
+                            onClick={async () => {
+                              await navigator.clipboard.writeText(cryptoAddressRef.current).catch(() => undefined);
+                              trackEvent('crypto_address_copied', { order_id: orderIdRef.current });
+                            }}
+                            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-canvas border-border-subtle text-[11px] font-semibold text-text-secondary hover:border-primary-blue hover:text-primary-blue transition-all cursor-pointer disabled:opacity-40"
+                          >
+                            <Copy className="w-3.5 h-3.5" /> Sao chép
+                          </button>
+                        </div>
 
-                {/* SUB-PANEL 3: PAYPAL PAY LATER */}
-                {paymentSubMethod === 'paypal_credit' && (
-                  <div className="space-y-4 p-5 rounded-2xl bg-canvas border border-[#0079C1]/30 text-center animate-fadeIn">
-                    <p className="text-xs text-text-secondary max-w-sm mx-auto">
-                      Chia nhỏ đơn hàng thành 4 kỳ thanh toán linh hoạt mỗi 2 tuần một lần, hoàn toàn không phát sinh lãi suất.
-                    </p>
+                        {isExpired && (
+                          <button
+                            type="button"
+                            onClick={handleRefreshQr}
+                            className="w-full py-2.5 rounded-xl bg-primary-blue text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <RefreshCw className="w-4 h-4" /> 🔄 Làm mới phiên thanh toán
+                          </button>
+                        )}
 
-                    <div className="p-3 bg-surface rounded-xl border border-border-subtle max-w-md mx-auto flex items-center justify-between text-xs font-mono">
-                      <span className="text-text-muted">Kỳ 1 (Thanh toán hôm nay):</span>
-                      <span className="font-bold text-accent-cyan">${(totalAmountUSD / 4).toFixed(2)} USD</span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleExecutePayment('paypal_credit')}
-                      className="w-full max-w-md mx-auto h-12 rounded-xl bg-[#003087] hover:bg-[#002266] active:scale-[0.99] text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
-                    >
-                      <span className="text-[#FFC439] font-bold italic text-sm">Pay</span>
-                      <span className="text-white font-bold italic text-sm">Later</span>
-                      <span className="text-gray-200">
-                        - Trả góp ${(totalAmountUSD / 4).toFixed(2)} USD / kỳ (0% Lãi)
-                      </span>
-                    </button>
+                        <button
+                          type="button"
+                          onClick={handleExecuteCryptoPayment}
+                          disabled={isExpired}
+                          className="w-full py-3.5 rounded-xl bg-[#26A17B] hover:brightness-110 active:scale-[0.99] disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#26A17B]/25 transition-all cursor-pointer"
+                        >
+                          <Bitcoin className="w-4 h-4" />
+                          <span>Tôi đã gửi {usdtAmount} USDT — Kích hoạt đối soát</span>
+                          <ArrowRight className="w-4 h-4 ml-1" />
+                        </button>
+                        <p className="text-[11px] text-text-muted text-center">
+                          * Gửi đúng số tiền và ghi rõ mã đơn <span className="font-mono font-bold">{orderIdRef.current}</span> trong memo nếu chain yêu cầu.
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -634,7 +766,7 @@ export const CheckoutPage: React.FC = () => {
                 <Lock className="w-3.5 h-3.5 text-status-success" /> Mã hóa SSL 256-bit chuẩn PCI
               </span>
               <span className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#FFC439]" /> PayPal Buyer Protection 180 ngày
+                <ShieldCheck className="w-3.5 h-3.5 text-[#FFC439]" /> Bảo vệ người mua 180 ngày
               </span>
               <span className="flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-accent-cyan" /> Kích hoạt bản quyền tức thì &lt; 30s
@@ -646,42 +778,47 @@ export const CheckoutPage: React.FC = () => {
         {/* RIGHT COLUMN: 5 Cols (Order summary & 10-min countdown timer) */}
         <div className="lg:col-span-5 space-y-4">
           <div className="p-6 rounded-2xl bg-surface border border-border-subtle shadow-card-hover">
-            {/* 10-Minute Countdown Clock */}
+            {/* 10-Minute Countdown Clock (AIPRO-109) */}
             <div className="pb-4 border-b border-border-subtle/60">
               <div className="flex items-center justify-between text-xs font-semibold mb-2">
                 <span className="flex items-center gap-1.5 text-text-secondary">
                   <Clock className="w-4 h-4 text-status-warning" />
                   Thời gian giữ slot tài khoản:
                 </span>
-                <span className="font-mono text-base font-bold text-status-warning">
-                  {timerString}
-                </span>
+                <span className="font-mono text-base font-bold text-status-warning">{timerString}</span>
               </div>
-              {/* Progress bar */}
               <div className="w-full h-1.5 bg-canvas rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-status-warning transition-all duration-1000"
-                  style={{ width: `${timerProgress}%` }}
-                />
+                <div className="h-full bg-status-warning transition-all duration-1000" style={{ width: `${timerProgress}%` }} />
               </div>
+              {isExpired && (
+                <button
+                  type="button"
+                  onClick={handleRefreshQr}
+                  className="mt-3 w-full py-2 rounded-lg bg-primary-blue/15 border border-primary-blue/40 text-primary-blue text-[11px] font-bold flex items-center justify-center gap-1.5 cursor-pointer hover:bg-primary-blue/25 transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Làm mới phiên thanh toán
+                </button>
+              )}
             </div>
 
             {/* Order Details */}
             <div className="py-4 space-y-3 text-xs border-b border-border-subtle/60">
               <div className="flex justify-between font-medium">
                 <span className="text-text-secondary">Mã đơn hàng:</span>
-                <span className="font-mono font-bold text-text-primary">{orderId}</span>
+                <span className="font-mono font-bold text-text-primary">{createdOrderId ?? orderIdRef.current}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-secondary">Sản phẩm:</span>
                 <span className="font-semibold text-text-primary">
-                  {activeConfig?.product.name ?? '—'} ({activeConfig?.duration.label ?? '—'})
+                  {isCartMode ? `${items.length} sản phẩm trong giỏ` : `${activeConfig?.product.name ?? '—'} (${activeConfig?.duration.label ?? '—'})`}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-secondary">Cổng thanh toán:</span>
                 <span className="font-semibold text-[#FFC439] flex items-center gap-1">
-                  <span>PayPal (Visa/MC)</span>
+                  <span>
+                    {paymentTab === 'vietqr' ? 'VietQR (SePay/Casso)' : paymentTab === 'stripe_card' ? 'Stripe (Visa/MC)' : 'Crypto USDT (Web3)'}
+                  </span>
                 </span>
               </div>
               <div className="flex justify-between">
@@ -701,20 +838,26 @@ export const CheckoutPage: React.FC = () => {
               <span className="text-xs text-text-muted">Tổng thanh toán:</span>
               <div className="text-right">
                 <span className="text-2xl font-extrabold font-mono text-[#FFC439] block">
-                  ${totalAmountUSD.toFixed(2)} USD
+                  {paymentTab === 'stripe_card'
+                    ? `$${totalAmountUSD.toFixed(2)} USD`
+                    : paymentTab === 'crypto_usdt'
+                    ? `${usdtAmount} USDT`
+                    : `${Math.round(totalAmountVND).toLocaleString('vi-VN')} ₫`}
                 </span>
-
+                {paymentTab !== 'stripe_card' && (
+                  <span className="text-[10px] text-text-muted">≈ ${totalAmountUSD.toFixed(2)} USD</span>
+                )}
               </div>
             </div>
 
             {/* CSKH Escalation */}
             <div className="pt-4 border-t border-border-subtle/60 text-center">
               <p className="text-[11px] text-text-muted mb-2">
-                Cần hỗ trợ thanh toán hoặc thắc mắc về PayPal &amp; Thẻ Visa?
+                Cần hỗ trợ thanh toán hoặc thắc mắc về VietQR, Stripe &amp; Crypto?
               </p>
               <button
                 type="button"
-                onClick={() => openTelegramSupport(orderId, { totalAmountVND, totalAmountUSD })}
+                onClick={() => openTelegramSupport(createdOrderId ?? orderIdRef.current, { totalAmountVND, totalAmountUSD })}
                 className="text-xs text-primary-blue hover:underline font-semibold cursor-pointer"
               >
                 [Báo Kỹ Thuật Viên Telegram 24/7]
