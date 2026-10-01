@@ -22,19 +22,21 @@ export const formatUserResponse = (row: any) => ({
 });
 
 /**
- * Seed default accounts with valid bcrypt hashes if they don't exist yet
+ * Seed default accounts with valid bcrypt hashes if they don't exist yet.
+ * H3 fix: INSERT-only (`DO NOTHING`) — the old `DO UPDATE SET password_hash`
+ * reset admin/member passwords back to `admin123`/`123456` on every boot,
+ * a permanent backdoor that undid any real password change.
  */
 export const ensureSeedUsers = async () => {
   try {
     const adminPassHash = await bcrypt.hash('admin123', 10);
     const memberPassHash = await bcrypt.hash('123456', 10);
 
-    // Upsert Admin
+    // Insert Admin only if missing (never overwrite an existing password)
     await pool.query(
       `INSERT INTO users (email, password_hash, name, role, avatar, balance_vnd, balance_usd, tier, phone)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       ON CONFLICT (email) 
-       DO UPDATE SET password_hash = $2, role = 'admin'`,
+       ON CONFLICT (email) DO NOTHING`,
       [
         'admin@aipro.dev',
         adminPassHash,
@@ -48,12 +50,11 @@ export const ensureSeedUsers = async () => {
       ]
     );
 
-    // Upsert Member Alex Dev
+    // Insert Member Alex Dev only if missing (never overwrite an existing password)
     await pool.query(
       `INSERT INTO users (email, password_hash, name, role, avatar, balance_vnd, balance_usd, tier, phone)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       ON CONFLICT (email) 
-       DO UPDATE SET password_hash = $2`,
+       ON CONFLICT (email) DO NOTHING`,
       [
         'alex.dev@gmail.com',
         memberPassHash,
@@ -133,7 +134,7 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
   const { email, password } = req.body;
   const normalizedEmail = email.trim().toLowerCase();
 
-  // Query user
+  // Query user (H2 fix: banned accounts cannot obtain a new session)
   const result = await pool.query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
   if (result.rows.length === 0) {
     throw new UnauthorizedError('Email hoặc mật khẩu không chính xác.');
@@ -145,6 +146,10 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
   const isMatch = await bcrypt.compare(password, user.password_hash);
   if (!isMatch) {
     throw new UnauthorizedError('Email hoặc mật khẩu không chính xác.');
+  }
+
+  if (String(user.status ?? 'active') === 'banned') {
+    throw new ForbiddenError('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.');
   }
 
   // Sign JWT token

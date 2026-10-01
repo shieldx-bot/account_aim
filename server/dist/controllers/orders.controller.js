@@ -1,16 +1,10 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAdminStats = exports.addUserBalance = exports.updateUserRole = exports.updateUserStatus = exports.getAllUsersAdmin = exports.updateOrderStatus = exports.getAllOrdersAdmin = exports.updateSubscriptionAutoRenew = exports.getMySubscriptions = exports.getOrderById = exports.getMyOrders = exports.verifyLookupOtp = exports.requestLookupOtp = exports.lookupOrderByEmailOrId = exports.redactSubscriptionCredentials = exports.createOrder = exports.formatSubscriptionRow = exports.formatOrderRow = void 0;
-const crypto_1 = __importDefault(require("crypto"));
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const db_js_1 = require("../config/db.js");
-const env_js_1 = require("../config/env.js");
-const catch_async_js_1 = require("../utils/catch-async.js");
-const app_error_js_1 = require("../utils/app-error.js");
-const referral_controller_js_1 = require("./referral.controller.js");
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import { pool } from '../config/db.js';
+import { env } from '../config/env.js';
+import { catchAsync } from '../utils/catch-async.js';
+import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/app-error.js';
+import { processOrderReferral } from './referral.controller.js';
 /**
  * In-memory cache for the last issued OTP per order (plaintext code is only
  * ever held here transiently so the development channel can echo it back —
@@ -22,12 +16,12 @@ const constantTimeEquals = (a, b) => {
     const bufB = Buffer.from(b);
     if (bufA.length !== bufB.length)
         return false;
-    return crypto_1.default.timingSafeEqual(bufA, bufB);
+    return crypto.timingSafeEqual(bufA, bufB);
 };
 /**
  * Format an order row from DB (snake_case → camelCase)
  */
-const formatOrderRow = (row) => ({
+export const formatOrderRow = (row) => ({
     orderId: row.id,
     userId: row.user_id,
     guestEmail: row.guest_email,
@@ -55,11 +49,10 @@ const formatOrderRow = (row) => ({
     createdAt: row.created_at,
     updatedAt: row.updated_at,
 });
-exports.formatOrderRow = formatOrderRow;
 /**
  * Format a subscription row from DB
  */
-const formatSubscriptionRow = (row) => ({
+export const formatSubscriptionRow = (row) => ({
     id: row.id,
     orderId: row.order_id,
     userId: row.user_id,
@@ -78,7 +71,6 @@ const formatSubscriptionRow = (row) => ({
     autoRenew: Boolean(row.auto_renew),
     createdAt: row.created_at,
 });
-exports.formatSubscriptionRow = formatSubscriptionRow;
 /**
  * Generate a unique order ID
  */
@@ -90,29 +82,29 @@ const generateOrderId = () => {
  * POST /api/orders
  * Create a new order (authenticated users only)
  */
-exports.createOrder = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const createOrder = catchAsync(async (req, res) => {
     const userId = req.user?.id;
     if (!userId) {
-        throw new app_error_js_1.UnauthorizedError('Bạn cần đăng nhập để đặt hàng.');
+        throw new UnauthorizedError('Bạn cần đăng nhập để đặt hàng.');
     }
     const { productId, productName, productSlug, planDurationMonths, provisioningType, targetEmail, guestEmail, quantity, unitPriceVND, unitPriceUSD, discountVND, discountUSD, totalVND, totalUSD, currency, paymentMethod, paymentGatewayRef, couponCode, referralCode, } = req.body;
     // Validate required fields
     if (!productId || !productName || !productSlug || !guestEmail) {
-        throw new app_error_js_1.BadRequestError('Thiếu thông tin đơn hàng bắt buộc.');
+        throw new BadRequestError('Thiếu thông tin đơn hàng bắt buộc.');
     }
     if (!totalVND || totalVND <= 0) {
-        throw new app_error_js_1.BadRequestError('Số tiền thanh toán không hợp lệ.');
+        throw new BadRequestError('Số tiền thanh toán không hợp lệ.');
     }
     // Verify product exists and is active
-    const productCheck = await db_js_1.pool.query('SELECT id, name, current_price_vnd, current_price_usd FROM products WHERE id = $1 AND is_active = true', [productId]);
+    const productCheck = await pool.query('SELECT id, name, current_price_vnd, current_price_usd FROM products WHERE id = $1 AND is_active = true', [productId]);
     if (productCheck.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Sản phẩm không tồn tại hoặc đã ngừng bán.');
+        throw new NotFoundError('Sản phẩm không tồn tại hoặc đã ngừng bán.');
     }
     // Ensure orderId is unique
     let orderId = generateOrderId();
     let attempts = 0;
     while (attempts < 5) {
-        const existing = await db_js_1.pool.query('SELECT id FROM orders WHERE id = $1', [orderId]);
+        const existing = await pool.query('SELECT id FROM orders WHERE id = $1', [orderId]);
         if (existing.rows.length === 0)
             break;
         orderId = generateOrderId();
@@ -123,7 +115,7 @@ exports.createOrder = (0, catch_async_js_1.catchAsync)(async (req, res) => {
     const warrantyDate = new Date();
     warrantyDate.setMonth(warrantyDate.getMonth() + warrantyMonths);
     // Insert order into DB
-    const result = await db_js_1.pool.query(`INSERT INTO orders (
+    const result = await pool.query(`INSERT INTO orders (
       id, user_id, guest_email, product_id, product_name, product_slug,
       plan_duration_months, provisioning_type, target_email, quantity,
       unit_price_vnd, unit_price_usd, discount_vnd, discount_usd,
@@ -161,7 +153,7 @@ exports.createOrder = (0, catch_async_js_1.catchAsync)(async (req, res) => {
     let referralOutcome = null;
     if (newOrder.referral_code) {
         try {
-            referralOutcome = await (0, referral_controller_js_1.processOrderReferral)({
+            referralOutcome = await processOrderReferral({
                 referralCode: newOrder.referral_code,
                 orderId: newOrder.id,
                 buyerUserId: userId,
@@ -176,24 +168,24 @@ exports.createOrder = (0, catch_async_js_1.catchAsync)(async (req, res) => {
     // ── Auto-provisioning: allocate a real account from the warehouse (PostgreSQL) ──
     let allocatedAccount = null;
     try {
-        const accRes = await db_js_1.pool.query(`SELECT * FROM inventory_accounts
+        const accRes = await pool.query(`SELECT * FROM inventory_accounts
        WHERE product_id = $1 AND pool = 'active' AND status = 'available'
        ORDER BY created_at ASC LIMIT 1 FOR UPDATE SKIP LOCKED`, [productId]);
         let acc = accRes.rows[0] ?? null;
         if (!acc) {
             // Fallback: match by tool name against product name/slug
-            const byTool = await db_js_1.pool.query(`SELECT * FROM inventory_accounts
+            const byTool = await pool.query(`SELECT * FROM inventory_accounts
          WHERE LOWER(tool) = LOWER($1) AND pool = 'active' AND status = 'available'
          ORDER BY created_at ASC LIMIT 1`, [productCheck.rows[0].name]);
             acc = byTool.rows[0] ?? null;
         }
         if (acc) {
-            await db_js_1.pool.query(`UPDATE inventory_accounts
+            await pool.query(`UPDATE inventory_accounts
          SET status = 'assigned', assigned_order_id = $1, updated_at = CURRENT_TIMESTAMP
          WHERE id = $2`, [newOrder.id, acc.id]);
             allocatedAccount = { email: acc.email, password: acc.password };
             // Create subscription record bound to the allocated account
-            await db_js_1.pool.query(`INSERT INTO subscriptions (
+            await pool.query(`INSERT INTO subscriptions (
           order_id, user_id, product_id, product_name, product_slug, brand,
           provisioning_type, account_email, account_password_encrypted,
           start_date, expires_at, days_remaining, status
@@ -222,7 +214,7 @@ exports.createOrder = (0, catch_async_js_1.catchAsync)(async (req, res) => {
             ? 'Đơn hàng đã được tạo và tự động bàn giao tài khoản từ kho.'
             : 'Đơn hàng đã được tạo! Hệ thống sẽ bàn giao tài khoản trong thời gian sớm nhất.',
         data: {
-            ...(0, exports.formatOrderRow)(newOrder),
+            ...formatOrderRow(newOrder),
             provisioned: Boolean(allocatedAccount),
             referral: referralOutcome,
             referralRewardGranted: Boolean(referralOutcome?.rewardGranted),
@@ -234,42 +226,41 @@ exports.createOrder = (0, catch_async_js_1.catchAsync)(async (req, res) => {
  * lookup gate must never expose account passwords / 2FA tokens — those are
  * only released after server-side OTP verification (verifyLookupOtp).
  */
-const redactSubscriptionCredentials = (sub) => {
+export const redactSubscriptionCredentials = (sub) => {
     if (!sub)
         return sub;
     return { ...sub, accountPassword: '', accessToken: '' };
 };
-exports.redactSubscriptionCredentials = redactSubscriptionCredentials;
 /**
  * GET /api/orders/lookup?email=&orderId=
  * Public lookup gate: find an order by Order ID alone, or by Email + guestEmail.
  * Returns only non-sensitive metadata (credentials require OTP verification client-side
  * and are served through the owner's session / delivery page).
  */
-exports.lookupOrderByEmailOrId = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const lookupOrderByEmailOrId = catchAsync(async (req, res) => {
     const email = String(req.query.email || '').trim().toLowerCase();
     const orderId = String(req.query.orderId || '').trim().toUpperCase();
     if (!email && !orderId) {
-        throw new app_error_js_1.BadRequestError('Thiếu email hoặc mã đơn hàng để tra cứu.');
+        throw new BadRequestError('Thiếu email hoặc mã đơn hàng để tra cứu.');
     }
     const result = orderId
-        ? await db_js_1.pool.query('SELECT * FROM orders WHERE UPPER(id) = $1', [orderId])
-        : await db_js_1.pool.query(`SELECT * FROM orders WHERE LOWER(guest_email) = $1 OR LOWER(target_email) = $1
+        ? await pool.query('SELECT * FROM orders WHERE UPPER(id) = $1', [orderId])
+        : await pool.query(`SELECT * FROM orders WHERE LOWER(guest_email) = $1 OR LOWER(target_email) = $1
          ORDER BY created_at DESC LIMIT 1`, [email]);
     if (result.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Không tìm thấy đơn hàng khớp với thông tin tra cứu.');
+        throw new NotFoundError('Không tìm thấy đơn hàng khớp với thông tin tra cứu.');
     }
     const order = result.rows[0];
     // Attach active subscription credentials for the matched order
-    const subRes = await db_js_1.pool.query(`SELECT s.*, p.brand AS prod_brand FROM subscriptions s
+    const subRes = await pool.query(`SELECT s.*, p.brand AS prod_brand FROM subscriptions s
      LEFT JOIN products p ON p.id = s.product_id
      WHERE s.order_id = $1 ORDER BY s.created_at DESC LIMIT 1`, [order.id]);
     res.status(200).json({
         success: true,
         data: {
-            order: (0, exports.formatOrderRow)(order),
+            order: formatOrderRow(order),
             // Credentials stay redacted until the customer passes OTP verification
-            subscription: subRes.rows[0] ? (0, exports.redactSubscriptionCredentials)((0, exports.formatSubscriptionRow)(subRes.rows[0])) : null,
+            subscription: subRes.rows[0] ? redactSubscriptionCredentials(formatSubscriptionRow(subRes.rows[0])) : null,
         },
     });
 });
@@ -280,36 +271,36 @@ exports.lookupOrderByEmailOrId = (0, catch_async_js_1.catchAsync)(async (req, re
  * echoed back in development so QA can complete the flow without an email
  * provider. In production the echo disappears and a mailer hook delivers it.
  */
-exports.requestLookupOtp = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const requestLookupOtp = catchAsync(async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const orderId = String(req.body?.orderId || '').trim().toUpperCase();
     if (!email || !orderId) {
-        throw new app_error_js_1.BadRequestError('Thiếu email hoặc mã đơn hàng để gửi OTP.');
+        throw new BadRequestError('Thiếu email hoặc mã đơn hàng để gửi OTP.');
     }
     // Order must exist AND the claimed email must own it
-    const orderRes = await db_js_1.pool.query(`SELECT id, guest_email, target_email FROM orders WHERE UPPER(id) = $1`, [orderId]);
+    const orderRes = await pool.query(`SELECT id, guest_email, target_email FROM orders WHERE UPPER(id) = $1`, [orderId]);
     if (orderRes.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Không tìm thấy đơn hàng.');
+        throw new NotFoundError('Không tìm thấy đơn hàng.');
     }
     const owner = orderRes.rows[0];
     const ownsEmail = String(owner.guest_email || '').toLowerCase() === email ||
         String(owner.target_email || '').toLowerCase() === email;
     if (!ownsEmail) {
-        throw new app_error_js_1.UnauthorizedError('Email không sở hữu đơn hàng này.');
+        throw new UnauthorizedError('Email không sở hữu đơn hàng này.');
     }
     // Throttle: refuse to re-issue while a live (unconsumed) OTP is < 60s old
-    const recentRes = await db_js_1.pool.query(`SELECT created_at FROM lookup_otps
+    const recentRes = await pool.query(`SELECT created_at FROM lookup_otps
      WHERE order_id = $1 AND LOWER(email) = $2 AND consumed_at IS NULL
      ORDER BY created_at DESC LIMIT 1`, [owner.id, email]);
     if (recentRes.rows.length > 0) {
         const ageMs = Date.now() - new Date(recentRes.rows[0].created_at).getTime();
         if (ageMs < 60_000) {
-            throw new app_error_js_1.BadRequestError('OTP đã được gửi cách đây chưa lâu. Vui lòng chờ hoặc nhập mã.');
+            throw new BadRequestError('OTP đã được gửi cách đây chưa lâu. Vui lòng chờ hoặc nhập mã.');
         }
     }
-    const code = String(crypto_1.default.randomInt(100000, 999999));
-    const codeHash = await bcryptjs_1.default.hash(code, 10);
-    await db_js_1.pool.query(`INSERT INTO lookup_otps (order_id, email, code_hash, expires_at)
+    const code = String(crypto.randomInt(100000, 999999));
+    const codeHash = await bcrypt.hash(code, 10);
+    await pool.query(`INSERT INTO lookup_otps (order_id, email, code_hash, expires_at)
      VALUES ($1, $2, $3, NOW() + INTERVAL '5 minutes')`, [owner.id, email, codeHash]);
     otpCodeCache.set(`${owner.id}:${email}`, {
         code,
@@ -320,7 +311,7 @@ exports.requestLookupOtp = (0, catch_async_js_1.catchAsync)(async (req, res) => 
         message: 'Mã OTP đã được gửi (hiệu lực 5 phút).',
         data: { orderId: owner.id, expiresInSec: 300 },
     };
-    if (env_js_1.env.NODE_ENV !== 'production') {
+    if (env.NODE_ENV !== 'production') {
         // Dev-only delivery channel — replace with SendGrid/SES hook in production.
         payload.devCode = code;
     }
@@ -332,50 +323,50 @@ exports.requestLookupOtp = (0, catch_async_js_1.catchAsync)(async (req, res) => 
  * On success returns the FULL order + subscription record including
  * credentials, which are never exposed by the unauthenticated lookup gate.
  */
-exports.verifyLookupOtp = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const verifyLookupOtp = catchAsync(async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const orderId = String(req.body?.orderId || '').trim().toUpperCase();
     const code = String(req.body?.code || '').trim();
     if (!email || !orderId || !/^\d{6}$/.test(code)) {
-        throw new app_error_js_1.BadRequestError('Mã OTP không hợp lệ (cần 6 chữ số).');
+        throw new BadRequestError('Mã OTP không hợp lệ (cần 6 chữ số).');
     }
-    const otpRes = await db_js_1.pool.query(`SELECT * FROM lookup_otps
+    const otpRes = await pool.query(`SELECT * FROM lookup_otps
      WHERE order_id = $1 AND LOWER(email) = $2 AND consumed_at IS NULL
        AND expires_at > NOW()
      ORDER BY created_at DESC LIMIT 1`, [orderId, email]);
     if (otpRes.rows.length === 0) {
-        throw new app_error_js_1.UnauthorizedError('OTP hết hạn hoặc chưa được gửi. Hãy yêu cầu mã mới.');
+        throw new UnauthorizedError('OTP hết hạn hoặc chưa được gửi. Hãy yêu cầu mã mới.');
     }
     const otp = otpRes.rows[0];
     if (Number(otp.attempts) >= 5) {
-        await db_js_1.pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
-        throw new app_error_js_1.UnauthorizedError('Nhập sai quá 5 lần. OTP đã bị vô hiệu hóa.');
+        await pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
+        throw new UnauthorizedError('Nhập sai quá 5 lần. OTP đã bị vô hiệu hóa.');
     }
     const cached = otpCodeCache.get(`${orderId}:${email}`);
-    const devMatch = env_js_1.env.NODE_ENV !== 'production' &&
+    const devMatch = env.NODE_ENV !== 'production' &&
         cached &&
         cached.expiresAt > Date.now() &&
         constantTimeEquals(cached.code, code);
-    const ok = devMatch || (await bcryptjs_1.default.compare(code, otp.code_hash));
+    const ok = devMatch || (await bcrypt.compare(code, otp.code_hash));
     if (!ok) {
-        await db_js_1.pool.query(`UPDATE lookup_otps SET attempts = attempts + 1 WHERE id = $1`, [otp.id]);
-        throw new app_error_js_1.UnauthorizedError('Mã OTP không đúng.');
+        await pool.query(`UPDATE lookup_otps SET attempts = attempts + 1 WHERE id = $1`, [otp.id]);
+        throw new UnauthorizedError('Mã OTP không đúng.');
     }
-    await db_js_1.pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
+    await pool.query(`UPDATE lookup_otps SET consumed_at = NOW() WHERE id = $1`, [otp.id]);
     otpCodeCache.delete(`${orderId}:${email}`);
-    const orderRes = await db_js_1.pool.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
+    const orderRes = await pool.query(`SELECT * FROM orders WHERE id = $1`, [orderId]);
     if (orderRes.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Đơn hàng tương ứng không còn tồn tại.');
+        throw new NotFoundError('Đơn hàng tương ứng không còn tồn tại.');
     }
-    const subRes = await db_js_1.pool.query(`SELECT s.*, p.brand AS prod_brand FROM subscriptions s
+    const subRes = await pool.query(`SELECT s.*, p.brand AS prod_brand FROM subscriptions s
      LEFT JOIN products p ON p.id = s.product_id
      WHERE s.order_id = $1 ORDER BY s.created_at DESC LIMIT 1`, [orderId]);
     res.status(200).json({
         success: true,
         message: 'Xác minh OTP thành công.',
         data: {
-            order: (0, exports.formatOrderRow)(orderRes.rows[0]),
-            subscription: subRes.rows[0] ? (0, exports.formatSubscriptionRow)(subRes.rows[0]) : null,
+            order: formatOrderRow(orderRes.rows[0]),
+            subscription: subRes.rows[0] ? formatSubscriptionRow(subRes.rows[0]) : null,
         },
     });
 });
@@ -383,17 +374,17 @@ exports.verifyLookupOtp = (0, catch_async_js_1.catchAsync)(async (req, res) => {
  * GET /api/orders/me
  * Get orders for the authenticated user
  */
-exports.getMyOrders = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const getMyOrders = catchAsync(async (req, res) => {
     const userId = req.user?.id;
     if (!userId) {
-        throw new app_error_js_1.UnauthorizedError('Bạn cần đăng nhập.');
+        throw new UnauthorizedError('Bạn cần đăng nhập.');
     }
     const limit = Math.min(Number(req.query.limit) || 50, 100);
     const offset = Number(req.query.offset) || 0;
-    const result = await db_js_1.pool.query(`SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`, [userId, limit, offset]);
+    const result = await pool.query(`SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`, [userId, limit, offset]);
     res.status(200).json({
         success: true,
-        data: result.rows.map(exports.formatOrderRow),
+        data: result.rows.map(formatOrderRow),
         count: result.rows.length,
     });
 });
@@ -401,40 +392,40 @@ exports.getMyOrders = (0, catch_async_js_1.catchAsync)(async (req, res) => {
  * GET /api/orders/:orderId
  * Get a specific order (must belong to the authenticated user or admin)
  */
-exports.getOrderById = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const getOrderById = catchAsync(async (req, res) => {
     const userId = req.user?.id;
     const userRole = req.user?.role;
     const { orderId } = req.params;
     if (!userId) {
-        throw new app_error_js_1.UnauthorizedError('Bạn cần đăng nhập.');
+        throw new UnauthorizedError('Bạn cần đăng nhập.');
     }
-    const result = await db_js_1.pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+    const result = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
     if (result.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Không tìm thấy đơn hàng.');
+        throw new NotFoundError('Không tìm thấy đơn hàng.');
     }
     const order = result.rows[0];
     // Only the order owner or admin can view
     if (order.user_id !== userId && userRole !== 'admin') {
-        throw new app_error_js_1.UnauthorizedError('Bạn không có quyền xem đơn hàng này.');
+        throw new UnauthorizedError('Bạn không có quyền xem đơn hàng này.');
     }
     res.status(200).json({
         success: true,
-        data: (0, exports.formatOrderRow)(order),
+        data: formatOrderRow(order),
     });
 });
 /**
  * GET /api/subscriptions/me
  * Get active subscriptions for the authenticated user
  */
-exports.getMySubscriptions = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const getMySubscriptions = catchAsync(async (req, res) => {
     const userId = req.user?.id;
     if (!userId) {
-        throw new app_error_js_1.UnauthorizedError('Bạn cần đăng nhập.');
+        throw new UnauthorizedError('Bạn cần đăng nhập.');
     }
-    const result = await db_js_1.pool.query(`SELECT * FROM subscriptions WHERE user_id = $1 ORDER BY expires_at ASC`, [userId]);
+    const result = await pool.query(`SELECT * FROM subscriptions WHERE user_id = $1 ORDER BY expires_at ASC`, [userId]);
     res.status(200).json({
         success: true,
-        data: result.rows.map(exports.formatSubscriptionRow),
+        data: result.rows.map(formatSubscriptionRow),
         count: result.rows.length,
     });
 });
@@ -442,32 +433,32 @@ exports.getMySubscriptions = (0, catch_async_js_1.catchAsync)(async (req, res) =
  * PATCH /api/subscriptions/:id/auto-renew
  * Toggle auto-renew flag on a subscription (owner only)
  */
-exports.updateSubscriptionAutoRenew = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const updateSubscriptionAutoRenew = catchAsync(async (req, res) => {
     const userId = req.user?.id;
     if (!userId)
-        throw new app_error_js_1.UnauthorizedError('Bạn cần đăng nhập.');
+        throw new UnauthorizedError('Bạn cần đăng nhập.');
     const { id } = req.params;
     const { autoRenew } = req.body;
     if (typeof autoRenew !== 'boolean') {
-        throw new app_error_js_1.BadRequestError('Giá trị autoRenew phải là true/false.');
+        throw new BadRequestError('Giá trị autoRenew phải là true/false.');
     }
-    const result = await db_js_1.pool.query(`UPDATE subscriptions SET auto_renew = $1, updated_at = CURRENT_TIMESTAMP
+    const result = await pool.query(`UPDATE subscriptions SET auto_renew = $1, updated_at = CURRENT_TIMESTAMP
      WHERE id = $2 AND user_id = $3
      RETURNING *`, [autoRenew, id, userId]);
     if (result.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Không tìm thấy đăng ký hoặc bạn không có quyền chỉnh sửa.');
+        throw new NotFoundError('Không tìm thấy đăng ký hoặc bạn không có quyền chỉnh sửa.');
     }
     res.status(200).json({
         success: true,
         message: `Đã ${autoRenew ? 'bật' : 'tắt'} tự động gia hạn.`,
-        data: (0, exports.formatSubscriptionRow)(result.rows[0]),
+        data: formatSubscriptionRow(result.rows[0]),
     });
 });
 /**
  * GET /api/admin/orders
  * Admin: Get all orders with filtering
  */
-exports.getAllOrdersAdmin = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const getAllOrdersAdmin = catchAsync(async (req, res) => {
     const { status, limit: rawLimit, offset: rawOffset, search } = req.query;
     const limit = Math.min(Number(rawLimit) || 50, 200);
     const offset = Number(rawOffset) || 0;
@@ -489,7 +480,7 @@ exports.getAllOrdersAdmin = (0, catch_async_js_1.catchAsync)(async (req, res) =>
     }
     query += ` ORDER BY o.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
-    const result = await db_js_1.pool.query(query, params);
+    const result = await pool.query(query, params);
     // Get total count
     let countQuery = 'SELECT COUNT(*) FROM orders o';
     const countParams = [];
@@ -505,11 +496,11 @@ exports.getAllOrdersAdmin = (0, catch_async_js_1.catchAsync)(async (req, res) =>
     if (countConditions.length > 0) {
         countQuery += ' WHERE ' + countConditions.join(' AND ');
     }
-    const countResult = await db_js_1.pool.query(countQuery, countParams);
+    const countResult = await pool.query(countQuery, countParams);
     res.status(200).json({
         success: true,
         data: result.rows.map((row) => ({
-            ...(0, exports.formatOrderRow)(row),
+            ...formatOrderRow(row),
             userName: row.user_name,
             userEmail: row.user_email,
         })),
@@ -521,29 +512,29 @@ exports.getAllOrdersAdmin = (0, catch_async_js_1.catchAsync)(async (req, res) =>
  * PATCH /api/admin/orders/:orderId/status
  * Admin: Update order status (e.g., pending → dispatched)
  */
-exports.updateOrderStatus = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const updateOrderStatus = catchAsync(async (req, res) => {
     const { orderId } = req.params;
     const { status, notes } = req.body;
     const validStatuses = ['pending', 'paid', 'dispatched', 'cancelled', 'refunded'];
     if (!validStatuses.includes(status)) {
-        throw new app_error_js_1.BadRequestError(`Trạng thái không hợp lệ. Chỉ chấp nhận: ${validStatuses.join(', ')}`);
+        throw new BadRequestError(`Trạng thái không hợp lệ. Chỉ chấp nhận: ${validStatuses.join(', ')}`);
     }
-    const result = await db_js_1.pool.query(`UPDATE orders SET status = $1, notes = COALESCE($2, notes), updated_at = CURRENT_TIMESTAMP
+    const result = await pool.query(`UPDATE orders SET status = $1, notes = COALESCE($2, notes), updated_at = CURRENT_TIMESTAMP
      WHERE id = $3 RETURNING *`, [status, notes || null, orderId]);
     if (result.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Không tìm thấy đơn hàng.');
+        throw new NotFoundError('Không tìm thấy đơn hàng.');
     }
     res.status(200).json({
         success: true,
         message: `Đã cập nhật trạng thái đơn hàng ${orderId} thành "${status}".`,
-        data: (0, exports.formatOrderRow)(result.rows[0]),
+        data: formatOrderRow(result.rows[0]),
     });
 });
 /**
  * GET /api/admin/users
  * Admin: Get all users with stats
  */
-exports.getAllUsersAdmin = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const getAllUsersAdmin = catchAsync(async (req, res) => {
     const { search, role } = req.query;
     let query = `
     SELECT u.*,
@@ -566,7 +557,7 @@ exports.getAllUsersAdmin = (0, catch_async_js_1.catchAsync)(async (req, res) => 
         query += ' WHERE ' + conditions.join(' AND ');
     }
     query += ' GROUP BY u.id ORDER BY u.created_at DESC';
-    const result = await db_js_1.pool.query(query, params);
+    const result = await pool.query(query, params);
     res.status(200).json({
         success: true,
         data: result.rows.map((row) => ({
@@ -590,15 +581,15 @@ exports.getAllUsersAdmin = (0, catch_async_js_1.catchAsync)(async (req, res) => 
  * PATCH /api/admin/users/:userId/status
  * Admin: Lock (ban) or unlock (activate) a user account
  */
-exports.updateUserStatus = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const updateUserStatus = catchAsync(async (req, res) => {
     const { userId } = req.params;
     const { status } = req.body;
     if (!['active', 'banned'].includes(status)) {
-        throw new app_error_js_1.BadRequestError(`Trạng thái không hợp lệ. Chỉ chấp nhận: active, banned`);
+        throw new BadRequestError(`Trạng thái không hợp lệ. Chỉ chấp nhận: active, banned`);
     }
-    const result = await db_js_1.pool.query(`UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, email, name, role, status`, [status, userId]);
+    const result = await pool.query(`UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, email, name, role, status`, [status, userId]);
     if (result.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Không tìm thấy người dùng.');
+        throw new NotFoundError('Không tìm thấy người dùng.');
     }
     res.status(200).json({
         success: true,
@@ -610,15 +601,15 @@ exports.updateUserStatus = (0, catch_async_js_1.catchAsync)(async (req, res) => 
  * PATCH /api/admin/users/:userId/role
  * Admin: Update user role
  */
-exports.updateUserRole = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const updateUserRole = catchAsync(async (req, res) => {
     const { userId } = req.params;
     const { role } = req.body;
     if (!['member', 'admin'].includes(role)) {
-        throw new app_error_js_1.BadRequestError('Role không hợp lệ.');
+        throw new BadRequestError('Role không hợp lệ.');
     }
-    const result = await db_js_1.pool.query(`UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`, [role, userId]);
+    const result = await pool.query(`UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`, [role, userId]);
     if (result.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Không tìm thấy người dùng.');
+        throw new NotFoundError('Không tìm thấy người dùng.');
     }
     res.status(200).json({
         success: true,
@@ -629,23 +620,27 @@ exports.updateUserRole = (0, catch_async_js_1.catchAsync)(async (req, res) => {
  * POST /api/admin/users/:userId/balance
  * Admin: Add balance to user wallet
  */
-exports.addUserBalance = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const addUserBalance = catchAsync(async (req, res) => {
     const { userId } = req.params;
-    const { amountVND } = req.body;
-    if (!amountVND || Number(amountVND) <= 0) {
-        throw new app_error_js_1.BadRequestError('Số tiền nạp không hợp lệ.');
+    const { amountUSD, amountVND } = req.body;
+    // Single-currency app: admins top up in USD. Legacy amountVND payloads are
+    // converted at the fixed rate (25,000 VND = 1 USD) for backward compatibility.
+    const amountUsd = Number(amountUSD ?? (Number(amountVND) > 0 ? Number(amountVND) / 25000 : NaN));
+    if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
+        throw new BadRequestError('Số tiền nạp không hợp lệ.');
     }
-    const result = await db_js_1.pool.query(`UPDATE users SET 
+    const amountVndDerived = Math.round(amountUsd * 25000);
+    const result = await pool.query(`UPDATE users SET 
       balance_vnd = balance_vnd + $1,
       balance_usd = balance_usd + $2,
       updated_at = CURRENT_TIMESTAMP
-     WHERE id = $3 RETURNING id, email, balance_vnd, balance_usd`, [Number(amountVND), Number(amountVND) / 25000, userId]);
+     WHERE id = $3 RETURNING id, email, balance_vnd, balance_usd`, [amountVndDerived, amountUsd, userId]);
     if (result.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Không tìm thấy người dùng.');
+        throw new NotFoundError('Không tìm thấy người dùng.');
     }
     res.status(200).json({
         success: true,
-        message: `Đã nạp ${Number(amountVND).toLocaleString('vi-VN')} ₫ vào ví người dùng.`,
+        message: `Đã nạp $${amountUsd.toFixed(2)} USD vào ví người dùng.`,
         data: {
             balanceVND: Number(result.rows[0].balance_vnd),
             balanceUSD: Number(result.rows[0].balance_usd),
@@ -656,14 +651,14 @@ exports.addUserBalance = (0, catch_async_js_1.catchAsync)(async (req, res) => {
  * GET /api/admin/stats
  * Admin: Get dashboard statistics
  */
-exports.getAdminStats = (0, catch_async_js_1.catchAsync)(async (req, res) => {
+export const getAdminStats = catchAsync(async (req, res) => {
     const [revenueToday, ordersToday, ordersTotal, ordersPending, usersTotal, activeSubscriptions,] = await Promise.all([
-        db_js_1.pool.query(`SELECT COALESCE(SUM(total_vnd), 0) as total FROM orders WHERE DATE(created_at) = CURRENT_DATE AND status IN ('paid','dispatched')`),
-        db_js_1.pool.query(`SELECT COUNT(*) as count FROM orders WHERE DATE(created_at) = CURRENT_DATE`),
-        db_js_1.pool.query(`SELECT COUNT(*) as count FROM orders`),
-        db_js_1.pool.query(`SELECT COUNT(*) as count FROM orders WHERE status = 'pending'`),
-        db_js_1.pool.query(`SELECT COUNT(*) as count FROM users`),
-        db_js_1.pool.query(`SELECT COUNT(*) as count FROM subscriptions WHERE status IN ('active','expiring_soon')`),
+        pool.query(`SELECT COALESCE(SUM(total_usd), 0) as total FROM orders WHERE DATE(created_at) = CURRENT_DATE AND status IN ('paid','dispatched')`),
+        pool.query(`SELECT COUNT(*) as count FROM orders WHERE DATE(created_at) = CURRENT_DATE`),
+        pool.query(`SELECT COUNT(*) as count FROM orders`),
+        pool.query(`SELECT COUNT(*) as count FROM orders WHERE status = 'pending'`),
+        pool.query(`SELECT COUNT(*) as count FROM users`),
+        pool.query(`SELECT COUNT(*) as count FROM subscriptions WHERE status IN ('active','expiring_soon')`),
     ]);
     res.status(200).json({
         success: true,

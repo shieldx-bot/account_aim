@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteProduct = exports.updateProduct = exports.createProduct = exports.getProductBySlug = exports.getAllProducts = exports.ensureSeedProducts = exports.formatProductRow = void 0;
-const db_js_1 = require("../config/db.js");
+import { pool } from '../config/db.js';
 // Initial 8 seed products matching the frontend portfolio
 const INITIAL_PRODUCTS = [
     {
@@ -470,7 +467,7 @@ const INITIAL_PRODUCTS = [
     },
 ];
 // Helper to convert database snake_case row to frontend camelCase object
-const formatProductRow = (row) => ({
+export const formatProductRow = (row) => ({
     id: row.id,
     slug: row.slug,
     name: row.name,
@@ -492,14 +489,13 @@ const formatProductRow = (row) => ({
     createdAt: row.created_at,
     updatedAt: row.updated_at,
 });
-exports.formatProductRow = formatProductRow;
 /**
  * Ensure database has initial seed products on launch
  */
-const ensureSeedProducts = async () => {
+export const ensureSeedProducts = async () => {
     try {
         for (const prod of INITIAL_PRODUCTS) {
-            await db_js_1.pool.query(`INSERT INTO products (
+            await pool.query(`INSERT INTO products (
           id, slug, name, brand, brand_logo, category,
           original_price_vnd, current_price_vnd, original_price_usd, current_price_usd,
           discount_percent, instant_delivery, stock_count, badge, platform_subtext,
@@ -526,26 +522,25 @@ const ensureSeedProducts = async () => {
                 true,
             ]);
         }
-        const countRes = await db_js_1.pool.query('SELECT COUNT(*) FROM products WHERE is_active = true');
+        const countRes = await pool.query('SELECT COUNT(*) FROM products WHERE is_active = true');
         console.log(`[PostgreSQL] Catalog ready: ${countRes.rows[0].count} active products.`);
     }
     catch (err) {
         console.error('[PostgreSQL] Error seeding products:', err);
     }
 };
-exports.ensureSeedProducts = ensureSeedProducts;
 /**
  * GET /api/products
  * Fetch all products (active by default, or all if ?all=true)
  */
-const getAllProducts = async (req, res) => {
+export const getAllProducts = async (req, res) => {
     try {
         const showAll = req.query.all === 'true';
         const query = showAll
             ? 'SELECT * FROM products ORDER BY created_at ASC'
             : 'SELECT * FROM products WHERE is_active = true ORDER BY created_at ASC';
-        const result = await db_js_1.pool.query(query);
-        const products = result.rows.map(exports.formatProductRow);
+        const result = await pool.query(query);
+        const products = result.rows.map(formatProductRow);
         res.status(200).json({
             success: true,
             data: products,
@@ -560,15 +555,14 @@ const getAllProducts = async (req, res) => {
         });
     }
 };
-exports.getAllProducts = getAllProducts;
 /**
  * GET /api/products/:slug
  * Fetch single product by slug
  */
-const getProductBySlug = async (req, res) => {
+export const getProductBySlug = async (req, res) => {
     try {
         const { slug } = req.params;
-        const result = await db_js_1.pool.query('SELECT * FROM products WHERE slug = $1', [slug]);
+        const result = await pool.query('SELECT * FROM products WHERE slug = $1', [slug]);
         if (result.rows.length === 0) {
             res.status(404).json({
                 success: false,
@@ -578,7 +572,7 @@ const getProductBySlug = async (req, res) => {
         }
         res.status(200).json({
             success: true,
-            data: (0, exports.formatProductRow)(result.rows[0]),
+            data: formatProductRow(result.rows[0]),
         });
     }
     catch (err) {
@@ -589,12 +583,11 @@ const getProductBySlug = async (req, res) => {
         });
     }
 };
-exports.getProductBySlug = getProductBySlug;
 /**
  * POST /api/products (Admin only)
  * Create a new product
  */
-const createProduct = async (req, res) => {
+export const createProduct = async (req, res) => {
     try {
         const { name, slug, brand, brandLogo, category, originalPriceVND, currentPriceVND, originalPriceUSD, currentPriceUSD, discountPercent, stockCount, badge, platformSubtext, quotaFeatures, specs, instantDelivery, isActive, } = req.body;
         if (!name || !slug || !brand || !category) {
@@ -605,7 +598,7 @@ const createProduct = async (req, res) => {
             return;
         }
         // Check slug collision
-        const existing = await db_js_1.pool.query('SELECT id FROM products WHERE slug = $1', [slug]);
+        const existing = await pool.query('SELECT id FROM products WHERE slug = $1', [slug]);
         if (existing.rows.length > 0) {
             res.status(400).json({
                 success: false,
@@ -614,7 +607,7 @@ const createProduct = async (req, res) => {
             return;
         }
         const id = `prod_${slug.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now().toString().slice(-4)}`;
-        const result = await db_js_1.pool.query(`INSERT INTO products (
+        const result = await pool.query(`INSERT INTO products (
         id, slug, name, brand, brand_logo, category,
         original_price_vnd, current_price_vnd, original_price_usd, current_price_usd,
         discount_percent, instant_delivery, stock_count, badge, platform_subtext,
@@ -643,7 +636,7 @@ const createProduct = async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'Thêm sản phẩm mới vào cơ sở dữ liệu thành công!',
-            data: (0, exports.formatProductRow)(result.rows[0]),
+            data: formatProductRow(result.rows[0]),
         });
     }
     catch (err) {
@@ -654,16 +647,15 @@ const createProduct = async (req, res) => {
         });
     }
 };
-exports.createProduct = createProduct;
 /**
  * PUT /api/products/:id (Admin only)
  * Update existing product
  */
-const updateProduct = async (req, res) => {
+export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, slug, brand, brandLogo, category, originalPriceVND, currentPriceVND, originalPriceUSD, currentPriceUSD, discountPercent, stockCount, badge, platformSubtext, quotaFeatures, specs, instantDelivery, isActive, } = req.body;
-        const check = await db_js_1.pool.query('SELECT * FROM products WHERE id = $1', [id]);
+        const check = await pool.query('SELECT * FROM products WHERE id = $1', [id]);
         if (check.rows.length === 0) {
             res.status(404).json({
                 success: false,
@@ -672,7 +664,7 @@ const updateProduct = async (req, res) => {
             return;
         }
         const current = check.rows[0];
-        const result = await db_js_1.pool.query(`UPDATE products SET
+        const result = await pool.query(`UPDATE products SET
         name = COALESCE($1, name),
         slug = COALESCE($2, slug),
         brand = COALESCE($3, brand),
@@ -715,7 +707,7 @@ const updateProduct = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Cập nhật sản phẩm thành công!',
-            data: (0, exports.formatProductRow)(result.rows[0]),
+            data: formatProductRow(result.rows[0]),
         });
     }
     catch (err) {
@@ -726,15 +718,14 @@ const updateProduct = async (req, res) => {
         });
     }
 };
-exports.updateProduct = updateProduct;
 /**
  * DELETE /api/products/:id (Admin only)
  * Delete product from database
  */
-const deleteProduct = async (req, res) => {
+export const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await db_js_1.pool.query('DELETE FROM products WHERE id = $1 RETURNING id, name', [id]);
+        const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING id, name', [id]);
         if (result.rows.length === 0) {
             res.status(404).json({
                 success: false,
@@ -755,4 +746,3 @@ const deleteProduct = async (req, res) => {
         });
     }
 };
-exports.deleteProduct = deleteProduct;

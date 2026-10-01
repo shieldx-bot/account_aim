@@ -1,12 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMaintenance = exports.getIncidents = exports.getComponentMetrics = exports.getStatusPage = void 0;
-const db_js_1 = require("../config/db.js");
-const catch_async_js_1 = require("../utils/catch-async.js");
-const app_error_js_1 = require("../utils/app-error.js");
-exports.getStatusPage = (0, catch_async_js_1.catchAsync)(async (req, res, next) => {
+import { pool } from '../config/db.js';
+import { catchAsync } from '../utils/catch-async.js';
+import { NotFoundError } from '../utils/app-error.js';
+export const getStatusPage = catchAsync(async (req, res, next) => {
     // Get all components with latest metrics
-    const componentsResult = await db_js_1.pool.query(`
+    const componentsResult = await pool.query(`
     SELECT 
       c.id, c.name, c.category, c.status, 
       c.uptime_percent::numeric as uptime_percent, 
@@ -35,7 +32,7 @@ exports.getStatusPage = (0, catch_async_js_1.catchAsync)(async (req, res, next) 
         latency_ms: row.latency_ms !== null ? Number(row.latency_ms) : null,
     }));
     // Get recent incidents (last 90 days)
-    const incidentsResult = await db_js_1.pool.query(`
+    const incidentsResult = await pool.query(`
     SELECT 
       i.id, i.title, i.description, i.status, i.impact, i.started_at, i.resolved_at,
       json_agg(
@@ -62,7 +59,7 @@ exports.getStatusPage = (0, catch_async_js_1.catchAsync)(async (req, res, next) 
     ORDER BY i.started_at DESC
   `);
     // Get scheduled maintenance
-    const maintenanceResult = await db_js_1.pool.query(`
+    const maintenanceResult = await pool.query(`
     SELECT 
       m.id, m.title, m.description, m.status, m.scheduled_for, m.scheduled_until,
       json_agg(
@@ -110,21 +107,21 @@ exports.getStatusPage = (0, catch_async_js_1.catchAsync)(async (req, res, next) 
         },
     });
 });
-exports.getComponentMetrics = (0, catch_async_js_1.catchAsync)(async (req, res, next) => {
+export const getComponentMetrics = catchAsync(async (req, res, next) => {
     const { id } = req.params;
     const hours = parseInt(req.query.hours) || 24;
-    const componentResult = await db_js_1.pool.query('SELECT id, name FROM status_components WHERE id = $1', [id]);
+    const componentResult = await pool.query('SELECT id, name FROM status_components WHERE id = $1', [id]);
     if (componentResult.rows.length === 0) {
-        throw new app_error_js_1.NotFoundError('Component not found');
+        throw new NotFoundError('Component not found');
     }
-    const metricsResult = await db_js_1.pool.query(`
+    const metricsResult = await pool.query(`
     SELECT timestamp, uptime, latency_ms, error_rate, requests_per_second
     FROM status_metrics
     WHERE component_id = $1 AND timestamp >= NOW() - INTERVAL '${hours} hours'
     ORDER BY timestamp ASC
   `, [id]);
     // Generate hourly aggregates for charting
-    const hourlyResult = await db_js_1.pool.query(`
+    const hourlyResult = await pool.query(`
     SELECT 
       DATE_TRUNC('hour', timestamp) as hour,
       AVG(uptime) as avg_uptime,
@@ -145,7 +142,7 @@ exports.getComponentMetrics = (0, catch_async_js_1.catchAsync)(async (req, res, 
         },
     });
 });
-exports.getIncidents = (0, catch_async_js_1.catchAsync)(async (req, res, next) => {
+export const getIncidents = catchAsync(async (req, res, next) => {
     const status = req.query.status;
     const limit = parseInt(req.query.limit) || 50;
     let whereClause = `WHERE i.started_at >= NOW() - INTERVAL '90 days'`;
@@ -154,7 +151,7 @@ exports.getIncidents = (0, catch_async_js_1.catchAsync)(async (req, res, next) =
         whereClause += ` AND i.status = $${params.length + 1}`;
         params.push(status);
     }
-    const result = await db_js_1.pool.query(`
+    const result = await pool.query(`
     SELECT 
       i.id, i.title, i.description, i.status, i.impact, i.started_at, i.resolved_at,
       json_agg(
@@ -183,7 +180,7 @@ exports.getIncidents = (0, catch_async_js_1.catchAsync)(async (req, res, next) =
   `, [...params, limit]);
     res.json({ success: true, data: result.rows });
 });
-exports.getMaintenance = (0, catch_async_js_1.catchAsync)(async (req, res, next) => {
+export const getMaintenance = catchAsync(async (req, res, next) => {
     const status = req.query.status;
     let whereClause = '';
     const params = [];
@@ -191,7 +188,7 @@ exports.getMaintenance = (0, catch_async_js_1.catchAsync)(async (req, res, next)
         whereClause = `WHERE m.status = $1`;
         params.push(status);
     }
-    const result = await db_js_1.pool.query(`
+    const result = await pool.query(`
     SELECT 
       m.id, m.title, m.description, m.status, m.scheduled_for, m.scheduled_until,
       json_agg(

@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.statusRouter = void 0;
-const express_1 = require("express");
-const status_controller_js_1 = require("../controllers/status.controller.js");
-exports.statusRouter = (0, express_1.Router)();
+import { Router } from 'express';
+import { getStatusPage, getComponentMetrics, getIncidents, getMaintenance } from '../controllers/status.controller.js';
+export const statusRouter = Router();
 /**
  * @openapi
  * /api/status:
@@ -14,7 +11,7 @@ exports.statusRouter = (0, express_1.Router)();
  *       200:
  *         description: Status page data
  */
-exports.statusRouter.get('/', status_controller_js_1.getStatusPage);
+statusRouter.get('/', getStatusPage);
 /**
  * @openapi
  * /api/status/components:
@@ -25,7 +22,7 @@ exports.statusRouter.get('/', status_controller_js_1.getStatusPage);
  *       200:
  *         description: List of components with current status
  */
-exports.statusRouter.get('/components', async (req, res, next) => {
+statusRouter.get('/components', async (req, res, next) => {
     try {
         const { pool } = await import('../config/db.js');
         const result = await pool.query(`
@@ -60,7 +57,7 @@ exports.statusRouter.get('/components', async (req, res, next) => {
  *       200:
  *         description: Component metrics
  */
-exports.statusRouter.get('/components/:id/metrics', status_controller_js_1.getComponentMetrics);
+statusRouter.get('/components/:id/metrics', getComponentMetrics);
 /**
  * @openapi
  * /api/status/incidents:
@@ -81,7 +78,7 @@ exports.statusRouter.get('/components/:id/metrics', status_controller_js_1.getCo
  *       200:
  *         description: List of incidents
  */
-exports.statusRouter.get('/incidents', status_controller_js_1.getIncidents);
+statusRouter.get('/incidents', getIncidents);
 /**
  * @openapi
  * /api/status/maintenance:
@@ -97,7 +94,7 @@ exports.statusRouter.get('/incidents', status_controller_js_1.getIncidents);
  *       200:
  *         description: List of maintenance windows
  */
-exports.statusRouter.get('/maintenance', status_controller_js_1.getMaintenance);
+statusRouter.get('/maintenance', getMaintenance);
 /**
  * @openapi
  * /api/status/subscribe:
@@ -112,7 +109,7 @@ exports.statusRouter.get('/maintenance', status_controller_js_1.getMaintenance);
  *             schema:
  *               type: string
  */
-exports.statusRouter.get('/subscribe', async (req, res) => {
+statusRouter.get('/subscribe', async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -151,7 +148,7 @@ exports.statusRouter.get('/subscribe', async (req, res) => {
  *       201:
  *         description: View recorded
  */
-exports.statusRouter.post('/view', async (req, res, next) => {
+statusRouter.post('/view', async (req, res, next) => {
     try {
         const { pool } = await import('../config/db.js');
         const { path } = req.body;
@@ -184,7 +181,7 @@ exports.statusRouter.post('/view', async (req, res, next) => {
  *       200:
  *         description: Analytics data
  */
-exports.statusRouter.get('/analytics', async (req, res, next) => {
+statusRouter.get('/analytics', async (req, res, next) => {
     try {
         const { pool } = await import('../config/db.js');
         const days = parseInt(req.query.days) || 30;

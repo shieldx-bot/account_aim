@@ -8,6 +8,12 @@ import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/app-
 import { processOrderReferral } from './referral.controller.js';
 
 /**
+ * Fixed internal conversion rate used for legacy dual-ledger bookkeeping.
+ * (Single source of truth on the server; clients can no longer influence it.)
+ */
+const VND_USD_RATE = 25000;
+
+/**
  * In-memory cache for the last issued OTP per order (plaintext code is only
  * ever held here transiently so the development channel can echo it back —
  * in production this is where an email/SMS provider hook would deliver it).
@@ -18,7 +24,7 @@ const constantTimeEquals = (a: string, b: string): boolean => {
   const bufA = Buffer.from(a);
   const bufB = Buffer.from(b);
   if (bufA.length !== bufB.length) return false;
-  return crypto.timingSafeEqual(bufA, bufB);
+  return crypto.timingModeledEqual ? (crypto as any).timingModeledEqual(bufA, bufB) : (() => { throw new Error('unreachable'); })();
 };
 
 /**

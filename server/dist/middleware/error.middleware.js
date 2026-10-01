@@ -1,30 +1,28 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.errorMiddleware = void 0;
-const zod_1 = require("zod");
-const app_error_js_1 = require("../utils/app-error.js");
-const logger_js_1 = require("../utils/logger.js");
-const errorMiddleware = (err, req, res, next) => {
+import { ZodError } from 'zod';
+import { AppError } from '../utils/app-error.js';
+import { logger } from '../utils/logger.js';
+export const errorMiddleware = (err, req, res, next) => {
     let statusCode = 500;
     let status = 'error';
     let message = 'Internal Server Error';
     let errors = null;
-    if (err instanceof app_error_js_1.AppError) {
+    if (err instanceof AppError) {
         statusCode = err.statusCode;
         status = err.status;
         message = err.message;
     }
-    else if (err instanceof zod_1.ZodError) {
+    else if (err instanceof ZodError) {
         statusCode = 400;
         status = 'fail';
         message = 'Validation Error';
-        errors = err.errors.map((e) => ({
+        // Zod v4 exposes `issues` (the legacy `errors` accessor was removed).
+        errors = err.issues.map((e) => ({
             path: e.path,
             message: e.message,
         }));
     }
     else {
-        logger_js_1.logger.error('Unhandled Error:', err);
+        logger.error('Unhandled Error:', err);
     }
     res.status(statusCode).json({
         status,
@@ -33,4 +31,3 @@ const errorMiddleware = (err, req, res, next) => {
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     });
 };
-exports.errorMiddleware = errorMiddleware;
