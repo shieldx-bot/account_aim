@@ -64,6 +64,19 @@ ENCRYPTION_KEY=<key-mới> node scripts/encrypt-existing-passwords.mjs
 1. Tài khoản Resend → verify domain → DKIM/SPF.
 2. `RESEND_API_KEY` + `MAIL_FROM=AgentLab <no-reply@<domain-đã-verify>>`.
 
+## 5a. Frontend — GitHub Pages (labagent24.github.io)
+
+Repo: `labagent24.github.io` (user site). Pipeline `.github/workflows/deploy-pages.yml`
+tự build + deploy khi push nhánh `main`.
+
+1. **Settings → Pages → Source = "GitHub Actions"** (không dùng "Deploy from branch").
+2. **Settings → Secrets and variables → Actions → Variables** → thêm:
+   - `VITE_API_BASE` = `https://<backend-của-bạn>/api` (vd: URL Railway). Bỏ trống workflow sẽ fail có chủ đích.
+3. Workflow tự tạo `404.html` (SPA fallback cho deep-link như `/checkout`, `/order/success/...`) và `.nojekyll`.
+4. Backend phải cho phép CORS từ Pages — trên Railway set:
+   - `CORS_ORIGIN=https://labagent24.github.io`
+   - `APP_URL=https://labagent24.github.io` (dùng làm return_url PayPal)
+
 ## 5. Frontend — Vercel
 
 1. Import repo vào Vercel (framework: Vite, root = thư mục gốc).

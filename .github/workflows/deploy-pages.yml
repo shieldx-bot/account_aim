@@ -1,0 +1,64 @@
+name: Deploy frontend to GitHub Pages
+
+# Builds the Vite SPA and publishes it to GitHub Pages (user/organization site
+# labagent24.github.io). SPA deep links work via the 404.html fallback copied
+# by the build:gh script; .nojekyll disables Jekyll processing.
+#
+# REQUIRED REPO SETTING: Settings → Pages → Source = GitHub Actions.
+#
+# REQUIRED REPO VARIABLE: Settings → Secrets and variables → Actions →
+# Variables → New repository variable:
+#   VITE_API_BASE = https://<your-backend-host>/api   (e.g. the Railway URL)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build SPA with backend API base
+        env:
+          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+        run: |
+          if [ -z "$VITE_API_BASE" ]; then
+            echo "::error::Repository variable VITE_API_BASE is not set (e.g. https://your-backend.up.railway.app/api)"
+            exit 1
+          fi
+          npm run build:gh
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
