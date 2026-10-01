@@ -95,7 +95,8 @@ export const App: React.FC = () => {
       <AuthProvider>
         <AppProvider>
           <CartProvider>
-            <BrowserRouter>
+            
+<BrowserRouter basename={import.meta.env.BASE_URL}>
               <ScrollToTop />
               <Routes>
                 {/* Public Storefront Layout Routes */}
