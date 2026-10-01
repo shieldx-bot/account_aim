@@ -1,28 +1,25 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.referralRouter = void 0;
-const express_1 = require("express");
-const referral_controller_js_1 = require("../controllers/referral.controller.js");
-const auth_middleware_js_1 = require("../middleware/auth.middleware.js");
-exports.referralRouter = (0, express_1.Router)();
+import { Router } from 'express';
+import { issueReferralCode, validateReferralCode, recordReferralClick, getMyReferralStats, } from '../controllers/referral.controller.js';
+import { authenticateToken, optionalAuth } from '../middleware/auth.middleware.js';
+export const referralRouter = Router();
 /**
  * POST /api/referral/code
  * Issue (idempotent) a personal invite code. Auth optional — anonymous users
  * can capture an email pre-registration and claim the code later.
  */
-exports.referralRouter.post('/code', auth_middleware_js_1.optionalAuth, referral_controller_js_1.issueReferralCode);
+referralRouter.post('/code', optionalAuth, issueReferralCode);
 /**
  * GET /api/referral/validate/:code
  * Public validation used by the /r/:code invite landing page.
  */
-exports.referralRouter.get('/validate/:code', referral_controller_js_1.validateReferralCode);
+referralRouter.get('/validate/:code', validateReferralCode);
 /**
  * POST /api/referral/click
  * Record an invite click → 30-day last-click attribution for the visitor session.
  */
-exports.referralRouter.post('/click', referral_controller_js_1.recordReferralClick);
+referralRouter.post('/click', recordReferralClick);
 /**
  * GET /api/referral/me
  * Referrer stats: clicks, FAB conversions, rewards earned (requires auth).
  */
-exports.referralRouter.get('/me', auth_middleware_js_1.authenticateToken, referral_controller_js_1.getMyReferralStats);
+referralRouter.get('/me', authenticateToken, getMyReferralStats);

@@ -1,51 +1,48 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.warrantyPublicRouter = exports.warrantyAdminRouter = exports.inventoryAdminRouter = void 0;
-const express_1 = require("express");
-const inventory_warranty_controller_js_1 = require("../controllers/inventory-warranty.controller.js");
-const auth_middleware_js_1 = require("../middleware/auth.middleware.js");
-exports.inventoryAdminRouter = (0, express_1.Router)();
-exports.warrantyAdminRouter = (0, express_1.Router)();
-exports.warrantyPublicRouter = (0, express_1.Router)();
+import { Router } from 'express';
+import { getInventoryAccounts, bulkImportInventory, moveInventoryPool, deleteInventoryAccount, getWarrantyTickets, createWarrantyTicket, resolveWarrantyTicket, getWarrantyQuota, } from '../controllers/inventory-warranty.controller.js';
+import { authenticateToken, requireAdmin } from '../middleware/auth.middleware.js';
+export const inventoryAdminRouter = Router();
+export const warrantyAdminRouter = Router();
+export const warrantyPublicRouter = Router();
 // ─────────── Admin: Inventory (Kho tài khoản) ───────────
 /**
  * GET /api/admin/inventory?pool=active|buffer&status=available
  * List all warehouse accounts + stock summary per tool (admin only)
  */
-exports.inventoryAdminRouter.get('/', auth_middleware_js_1.authenticateToken, auth_middleware_js_1.requireAdmin, inventory_warranty_controller_js_1.getInventoryAccounts);
+inventoryAdminRouter.get('/', authenticateToken, requireAdmin, getInventoryAccounts);
 /**
  * POST /api/admin/inventory/bulk
  * Bulk import accounts. Body: { items: [{ tool, email, pass }], pool }
  */
-exports.inventoryAdminRouter.post('/bulk', auth_middleware_js_1.authenticateToken, auth_middleware_js_1.requireAdmin, inventory_warranty_controller_js_1.bulkImportInventory);
+inventoryAdminRouter.post('/bulk', authenticateToken, requireAdmin, bulkImportInventory);
 /**
  * PATCH /api/admin/inventory/:id/pool
  * Toggle account between Kho bán (active) and Kho dự phòng (buffer)
  */
-exports.inventoryAdminRouter.patch('/:id/pool', auth_middleware_js_1.authenticateToken, auth_middleware_js_1.requireAdmin, inventory_warranty_controller_js_1.moveInventoryPool);
+inventoryAdminRouter.patch('/:id/pool', authenticateToken, requireAdmin, moveInventoryPool);
 /**
  * DELETE /api/admin/inventory/:id
  */
-exports.inventoryAdminRouter.delete('/:id', auth_middleware_js_1.authenticateToken, auth_middleware_js_1.requireAdmin, inventory_warranty_controller_js_1.deleteInventoryAccount);
+inventoryAdminRouter.delete('/:id', authenticateToken, requireAdmin, deleteInventoryAccount);
 // ─────────── Admin: Warranty (Khiếu nại bảo hành SLA) ───────────
 /**
  * GET /api/admin/warranty?status=agent_pending
  * List dispute tickets (admin only)
  */
-exports.warrantyAdminRouter.get('/', auth_middleware_js_1.authenticateToken, auth_middleware_js_1.requireAdmin, inventory_warranty_controller_js_1.getWarrantyTickets);
+warrantyAdminRouter.get('/', authenticateToken, requireAdmin, getWarrantyTickets);
 /**
  * PATCH /api/admin/warranty/:id/resolve
  * Approve override: issue replacement account from buffer pool atomically
  */
-exports.warrantyAdminRouter.patch('/:id/resolve', auth_middleware_js_1.authenticateToken, auth_middleware_js_1.requireAdmin, inventory_warranty_controller_js_1.resolveWarrantyTicket);
+warrantyAdminRouter.patch('/:id/resolve', authenticateToken, requireAdmin, resolveWarrantyTicket);
 // ─────────── Public/Customer: Warranty ───────────
 /**
  * POST /api/warranty
  * Customer files a warranty/dispute ticket against an order
  */
-exports.warrantyPublicRouter.post('/', inventory_warranty_controller_js_1.createWarrantyTicket);
+warrantyPublicRouter.post('/', createWarrantyTicket);
 /**
  * GET /api/warranty/quota?email=...
  * Daily replacement usage (source of truth = warranty_tickets table)
  */
-exports.warrantyPublicRouter.get('/quota', inventory_warranty_controller_js_1.getWarrantyQuota);
+warrantyPublicRouter.get('/quota', getWarrantyQuota);
