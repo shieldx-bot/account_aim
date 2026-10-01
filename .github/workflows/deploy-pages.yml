@@ -28,6 +28,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # The VITE_API_BASE variable is stored in the `github-pages` environment
+    # (Settings → Environments → github-pages → Environment variables), so the
+    # build job must declare the environment to see it in the `vars` context.
+    environment: github-pages
     steps:
       - uses: actions/checkout@v4
 
