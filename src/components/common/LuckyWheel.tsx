@@ -13,7 +13,7 @@ export const LUCKY_STORAGE_KEY = 'agentlab_lucky_code';
 export const WHEEL_SHOWN_KEY = 'agentlab_wheel_seen';
 export const WHEEL_DECLINED_KEY = 'agentlab_wheel_declined_at';
 const WHEEL_SOUND_KEY = 'agentlab_wheel_sound';
-const RESHOW_AFTER_MS = 24 * 60 * 60 * 1000; // "Để sau" cools down for a day
+const RESHOW_AFTER_MS = 24 * 60 * 60 * 1000; // 'Maybe later' cools down for a day
 
 interface StoredPrize {
   code: string;
@@ -329,7 +329,7 @@ export const LuckyWheelModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
         <button
           onClick={toggleSound}
           className="absolute top-3 left-3 p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-canvas cursor-pointer z-30"
-          aria-label={soundOn ? 'Tắt âm thanh' : 'Bật âm thanh'}
+          aria-label={soundOn ? 'Mute sound' : 'Unmute sound'}
         >
           {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
         </button>
@@ -347,26 +347,26 @@ export const LuckyWheelModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
         {confirmExit && !prize ? (
           <div className="py-6 z-30 relative">
             <div className="w-16 h-16 mx-auto rounded-full bg-status-warning/15 flex items-center justify-center mb-3 text-3xl">⏳</div>
-            <h2 className="text-xl font-extrabold text-text-primary">Đợi đã! Đừng bỏ lỡ…</h2>
+            <h2 className="text-xl font-extrabold text-text-primary">Wait! Don’t miss out…</h2>
             <p className="text-sm text-text-secondary mt-2 leading-relaxed">
-              Lượt quay <span className="font-bold text-status-error">miễn phí duy nhất</span> của bạn vẫn đang chờ.
-              Rời đi bây giờ = mất cơ hội giảm tới{' '}
-              <span className="font-extrabold text-status-error">{maxPercent}%</span> cho đơn hàng đầu tiên.
+              Your <span className="font-bold text-status-error">one free spin</span> is still waiting.
+              Leave now and you lose your shot at up to{' '}
+              <span className="font-extrabold text-status-error">{maxPercent}%</span> off your first order.
             </p>
             <p className="text-[11px] text-text-muted mt-2">
-              Chỉ cần {ttlMinutes} phút là đủ để quay và hoàn tất thanh toán với mức giá giảm.
+              It only takes {ttlMinutes} minutes to spin and check out at the discounted price.
             </p>
             <button
               onClick={spin}
               className="mt-5 w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-sm font-extrabold shadow-lg shadow-amber-500/40 cursor-pointer transition-all animate-pulse"
             >
-              🎡 QUAY NGAY — KHÔNG MẤT GÌ HẾT
+              🎡 SPIN NOW — IT COSTS NOTHING
             </button>
             <button
               onClick={declineForToday}
               className="mt-2.5 w-full py-2.5 rounded-xl text-xs font-semibold text-text-muted hover:text-text-secondary hover:bg-canvas cursor-pointer transition-colors"
             >
-              Vẫn bỏ qua (mã sẽ biến mất)
+              Skip anyway (the code disappears)
             </button>
           </div>
         ) : !prize ? (
@@ -374,18 +374,18 @@ export const LuckyWheelModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
           <>
             <div className="flex items-center justify-center gap-2 mb-1">
               <Sparkles className="w-4 h-4 text-accent-cyan" />
-              <p className="text-[11px] font-bold uppercase tracking-widest text-accent-cyan">Ưu đãi dành riêng cho bạn</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-accent-cyan">An offer just for you</p>
             </div>
-            <h2 className="text-xl font-extrabold text-text-primary">Vòng quay may mắn 🎡</h2>
+            <h2 className="text-xl font-extrabold text-text-primary">Lucky Wheel 🎡</h2>
             {totalIssued !== null && totalIssued > 0 && (
               <p className="text-[11px] font-semibold text-status-success mt-1">
-                🔥 {totalIssued.toLocaleString('vi-VN')} mã may mắn đã được trao — lượt của bạn đang chờ!
+                🔥 {totalIssued.toLocaleString('en-US')} lucky codes already claimed — yours is waiting!
               </p>
             )}
             <div className="mt-2 mb-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-status-warning/10 border border-status-warning/40">
               <TimerReset className="w-3.5 h-3.5 text-status-warning" />
               <span className="text-[11px] font-bold text-status-warning">
-                Mã trúng chỉ còn hiệu lực {ttlMinutes} phút — hết giờ là mất vĩnh viễn!
+                Your code only lasts {ttlMinutes} minutes — when it’s gone, it’s gone forever!
               </span>
             </div>
 
@@ -433,20 +433,20 @@ export const LuckyWheelModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
                 disabled={isSpinning}
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[68px] h-[68px] rounded-full bg-gradient-to-b from-amber-400 to-orange-500 border-4 border-white shadow-xl text-white font-black text-sm tracking-wide hover:scale-105 active:scale-95 disabled:cursor-wait transition-transform cursor-pointer z-10"
                 style={{ animation: isSpinning ? 'none' : 'hubPulse 1.8s infinite' }}
-                aria-label="Quay vòng quay"
+                aria-label="Spin the wheel"
               >
                 {isSpinning ? '…' : 'QUAY'}
               </button>
             </div>
 
             {loadError ? (
-              <p className="text-xs font-semibold text-status-error mb-3">Không kết nối được máy chủ — bấm QUAY để thử lại.</p>
+              <p className="text-xs font-semibold text-status-error mb-3">Can’t reach the server — hit SPIN to try again.</p>
             ) : (
               <p className="text-xs text-text-secondary mb-3 h-4">
                 {isSpinning ? (
-                  <span className="font-bold text-primary-blue">Đang trộn phần thưởng… nín thở nào!</span>
+                  <span className="font-bold text-primary-blue">Mixing your prize… hold your breath!</span>
                 ) : (
-                  <span>Chỉ <b>1 lượt quay</b> trên trình duyệt này — trúng gì dùng ngay nấy!</span>
+                  <span>Only <b>1 spin</b> per browser — whatever you win, use it on the spot!</span>
                 )}
               </p>
             )}
@@ -457,18 +457,18 @@ export const LuckyWheelModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
               className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-sm font-extrabold shadow-lg shadow-amber-500/40 disabled:opacity-70 transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               <Gift className="w-4 h-4" />
-              {isSpinning ? 'ĐANG QUAY…' : 'QUAY NGAY — MIỄN PHÍ'}
+              {isSpinning ? 'SPINNING…' : 'SPIN NOW — FREE'}
             </button>
             <p className="text-[10px] text-text-muted mt-3 leading-relaxed">
-              🎟️ Mã áp dụng cho 1 đơn hàng, tự xóa sau khi thanh toán thành công. Không quay = mất lượt.
+              🎟️ Code applies to 1 order and self-deletes after successful payment. No spin = no code.
             </p>
           </>
         ) : (
           /* ---------- WON: euphoria → countdown urgency → CTA ---------- */
           <div className="py-2 relative z-30">
-            <h2 className="text-xl font-extrabold text-text-primary">🎉 Chúc mừng — bạn đã trúng!</h2>
+            <h2 className="text-xl font-extrabold text-text-primary">🎉 Congratulations — you won!</h2>
             <p className="text-sm text-text-secondary mt-1">
-              Ưu đãi <span className="font-extrabold text-status-error">{prize.discountPercent}%</span> cho đơn hàng của bạn
+              <span className="font-extrabold text-status-error">{prize.discountPercent}%</span> off your order
             </p>
             <div
               className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 my-2"
@@ -479,8 +479,8 @@ export const LuckyWheelModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
 
             {expired ? (
               <div className="mt-2 p-4 rounded-xl bg-status-error/10 border border-status-error/40">
-                <p className="text-sm font-bold text-status-error">⏰ Ơ — đồng hồ đã về 0, mã này hết hạn rồi!</p>
-                <p className="text-[11px] text-text-secondary mt-1">Nhưng bạn được quay thêm lượt mới ngay bây giờ.</p>
+                <p className="text-sm font-bold text-status-error">⏰ Oops — the clock hit zero and this code has expired!</p>
+                <p className="text-[11px] text-text-secondary mt-1">But you can spin a fresh one right now.</p>
                 <button
                   onClick={() => {
                     setPrize(null);
@@ -489,7 +489,7 @@ export const LuckyWheelModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
                   }}
                   className="mt-3 w-full py-2.5 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold cursor-pointer"
                 >
-                  🎡 Quay lượt mới
+                  🎡 Spin again
                 </button>
               </div>
             ) : (
@@ -501,16 +501,16 @@ export const LuckyWheelModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
                   {prize.code}
                   {copied ? <Check className="w-4 h-4 text-status-success" /> : <Copy className="w-4 h-4" />}
                 </button>
-                <p className="text-[11px] text-text-muted mt-1.5">{copied ? '✅ Đã copy — dán vào bước thanh toán!' : 'Bấm để copy — tự động áp dụng khi thanh toán'}</p>
+                <p className="text-[11px] text-text-muted mt-1.5">{copied ? '✅ Copied — paste it at checkout!' : 'Click to copy — auto-applied at checkout'}</p>
 
                 {/* The burning countdown */}
                 <div className={`mt-3 p-3 rounded-xl border ${urgent ? 'bg-status-error/10 border-status-error/50 animate-pulse' : 'bg-status-warning/10 border-status-warning/40'}`}>
-                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-text-secondary">⏰ Mã hết hạn sau</p>
+                  <p className="text-[10px] font-extrabold uppercase tracking-widest text-text-secondary">⏰ CODE EXPIRES IN</p>
                   <p className={`text-3xl font-black font-mono tabular-nums ${urgent ? 'text-status-error' : 'text-status-warning'}`}>
                     {timeLabel}
                   </p>
                   <p className="text-[11px] font-semibold text-text-secondary mt-1">
-                    Về 0 = mã <span className="text-status-error font-bold">biến mất vĩnh viễn</span>. Thanh toán ngay để khóa mức giá này!
+                    At 0:00 the code is <span className="text-status-error font-bold">gone forever</span>. Pay now to lock in this price!
                   </p>
                 </div>
 
@@ -521,10 +521,10 @@ export const LuckyWheelModal: React.FC<{ onClose: () => void }> = ({ onClose }) 
                   }}
                   className="mt-4 w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-sm font-extrabold shadow-lg shadow-emerald-500/40 cursor-pointer transition-all animate-pulse"
                 >
-                  ⚡ MUA NGAY VỚI GIÁ GIẢM →
+                  ⚡ BUY NOW WITH YOUR DISCOUNT →
                 </button>
                 <p className="text-[10px] text-text-muted mt-2.5">
-                  🔒 Mã dành riêng cho trình duyệt này · dùng cho 1 đơn hàng · thanh toán bằng PayPal
+                  🔒 Exclusive to this browser · 1 order only · paid via PayPal
                 </p>
               </>
             )}
@@ -564,10 +564,10 @@ export const LuckyBadge: React.FC = () => {
             window.dispatchEvent(new CustomEvent('agentlab:lucky-expired'));
           }}
           className="flex items-center gap-2 px-3 py-2 rounded-xl bg-status-warning/95 hover:bg-status-warning text-white shadow-lg shadow-status-warning/40 cursor-pointer transition-all hover:scale-105"
-          title="Mã cũ đã hết hạn — bấm để quay lượt mới!"
+          title="Your old code expired — click to spin a fresh one!"
         >
           <TimerReset className="w-4 h-4 shrink-0" />
-          <span className="text-[11px] font-extrabold">Mã hết hạn — Quay lại? 🎡</span>
+          <span className="text-[11px] font-extrabold">Code expired — Spin again? 🎡</span>
         </button>
       </div>
     );
@@ -584,7 +584,7 @@ export const LuckyBadge: React.FC = () => {
         className={`group flex items-center gap-2 px-3 py-2 rounded-xl text-white shadow-lg cursor-pointer transition-all hover:scale-105 ${
           urgent ? 'bg-status-error hover:bg-status-error shadow-status-error/50 animate-pulse' : 'bg-status-success/95 hover:bg-status-success shadow-status-success/40'
         }`}
-        title={copied ? 'Đã copy!' : 'Bấm để copy mã giảm giá'}
+        title={copied ? 'Copied!' : 'Click to copy your discount code'}
       >
         <Gift className="w-4 h-4 shrink-0" />
         <span className="text-[11px] font-extrabold leading-tight">

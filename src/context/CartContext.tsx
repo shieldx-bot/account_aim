@@ -134,7 +134,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setCouponExpiresAt(null);
       if (err?.reason === 'expired') {
         // Loss-aversion re-engagement: a lapsed code should end at the wheel, not a dead end.
-        return { success: false, message: '⏰ Mã đã hết hạn 😥 — về trang chủ quay Vòng quay may mắn để nhận mã mới (vẫn miễn phí)!' };
+        return { success: false, message: '⏰ This code has expired 😥 — spin the Lucky Wheel on the home page for a fresh one (still free)!' };
       }
       return { success: false, message: err.message || 'This discount code is invalid or has expired.' };
     }

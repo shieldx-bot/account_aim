@@ -54,7 +54,7 @@ export const CheckoutPage: React.FC = () => {
     setCouponMsg({
       ok: r.success,
       text: r.success
-        ? `✅ Đã áp dụng ${code.toUpperCase()} — hoàn tất thanh toán ngay trước khi mã hết hạn!`
+        ? `✅ ${code.toUpperCase()} applied — complete your checkout before it expires!`
         : r.message,
     });
     if (r.success) setCouponInput('');
@@ -64,7 +64,7 @@ export const CheckoutPage: React.FC = () => {
   const handleRemoveCoupon = () => {
     removeCoupon();
     localStorage.removeItem(LUCKY_STORAGE_KEY); // removing the wheel prize retires it too
-    setCouponMsg({ ok: true, text: 'Đã gỡ mã giảm giá khỏi đơn hàng.' });
+    setCouponMsg({ ok: true, text: 'Discount code removed from this order.' });
   };
 
   // Auto-apply the Lucky Wheel coupon (first-order prize, one order only).
@@ -82,7 +82,7 @@ export const CheckoutPage: React.FC = () => {
           clearStoredPrize();
           setCouponMsg({
             ok: false,
-            text: '⏰ Mã vòng quay đã hết hạn 😥 — về trang chủ quay vòng quay để nhận mã mới (vẫn miễn phí)!',
+            text: '⏰ Your wheel code has expired 😥 — spin the Lucky Wheel on the home page for a fresh one (still free)!',
           });
         }
       });
@@ -438,10 +438,10 @@ export const CheckoutPage: React.FC = () => {
                   <TicketPercent className={`w-4 h-4 shrink-0 ${couponExpired ? 'text-status-error' : 'text-status-success'}`} />
                   <div className="text-xs">
                     <span className={`font-mono font-extrabold ${couponExpired ? 'text-status-error line-through' : 'text-status-success'}`}>{couponCode}</span>
-                    {!couponExpired && <span className="text-text-secondary"> — giảm {couponDiscountPercent}% đã áp dụng</span>}
+                    {!couponExpired && <span className="text-text-secondary"> — {couponDiscountPercent}% off applied</span>}
                     {couponCode.startsWith('LUCKY-') && (
                       <span className="block text-[10px] text-text-muted mt-0.5">
-                        🎡 Mã vòng quay may mắn — áp dụng cho 1 đơn hàng, tự xóa sau khi thanh toán.
+                        🎡 Lucky Wheel prize — applies to 1 order, self-deletes after payment.
                       </span>
                     )}
                   </div>
@@ -451,7 +451,7 @@ export const CheckoutPage: React.FC = () => {
                   onClick={handleRemoveCoupon}
                   className="text-[11px] font-bold text-status-error hover:underline cursor-pointer shrink-0"
                 >
-                  Gỡ mã
+                  Remove
                 </button>
               </div>
 
@@ -460,7 +460,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className="mt-3 pt-3 border-t border-border-subtle flex items-center justify-between gap-3">
                   <div className="flex items-center gap-1.5">
                     <Clock className={`w-3.5 h-3.5 ${couponUrgent ? 'text-status-error' : 'text-status-warning'}`} />
-                    <span className="text-[11px] font-semibold text-text-secondary">Mã hết hạn sau</span>
+                    <span className="text-[11px] font-semibold text-text-secondary">Code expires in</span>
                   </div>
                   <span className={`font-mono font-black tabular-nums text-lg ${couponUrgent ? 'text-status-error' : 'text-status-warning'}`}>
                     {couponTimeLeft}
@@ -470,12 +470,12 @@ export const CheckoutPage: React.FC = () => {
 
               {couponExpired ? (
                 <p className="text-[11px] font-bold text-status-error mt-2">
-                  ⏰ Mã này đã hết hạn — gỡ mã và về trang chủ quay Vòng quay may mắn để nhận mã mới (vẫn miễn phí)!
+                  ⏰ This code has expired — remove it and spin the Lucky Wheel on the home page for a fresh one (still free)!
                 </p>
               ) : (
                 orderDiscountUSD > 0 && (
                   <p className="text-[11px] font-semibold text-status-error mt-2.5">
-                    ❗ Gỡ mã = bạn tự bỏ lỡ {orderDiscountUSD.toFixed(2)} USD ưu đãi cho đơn này.
+                    ❗ Removing this code means giving up ${orderDiscountUSD.toFixed(2)} in savings on this order.
                   </p>
                 )
               )}
@@ -484,14 +484,14 @@ export const CheckoutPage: React.FC = () => {
             <div className="p-4 rounded-xl bg-surface border border-border-subtle">
               <div className="flex items-center gap-2 text-xs font-semibold text-text-primary mb-2">
                 <TicketPercent className="w-4 h-4 text-primary-blue" />
-                <span>Mã giảm giá</span>
+                <span>Discount code</span>
               </div>
               <div className="flex gap-2">
                 <input
                   value={couponInput}
                   onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                   onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-                  placeholder="VD: LUCKY-1A2B3C (quay vòng quay ở trang chủ)"
+                  placeholder="e.g. LUCKY-1A2B3C (spin the wheel on the home page)"
                   className="flex-1 px-3 py-2 rounded-lg bg-canvas border border-border-subtle text-xs text-text-primary font-mono placeholder:normal-case placeholder:font-sans focus:outline-none focus:border-primary-blue"
                 />
                 <button
@@ -501,7 +501,7 @@ export const CheckoutPage: React.FC = () => {
                   className="px-4 py-2 rounded-lg bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
                 >
                   {isApplyingCoupon ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <TicketPercent className="w-3.5 h-3.5" />}
-                  Áp dụng
+                  Apply
                 </button>
               </div>
               {couponMsg && (
@@ -566,7 +566,7 @@ export const CheckoutPage: React.FC = () => {
                 </div>
                 {orderDiscountUSD > 0 && (
                   <span className="text-[11px] font-bold text-status-success">
-                    🎟️ Đã giảm {orderDiscountUSD.toFixed(2)} USD ({couponDiscountPercent}%){couponCode ? ` — ${couponCode}` : ''}
+                    🎟️ You saved ${orderDiscountUSD.toFixed(2)} ({couponDiscountPercent}%){couponCode ? ` — ${couponCode}` : ''}
                   </span>
                 )}
               </div>
@@ -755,7 +755,7 @@ export const CheckoutPage: React.FC = () => {
 
             {orderDiscountUSD > 0 && (
               <div className="pb-2 flex items-center justify-between text-xs">
-                <span className="text-text-secondary">Giảm giá ({couponDiscountPercent}%){couponCode ? ` · ${couponCode}` : ''}:</span>
+                <span className="text-text-secondary">Discount ({couponDiscountPercent}%){couponCode ? ` · ${couponCode}` : ''}:</span>
                 <span className="font-mono font-bold text-status-success">-${orderDiscountUSD.toFixed(2)}</span>
               </div>
             )}

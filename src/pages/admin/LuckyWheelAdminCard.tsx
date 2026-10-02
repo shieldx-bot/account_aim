@@ -43,9 +43,9 @@ export const LuckyWheelAdminCard: React.FC = () => {
         body: JSON.stringify({ active, segments, couponTtlMinutes: ttlMinutes }),
       });
       const body = await res.json();
-      setMessage(res.ok ? '✅ Đã lưu cấu hình vòng quay' : `❌ ${body?.message || 'Lưu thất bại'}`);
+      setMessage(res.ok ? '✅ Wheel configuration saved' : `❌ ${body?.message || 'Save failed'}`);
     } catch {
-      setMessage('❌ Không kết nối được máy chủ');
+      setMessage('❌ Cannot reach the server');
     } finally {
       setSaving(false);
       setTimeout(() => setMessage(null), 3000);
@@ -62,18 +62,18 @@ export const LuckyWheelAdminCard: React.FC = () => {
             <Gift className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase text-text-muted">Vòng quay may mắn</p>
-            <p className="text-xs font-bold text-text-primary">Tỉ lệ trúng thưởng từng mức giảm giá</p>
+            <p className="text-[11px] font-bold uppercase text-text-muted">Lucky Wheel</p>
+            <p className="text-xs font-bold text-text-primary">Win odds per discount tier</p>
           </div>
         </div>
         <label className="flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="accent-primary-blue" />
-          Bật vòng quay
+          Wheel enabled
         </label>
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-text-muted py-3"><Loader2 className="w-4 h-4 animate-spin" /> Đang tải…</div>
+        <div className="flex items-center gap-2 text-text-muted py-3"><Loader2 className="w-4 h-4 animate-spin" /> Loading…</div>
       ) : (
         <>
           <div className="space-y-1.5 mb-4 max-h-56 overflow-y-auto pr-1">
@@ -102,7 +102,7 @@ export const LuckyWheelAdminCard: React.FC = () => {
 
           <div className="flex items-center gap-3 mb-4">
             <label className="flex items-center gap-2 flex-1">
-              <span className="text-[11px] font-semibold text-text-primary whitespace-nowrap">⏳ Hạn mã sau khi quay (phút):</span>
+              <span className="text-[11px] font-semibold text-text-primary whitespace-nowrap">⏳ Code lifetime after spin (minutes):</span>
               <input
                 type="number"
                 min={5}
@@ -113,13 +113,13 @@ export const LuckyWheelAdminCard: React.FC = () => {
               />
             </label>
             <span className="text-[10px] text-text-muted">
-              {ttlMinutes < 60 ? `${ttlMinutes} phút` : `${(ttlMinutes / 60).toFixed(1)} giờ`} — ngắn hơn = khẩn cấp hơn (khuyến nghị 10–30)
+              {ttlMinutes < 60 ? `${ttlMinutes} min` : `${(ttlMinutes / 60).toFixed(1)} hr`} — shorter = more urgent (recommended 10–30)
             </span>
           </div>
 
           <div className="flex items-center justify-between gap-3">
             <span className="text-[10px] text-text-muted">
-              Trọng số là tương đối — tổng {total} điểm. Cao hơn = dễ trúng hơn.
+              Weights are relative — {total} points total. Higher = more likely to win.
             </span>
             <button
               onClick={save}
@@ -127,7 +127,7 @@ export const LuckyWheelAdminCard: React.FC = () => {
               className="px-4 py-2 rounded-xl bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
             >
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              Lưu
+              Save
             </button>
           </div>
           {message && <p className="mt-2 text-[11px] font-semibold text-text-primary">{message}</p>}

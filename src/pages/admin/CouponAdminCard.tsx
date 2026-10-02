@@ -14,16 +14,16 @@ function statusOf(c: AdminCoupon): CouponStatus {
 }
 
 const STATUS_META: Record<CouponStatus, { label: string; cls: string }> = {
-  live: { label: 'Đang chạy', cls: 'bg-status-success/15 text-status-success border-status-success/40' },
-  expired: { label: 'Hết hạn', cls: 'bg-status-error/10 text-status-error border-status-error/40' },
-  off: { label: 'Đã tắt', cls: 'bg-canvas text-text-muted border-border-subtle' },
-  used: { label: 'Đã dùng', cls: 'bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30' },
+  live: { label: 'Active', cls: 'bg-status-success/15 text-status-success border-status-success/40' },
+  expired: { label: 'Expired', cls: 'bg-status-error/10 text-status-error border-status-error/40' },
+  off: { label: 'Disabled', cls: 'bg-canvas text-text-muted border-border-subtle' },
+  used: { label: 'Used', cls: 'bg-accent-cyan/10 text-accent-cyan border-accent-cyan/30' },
 };
 
 const fmtLocal = (iso: string | null) =>
   iso
-    ? new Date(iso).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })
-    : 'Không hạn';
+    ? new Date(iso).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })
+    : 'No expiry';
 
 /** ISO → value for <input type="datetime-local"> (local time, minute precision). */
 const toLocalInput = (iso: string | null) => {
@@ -36,11 +36,11 @@ const toLocalInput = (iso: string | null) => {
 const fromLocalInput = (v: string) => (v ? new Date(v).toISOString() : null);
 
 const PRESETS: Array<{ label: string; minutes: number | null }> = [
-  { label: '+15 phút', minutes: 15 },
-  { label: '+1 giờ', minutes: 60 },
-  { label: '+24 giờ', minutes: 24 * 60 },
-  { label: '+7 ngày', minutes: 7 * 24 * 60 },
-  { label: 'Không hạn', minutes: null },
+  { label: '+15 min', minutes: 15 },
+  { label: '+1 hr', minutes: 60 },
+  { label: '+24 hr', minutes: 24 * 60 },
+  { label: '+7 days', minutes: 7 * 24 * 60 },
+  { label: 'No expiry', minutes: null },
 ];
 
 const CouponRow: React.FC<{
@@ -82,7 +82,7 @@ const CouponRow: React.FC<{
       onUpdated(updated);
       setEditing(false);
     } catch (err: any) {
-      onError(err.message || 'Cập nhật thất bại.');
+      onError(err.message || 'Update failed.');
     } finally {
       setSaving(false);
     }
@@ -95,7 +95,7 @@ const CouponRow: React.FC<{
       setCoupon(updated);
       onUpdated(updated);
     } catch (err: any) {
-      onError(err.message || 'Cập nhật thất bại.');
+      onError(err.message || 'Update failed.');
     } finally {
       setSaving(false);
     }
@@ -109,7 +109,7 @@ const CouponRow: React.FC<{
           <span className="px-1.5 py-0.5 rounded bg-primary-blue/10 text-primary-blue text-[10px] font-bold">
             -{coupon.discountPercent}%
           </span>
-          <span className="text-[10px] text-text-muted" title={coupon.source === 'wheel' ? 'Mã vòng quay (theo từng khách)' : 'Mã thủ công'}>
+          <span className="text-[10px] text-text-muted" title={coupon.source === 'wheel' ? 'Wheel prize (per visitor)' : 'Manual code'}>
             {coupon.source === 'wheel' ? '🎡 wheel' : '✋ manual'}
           </span>
         </div>
@@ -120,7 +120,7 @@ const CouponRow: React.FC<{
             disabled={editing}
             className="px-2 py-1 rounded-lg bg-primary-blue/10 hover:bg-primary-blue/20 text-primary-blue text-[10px] font-bold cursor-pointer flex items-center gap-1 disabled:opacity-50"
           >
-            <CalendarClock className="w-3 h-3" /> Sửa hạn
+            <CalendarClock className="w-3 h-3" /> Edit expiry
           </button>
           <button
             onClick={toggleActive}
@@ -129,21 +129,21 @@ const CouponRow: React.FC<{
               coupon.active ? 'bg-status-error/10 text-status-error hover:bg-status-error/20' : 'bg-status-success/10 text-status-success hover:bg-status-success/20'
             }`}
           >
-            {coupon.active ? 'Tắt' : 'Bật'}
+            {coupon.active ? 'Disable' : 'Enable'}
           </button>
         </div>
       </div>
 
       <div className="mt-1.5 flex items-center gap-2 text-[10px] text-text-muted flex-wrap">
         <span>
-          Hạn: <b className={expired && status !== 'used' ? 'text-status-error' : 'text-text-secondary'}>{fmtLocal(coupon.expiresAt)}</b>
+          Expires: <b className={expired && status !== 'used' ? 'text-status-error' : 'text-text-secondary'}>{fmtLocal(coupon.expiresAt)}</b>
         </span>
         {status === 'live' && timeLeft && (
           <span className={`font-mono font-bold ${timeLeft.startsWith('00') || Number(timeLeft.split(':')[0]) < 5 ? 'text-status-warning' : ''}`}>
-            (còn {timeLeft})
+            ({timeLeft} left)
           </span>
         )}
-        {coupon.usedByOrder && <span className="font-mono">· đơn {coupon.usedByOrder}</span>}
+        {coupon.usedByOrder && <span className="font-mono">· order {coupon.usedByOrder}</span>}
       </div>
 
       {editing && (
@@ -155,7 +155,7 @@ const CouponRow: React.FC<{
               onChange={(e) => setEditValue(e.target.value)}
               className="px-2 py-1.5 rounded-lg bg-surface border border-border-subtle text-[11px] font-mono text-text-primary focus:outline-none focus:border-primary-blue"
             />
-            <span className="text-[10px] text-text-muted">để trống = không có hạn</span>
+            <span className="text-[10px] text-text-muted">clear = no expiry</span>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             {PRESETS.map((p) => (
@@ -174,13 +174,13 @@ const CouponRow: React.FC<{
               disabled={saving}
               className="px-3 py-1.5 rounded-lg bg-primary-blue hover:bg-primary-hover text-white text-[10px] font-bold cursor-pointer flex items-center gap-1 disabled:opacity-50"
             >
-              {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} Lưu hạn mới
+              {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />} Save new expiry
             </button>
             <button
               onClick={() => setEditing(false)}
               className="px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-text-muted hover:text-text-primary hover:bg-surface cursor-pointer flex items-center gap-1"
             >
-              <X className="w-3 h-3" /> Hủy
+              <X className="w-3 h-3" /> Cancel
             </button>
           </div>
         </div>
@@ -225,16 +225,16 @@ export const CouponAdminCard: React.FC = () => {
             <TicketPercent className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[11px] font-bold uppercase text-text-muted">Quản lý mã giảm giá</p>
+            <p className="text-[11px] font-bold uppercase text-text-muted">Discount code manager</p>
             <p className="text-xs font-bold text-text-primary">
-              {liveCount} đang chạy · {coupons.length} mã gần nhất
+              {liveCount} active · latest {coupons.length} codes
             </p>
           </div>
         </div>
         <button
           onClick={load}
           className="p-2 rounded-lg hover:bg-canvas text-text-muted hover:text-text-primary cursor-pointer"
-          title="Tải lại danh sách"
+          title="Reload list"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
         </button>
@@ -246,7 +246,7 @@ export const CouponAdminCard: React.FC = () => {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value.toUpperCase())}
-            placeholder="Tìm mã… (VD: LUCKY-1A2B3C)"
+            placeholder="Search code… (e.g. LUCKY-1A2B3C)"
             className="w-full pl-8 pr-3 py-2 rounded-lg bg-canvas border border-border-subtle text-xs font-mono text-text-primary placeholder:font-sans placeholder:normal-case focus:outline-none focus:border-primary-blue"
           />
         </div>
@@ -256,10 +256,10 @@ export const CouponAdminCard: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center gap-2 text-text-muted py-3">
-          <Loader2 className="w-4 h-4 animate-spin" /> Đang tải…
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading…
         </div>
       ) : filtered.length === 0 ? (
-        <p className="text-[11px] text-text-muted py-3">Không có mã nào khớp.</p>
+        <p className="text-[11px] text-text-muted py-3">No matching codes.</p>
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
           {filtered.map((c) => (
@@ -275,7 +275,7 @@ export const CouponAdminCard: React.FC = () => {
       )}
 
       <p className="mt-3 text-[10px] text-text-muted leading-relaxed">
-        💡 Sửa hạn từng mã (gia hạn cho khách khi hỗ trợ). TTL mặc định cho lượt quay mới chỉnh ở card <b>Vòng quay may mắn</b> phía trên.
+        💡 Edit each code's expiry (extend a customer's prize during support). The default TTL for new spins lives in the <b>Lucky Wheel</b> card above.
       </p>
     </div>
   );
