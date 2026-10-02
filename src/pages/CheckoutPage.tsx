@@ -99,6 +99,14 @@ export const CheckoutPage: React.FC = () => {
   // Generate deterministic order id (will be replaced by server response)
   const orderId = useRef(`AGTLAB-${Math.floor(10000 + Math.random() * 90000)}`).current;
 
+  // The PayPal SDK Buttons keep the callbacks they were mounted with, so every
+  // value those callbacks read must come through this ref. Reading state
+  // directly would freeze the values from the first render — an order placed
+  // after the coupon was applied would still be created with couponCode = null
+  // and PayPal would charge the undiscounted amount.
+  const paypalInputsRef = useRef({ user, token, couponCode, items, activeConfig });
+  paypalInputsRef.current = { user, token, couponCode, items, activeConfig };
+
   // Determine if we're using cart mode or single-product mode
   const isCartMode = items.length > 0;
 
@@ -160,6 +168,10 @@ export const CheckoutPage: React.FC = () => {
    * never dictates the amount).
    */
   const createPendingOrder = async (): Promise<string> => {
+    // Read through the ref so the PayPal SDK's mounted callbacks always see
+    // the latest auth state and coupon.
+    const { user, token, couponCode, items, activeConfig } = paypalInputsRef.current;
+    const isCartMode = items.length > 0;
     if (!user || !token) {
       navigate('/login', { state: { from: '/checkout' } });
       throw new Error('Not authenticated');
@@ -254,7 +266,8 @@ export const CheckoutPage: React.FC = () => {
       .Buttons({
         style: { layout: 'vertical', label: 'paypal', height: 45 },
         createOrder: async (): Promise<string> => {
-          if (!token) {
+          const currentToken = paypalInputsRef.current.token;
+          if (!currentToken) {
             navigate('/login', { state: { from: '/checkout' } });
             throw new Error('Please sign in to continue.');
           }
@@ -269,14 +282,15 @@ export const CheckoutPage: React.FC = () => {
           }
           const pendingOrderId = await createPendingOrder();
           trackEvent('begin_paypal_checkout', { order_id: pendingOrderId, amount_usd: totalAmountUSD });
-          const pp = await paymentsApi.createPaypalOrder(token, pendingOrderId);
+          const pp = await paymentsApi.createPaypalOrder(currentToken, pendingOrderId);
           lastPendingOrderIdRef.current = pendingOrderId;
           return pp.paypalOrderId;
         },
         onApprove: async (data: { orderID: string }) => {
-          if (!token) throw new Error('Session expired — please sign in again.');
+          const approveToken = paypalInputsRef.current.token;
+          if (!approveToken) throw new Error('Session expired — please sign in again.');
           setProcessStage('capturing');
-          await paymentsApi.capturePaypalOrder(token, data.orderID);
+          await paymentsApi.capturePaypalOrder(approveToken, data.orderID);
           setProcessStage('completed');
           setPaymentSuccess(true);
           clearCart();
