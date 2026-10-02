@@ -114,8 +114,22 @@ export const ProductsPage: React.FC = () => {
     return counts;
   }, [products]);
 
-  // Products for the current page come from the API (paginated + server-filtered)
-  const filteredProducts = serverProducts;
+  // Products for the current page come from the API (paginated + server-filtered).
+  // Client-side safety net: older backends return the full list, so filter locally too.
+  const filteredProducts = useMemo(
+    () =>
+      serverProducts.filter((prod) => {
+        const matchCat = activeCategory === 'all' || prod.category === activeCategory;
+        const q = debouncedSearch.toLowerCase();
+        const matchSearch =
+          !q ||
+          prod.name.toLowerCase().includes(q) ||
+          prod.brand.toLowerCase().includes(q) ||
+          prod.slug.toLowerCase().includes(q);
+        return matchCat && matchSearch;
+      }),
+    [serverProducts, activeCategory, debouncedSearch]
+  );
   const rangeStart = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, totalCount);
 
