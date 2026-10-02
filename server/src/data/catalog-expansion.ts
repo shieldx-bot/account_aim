@@ -20,7 +20,7 @@ export interface SeedProduct {
   name: string;
   brand: string;
   brandLogo: string;
-  category: 'coding' | 'llm' | 'search' | 'design' | 'creative' | 'enterprise';
+  category: 'coding' | 'llm' | 'search' | 'design' | 'creative' | 'enterprise' | 'education';
   originalPriceVND: number;
   currentPriceVND: number;
   originalPriceUSD: number;

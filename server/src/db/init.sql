@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS products (
     name VARCHAR(255) NOT NULL,
     brand VARCHAR(100) NOT NULL,
     brand_logo VARCHAR(500) NOT NULL,
-    category VARCHAR(50) NOT NULL CHECK (category IN ('coding', 'llm', 'search', 'design', 'creative', 'enterprise', 'bundle')),
+    category VARCHAR(50) NOT NULL CHECK (category IN ('coding', 'llm', 'search', 'design', 'creative', 'enterprise', 'education', 'bundle')),
     original_price_vnd BIGINT NOT NULL,
     current_price_vnd BIGINT NOT NULL,
     original_price_usd NUMERIC(10, 2) NOT NULL,

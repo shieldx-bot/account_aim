@@ -9,7 +9,7 @@ export const VND_PER_USD = 25000;
 /** Derive a legacy *_VND value from a USD amount. */
 export const usdToVnd = (usd: number): number => Math.round(usd * VND_PER_USD);
 
-export type ProductCategory = 'all' | 'coding' | 'llm' | 'search' | 'design' | 'creative' | 'enterprise';
+export type ProductCategory = 'all' | 'coding' | 'llm' | 'search' | 'design' | 'creative' | 'enterprise' | 'education';
 
 export interface ProductPlan {
   id: string;

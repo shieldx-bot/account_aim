@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
-import { ProductCategory } from '@/types';
+import { ProductCategory, ProductPlan } from '@/types';
 import { FilterPillsBar, SortOption } from '@/components/home/FilterPillsBar';
 import { ProductCard } from '@/components/home/ProductCard';
 import { LiveStockBanner } from '@/components/home/LiveStockBanner';
@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Layers,
   ArrowRight,
+  ChevronLeft,
 } from 'lucide-react';
 
 export const ProductsPage: React.FC = () => {
@@ -31,9 +32,61 @@ export const ProductsPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'compact'>('grid');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  // Server-side pagination: only the current page is fetched from the API
+  const PAGE_SIZE = 24;
+  const [page, setPage] = useState(1);
+  const [serverProducts, setServerProducts] = useState<ProductPlan[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
   useEffect(() => {
     document.title = 'Official AgentLab License Accounts | AgentLab';
   }, []);
+
+  // Debounce search input so we do not hit the API on every keystroke
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  // Reset to first page whenever filters change
+  useEffect(() => {
+    setPage(1);
+  }, [activeCategory, debouncedSearch, sortBy]);
+
+  // Fetch the current page from the API (category + search + sort are server-side)
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setIsPageLoading(true);
+      try {
+        const qs = new URLSearchParams({
+          page: String(page),
+          limit: String(PAGE_SIZE),
+          category: activeCategory,
+          sort: sortBy,
+        });
+        if (debouncedSearch) qs.set('search', debouncedSearch);
+        const res = await fetch(`${import.meta.env.VITE_API_BASE || '/api'}/products?${qs}`);
+        const body = await res.json();
+        if (!cancelled && body.success) {
+          setServerProducts(body.data || []);
+          setTotalCount(body.count || 0);
+          setTotalPages(body.totalPages || 1);
+        }
+      } catch {
+        if (!cancelled) setServerProducts([]);
+      } finally {
+        if (!cancelled) setIsPageLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [page, activeCategory, debouncedSearch, sortBy]);
 
   // Sync category param with URL if needed
   useEffect(() => {
@@ -61,34 +114,15 @@ export const ProductsPage: React.FC = () => {
     return counts;
   }, [products]);
 
-  // Filtered and sorted products
-  const filteredProducts = useMemo(() => {
-    const list = products.filter((prod) => {
-      const matchCat = activeCategory === 'all' || prod.category === activeCategory;
-      const matchSearch =
-        prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prod.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prod.slug.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prod.quotaFeatures.some((f) => f.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchCat && matchSearch;
-    });
+  // Products for the current page come from the API (paginated + server-filtered)
+  const filteredProducts = serverProducts;
+  const rangeStart = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, totalCount);
 
-    return list.sort((a, b) => {
-      switch (sortBy) {
-        case 'price_asc':
-          return a.currentPriceVND - b.currentPriceVND;
-        case 'price_desc':
-          return b.currentPriceVND - a.currentPriceVND;
-        case 'discount':
-          return b.discountPercent - a.discountPercent;
-        case 'stock':
-          return b.stockCount - a.stockCount;
-        case 'popular':
-        default:
-          return 0;
-      }
-    });
-  }, [products, activeCategory, searchQuery, sortBy]);
+  const goToPage = (p: number) => {
+    setPage(Math.min(Math.max(1, p), totalPages));
+    window.scrollTo({ top: 300, behavior: 'smooth' });
+  };
 
   const clearFilters = () => {
     setActiveCategory('all');
@@ -194,8 +228,8 @@ export const ProductsPage: React.FC = () => {
         <div className="flex items-center justify-between text-xs text-text-muted mb-6 pb-3 border-b border-border-subtle/60">
           <div className="flex items-center gap-2">
             <span>
-              Showing <span className="font-bold text-text-primary font-mono">{filteredProducts.length}</span> of{' '}
-              <span className="font-bold text-text-primary font-mono">{products.length}</span> products
+              Showing <span className="font-bold text-text-primary font-mono">{rangeStart}–{rangeEnd}</span> of{' '}
+              <span className="font-bold text-text-primary font-mono">{totalCount}</span> products
             </span>
             {activeCategory !== 'all' && (
               <span className="px-2 py-0.5 rounded-md bg-primary-blue/15 text-accent-cyan border border-primary-blue/30 font-mono text-[11px]">
@@ -221,7 +255,7 @@ export const ProductsPage: React.FC = () => {
         </div>
 
         {/* Product Cards Container */}
-        {isLoadingProducts ? (
+        {isLoadingProducts || isPageLoading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
             <div className="w-10 h-10 border-2 border-primary-blue border-t-accent-cyan rounded-full animate-spin" />
             <span className="text-xs font-mono text-text-muted">Loading catalog from database...</span>
@@ -255,6 +289,45 @@ export const ProductsPage: React.FC = () => {
               <ProductCard key={product.id} product={product} compact={false} />
             ))}
           </div>
+        )}
+
+        {/* Pagination */}
+        {!isPageLoading && totalCount > 0 && (
+          <nav className="mt-10 flex items-center justify-center gap-1.5 flex-wrap" aria-label="Catalog pagination">
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1}
+              className="px-3 py-2 rounded-lg border border-border-subtle bg-surface text-xs font-mono text-text-secondary hover:border-accent-cyan/40 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+              .map((n, idx, arr) => (
+                <React.Fragment key={n}>
+                  {idx > 0 && arr[idx - 1] !== n - 1 && (
+                    <span className="px-1 text-text-muted font-mono text-xs">…</span>
+                  )}
+                  <button
+                    onClick={() => goToPage(n)}
+                    className={`w-9 h-9 rounded-lg text-xs font-mono transition-all ${
+                      n === page
+                        ? 'bg-primary-blue text-white font-bold shadow-[0_0_12px_rgba(99,91,255,0.35)]'
+                        : 'border border-border-subtle bg-surface text-text-secondary hover:border-accent-cyan/40'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                </React.Fragment>
+              ))}
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages}
+              className="px-3 py-2 rounded-lg border border-border-subtle bg-surface text-xs font-mono text-text-secondary hover:border-accent-cyan/40 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-1"
+            >
+              Next <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </nav>
         )}
 
         {/* Why Choose AgentLab Trust Grid */}

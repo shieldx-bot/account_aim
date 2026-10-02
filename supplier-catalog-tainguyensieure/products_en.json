@@ -1,0 +1,2053 @@
+{
+  "meta": {
+    "source": "tainguyensieure.com — /tai-khoan-premium/ pages 1-4",
+    "crawled": "2026-10-02",
+    "fx_rate": 25941.35,
+    "fx_rate_date": "2026-10-02",
+    "fx_source": "open.er-api.com/v6/latest/USD",
+    "currency": "USD",
+    "note": "Prices are the supplier's listed prices converted from VND at the stated rate. Duplicate listings are flagged in duplicate_of."
+  },
+  "products": [
+    {
+      "id": "goi-nang-cap-tai-khoan-envato-elements",
+      "page": 1,
+      "name_en": "Envato Elements — Upgrade Package",
+      "brand": "Envato Elements",
+      "category": "Design & Creative Assets",
+      "description_en": "Envato Elements is an all-in-one digital subscription for creatives: unlimited downloads of premium templates, fonts, stock video, music, photos, graphics and courses under a single commercial license. This upgrade activates the Core plan directly on your own email — ideal for designers, video editors, marketers and freelancers.",
+      "supplier_url": "https://tainguyensieure.com/goi-nang-cap-tai-khoan-envato-elements/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/06/Envato.webp",
+      "logo_file": "logos/goi-nang-cap-tai-khoan-envato-elements.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=envato.com&sz=256 (Google favicon mirror of envato.com)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Core (1 month)",
+          "plan_source_vn": "Gói Core (1 tháng)",
+          "price_usd": 20.43,
+          "price_vnd": 530000,
+          "regular_price_usd": 20.43,
+          "regular_price_vnd": 530000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "goi-nang-cap-tai-khoan-make-com",
+      "page": 1,
+      "name_en": "Make.com — Upgrade Package",
+      "brand": "Make.com",
+      "category": "Automation & Workflows",
+      "description_en": "Make.com is a no-code, drag-and-drop automation platform that connects 2,000+ apps (Gmail, Slack, Google Sheets, CRMs, AI tools) into automated workflows, with built-in Make AI Agents for smart, reactive scenarios. Upgraded directly on your own account — Core and Pro monthly plans available; annual plan on request.",
+      "supplier_url": "https://tainguyensieure.com/goi-nang-cap-tai-khoan-make-com/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/06/ChatGPT-Image-13_54_15-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/goi-nang-cap-tai-khoan-make-com.png",
+      "logo_source": "https://www.make.com/apple-touch-icon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Core (official $10.59/mo value)",
+          "plan_source_vn": "Core 10.59$ / tháng",
+          "price_usd": 6.17,
+          "price_vnd": 160000,
+          "regular_price_usd": 6.17,
+          "regular_price_vnd": 160000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Pro (official $18.82/mo value)",
+          "plan_source_vn": "Pro 18.82/ tháng",
+          "price_usd": 10.79,
+          "price_vnd": 280000,
+          "regular_price_usd": 10.79,
+          "regular_price_vnd": 280000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "annual (contact us)",
+          "plan_source_vn": "theo năm (liên hệ shop)",
+          "price_usd": 38.55,
+          "price_vnd": 999999,
+          "regular_price_usd": 38.55,
+          "regular_price_vnd": 999999,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "mua-tai-khoan-studocu-gia-re",
+      "page": 4,
+      "name_en": "Studocu Premium",
+      "brand": "Studocu",
+      "category": "Education & Study",
+      "description_en": "Studocu Premium unlocks the full student document library — past exams, lecture notes and study summaries without blurred, paywalled sections. The upgrade is applied as an official Premium subscription on the email you provide, not a shared account. 1, 3 and 12 month options.",
+      "supplier_url": "https://tainguyensieure.com/mua-tai-khoan-studocu-gia-re/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2024/11/studocu-1.png",
+      "logo_file": "logos/mua-tai-khoan-studocu-gia-re.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=studocu.com&sz=256 (Google favicon mirror of studocu.com)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "1 month",
+          "plan_source_vn": "1 Tháng",
+          "price_usd": 2.66,
+          "price_vnd": 69000,
+          "regular_price_usd": 2.66,
+          "regular_price_vnd": 69000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "3 months",
+          "plan_source_vn": "3 Tháng",
+          "price_usd": 6.9,
+          "price_vnd": 179000,
+          "regular_price_usd": 6.9,
+          "regular_price_vnd": 179000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "12 months",
+          "plan_source_vn": "12 Tháng",
+          "price_usd": 19.24,
+          "price_vnd": 499000,
+          "regular_price_usd": 19.24,
+          "regular_price_vnd": 499000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-canva-edu-pro",
+      "page": 1,
+      "name_en": "Canva EDU Pro Upgrade",
+      "brand": "Canva",
+      "category": "Design & Creative Assets",
+      "description_en": "Canva EDU Pro-style upgrade unlocks premium templates, stock photos and videos, and Magic Studio tools (Background Remover, Magic Resize, Brand Kit) on the email you provide. A budget-friendly alternative to the official Canva Pro at ~$144/year. 1 month and 1 year options.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-canva-edu-pro/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-canva-edu-pro-chinh-chu.jpg",
+      "logo_file": "logos/nang-cap-canva-edu-pro.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=canva.com&sz=256 (Google favicon mirror of canva.com)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Canva pro 1 month",
+          "plan_source_vn": "Canva pro 1 tháng",
+          "price_usd": 1.12,
+          "price_vnd": 29000,
+          "regular_price_usd": 1.12,
+          "regular_price_vnd": 29000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Canva pro 1 year",
+          "plan_source_vn": "Canva pro 1 Năm",
+          "price_usd": 2.27,
+          "price_vnd": 59000,
+          "regular_price_usd": 2.27,
+          "regular_price_vnd": 59000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-google-one-ai-pro-ultra-antigravity",
+      "page": 1,
+      "name_en": "Google One AI Pro/Ultra & Antigravity Upgrade",
+      "brand": "Google One",
+      "category": "AI & Productivity",
+      "description_en": "Upgrade Google One to AI Pro or AI Ultra on your own Google account at Vietnam pricing: Gemini 3.1 Pro, Google Antigravity (Google's new agent-first IDE), up to 30TB of storage and YouTube Premium. Slot and Family options from 1 month to 1 year, at deep discounts off the regular price.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-google-one-ai-pro-ultra-antigravity/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-google-one-ai-pro-ultra-antigravity.jpg",
+      "logo_file": "logos/nang-cap-google-one-ai-pro-ultra-antigravity.png",
+      "logo_source": "https://one.google.com/about/public/favicon-32x32.png (official)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Google AI Pro Slot — 1 year",
+          "plan_source_vn": "Gói Google AI Pro Slot hạn 1 năm",
+          "price_usd": 9.64,
+          "price_vnd": 250000,
+          "regular_price_usd": 57.82,
+          "regular_price_vnd": 1500000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Google AI Pro Family — 1 year",
+          "plan_source_vn": "Gói Google AI Pro Family hạn 1 năm",
+          "price_usd": 19.27,
+          "price_vnd": 500000,
+          "regular_price_usd": 46.26,
+          "regular_price_vnd": 1200000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Google AI Ultra ×5 — 1 month",
+          "plan_source_vn": "Gói Google AI Ultra x5 Hạn 1 tháng",
+          "price_usd": 57.82,
+          "price_vnd": 1500000,
+          "regular_price_usd": 115.65,
+          "regular_price_vnd": 3000000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Google AI Ultra ×20 — 1 month",
+          "plan_source_vn": "Gói Google AI Ultra x20 Hạn 1 tháng",
+          "price_usd": 77.1,
+          "price_vnd": 2000000,
+          "regular_price_usd": 154.19,
+          "regular_price_vnd": 4000000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-abacus-ai-chinh-chu",
+      "page": 1,
+      "name_en": "Abacus.AI Upgrade",
+      "brand": "Abacus.AI",
+      "category": "AI & Data Science",
+      "description_en": "Abacus.AI is an end-to-end enterprise AI platform (AI as a Service) for deploying machine learning and deep learning models: forecasting, personalization, chatbots and workflow automation without a heavy engineering team. Basic and Pro monthly plans, activated on your own account.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-abacus-ai-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/ChatGPT-Image-13_55_24-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-abacus-ai-chinh-chu.png",
+      "logo_source": "https://abacus.ai/static/hb3ee7c1d/icon2/favicon-180-precomposed.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Basic 1 month",
+          "plan_source_vn": "Gói Basic 1 tháng",
+          "price_usd": 7.71,
+          "price_vnd": 200000,
+          "regular_price_usd": 7.71,
+          "regular_price_vnd": 200000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Pro 1 month",
+          "plan_source_vn": "Gói Pro 1 tháng",
+          "price_usd": 13.49,
+          "price_vnd": 350000,
+          "regular_price_usd": 13.49,
+          "regular_price_vnd": 350000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-artistly-chinh-chu",
+      "page": 1,
+      "name_en": "Artistly Upgrade",
+      "brand": "Artistly",
+      "category": "AI Image & Design",
+      "description_en": "Artistly is an AI image generation and design platform: turn prompts into high-quality visuals, remove or swap backgrounds, inpaint details, upscale images and create product mockups for marketing and e-commerce. Commercial and Premium plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-artistly-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-tai-khoan-artistly-chinh-chu.jpg",
+      "logo_file": "logos/nang-cap-tai-khoan-artistly-chinh-chu.png",
+      "logo_source": "https://cdn-land.artistly.ai/fbdeal/assets/images/favicon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Commercial",
+          "plan_source_vn": "Gói Commercial",
+          "price_usd": 18.89,
+          "price_vnd": 490000,
+          "regular_price_usd": 18.89,
+          "regular_price_vnd": 490000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Premium",
+          "plan_source_vn": "Gói Premium",
+          "price_usd": 56.67,
+          "price_vnd": 1470000,
+          "regular_price_usd": 56.67,
+          "regular_price_vnd": 1470000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-captions-chinh-chu",
+      "page": 1,
+      "name_en": "Captions AI Upgrade",
+      "brand": "Captions",
+      "category": "AI Video",
+      "description_en": "Captions is an AI short-video studio: AI voice translation into 28+ languages with lip-sync, automatic editing styles, subtitles and effects — built for influencers and businesses producing social video at speed. Max and Scale monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-captions-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-tai-khoan-captions-chinh-chu.jpg",
+      "logo_file": "logos/nang-cap-tai-khoan-captions-chinh-chu.png",
+      "logo_source": "https://captions.ai/mrkt-static/apple-touch-icon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Max 1 month",
+          "plan_source_vn": "Gói Max 1 tháng",
+          "price_usd": 14.46,
+          "price_vnd": 375000,
+          "regular_price_usd": 14.46,
+          "regular_price_vnd": 375000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Scale 1 month",
+          "plan_source_vn": "Gói Scale 1 tháng",
+          "price_usd": 30.84,
+          "price_vnd": 800000,
+          "regular_price_usd": 30.84,
+          "regular_price_vnd": 800000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-clicksites-chinh-chu",
+      "page": 1,
+      "name_en": "ClickSites Upgrade",
+      "brand": "ClickSites",
+      "category": "AI Website Builder",
+      "description_en": "ClickSites is an AI website builder: describe your idea and it generates a complete site — layout, copy and images — which you can fine-tune with drag-and-drop editing, AI content tools and built-in image search. Basic and All-Access plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-clicksites-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/09/ClickSites-AI-1024x683-1.png",
+      "logo_file": "logos/nang-cap-tai-khoan-clicksites-chinh-chu.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=clicksites.io&sz=256 (Google favicon mirror of clicksites.io)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Basic",
+          "plan_source_vn": "Gói Basic",
+          "price_usd": 18.89,
+          "price_vnd": 490000,
+          "regular_price_usd": 18.89,
+          "regular_price_vnd": 490000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "All-Access",
+          "plan_source_vn": "Gói All-Access",
+          "price_usd": 69.0,
+          "price_vnd": 1790000,
+          "regular_price_usd": 69.0,
+          "regular_price_vnd": 1790000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-clickup-chinh-chu",
+      "page": 3,
+      "name_en": "ClickUp — Unlimited & Business",
+      "brand": "ClickUp",
+      "category": "Productivity & Project Management",
+      "description_en": "ClickUp is an all-in-one work management workspace unifying tasks, docs, chat and reporting. This upgrade activates Unlimited or Business seats on your own workspace — for teams that need more storage, guests and automation limits.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-clickup-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/snapedit_1756521659083-1200x628.jpeg",
+      "logo_file": "logos/nang-cap-tai-khoan-clickup-chinh-chu.png",
+      "logo_source": "https://clickup.com/favicons/apple-touch-icon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Unlimited 1 month",
+          "plan_source_vn": "Gói Unlimited 1 tháng",
+          "price_usd": 5.78,
+          "price_vnd": 150000,
+          "regular_price_usd": 5.78,
+          "regular_price_vnd": 150000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Business 1 month",
+          "plan_source_vn": "Gói Business 1 tháng",
+          "price_usd": 10.99,
+          "price_vnd": 285000,
+          "regular_price_usd": 10.99,
+          "regular_price_vnd": 285000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-comfy-cloud",
+      "page": 1,
+      "name_en": "Comfy Cloud (ComfyUI) Upgrade",
+      "brand": "Comfy Cloud",
+      "category": "AI Image & Video Infrastructure",
+      "description_en": "Comfy Cloud is the official cloud infrastructure for ComfyUI: run node-based image and video workflows on high-end GPUs without owning hardware — no more VRAM overflow or laggy renders breaking your creative flow. Standard and Creator monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-comfy-cloud/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-14_05_12-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-comfy-cloud.png",
+      "logo_source": "https://comfy.org/apple-touch-icon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "STANDARD (1 month)",
+          "plan_source_vn": "Gói STANDARD (1 tháng)",
+          "price_usd": 15.42,
+          "price_vnd": 400000,
+          "regular_price_usd": 23.13,
+          "regular_price_vnd": 600000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "CREATOR (1 month)",
+          "plan_source_vn": "Gói CREATOR (1 tháng)",
+          "price_usd": 21.2,
+          "price_vnd": 550000,
+          "regular_price_usd": 34.69,
+          "regular_price_vnd": 900000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-consensus-chinh-chu",
+      "page": 3,
+      "name_en": "Consensus Pro",
+      "brand": "Consensus",
+      "category": "Academic Research",
+      "description_en": "Consensus is an AI academic search engine for peer-reviewed papers: ask questions in natural language and get answers with citations and a Consensus Meter. The Pro plan gives unlimited Pro messages each month plus Deep Review quotas — a strong fit for students and researchers.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-consensus-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/33301be8-cdb3-4264-ba0f-4c62bad95b2d-1000x525-NQ77Jmom8YbxLV86WJ66ngkOQVzE2geAskddAzqw.webp",
+      "logo_file": "logos/nang-cap-tai-khoan-consensus-chinh-chu.png",
+      "logo_source": "https://consensus.app/images/icon-384.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Full access (single plan)",
+          "plan_source_vn": "Full access (single plan)",
+          "price_usd": 15.42,
+          "price_vnd": 400000,
+          "regular_price_usd": 15.42,
+          "regular_price_vnd": 400000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-elicit-ai-chinh-chu",
+      "page": 2,
+      "name_en": "Elicit AI Upgrade",
+      "brand": "Elicit",
+      "category": "Academic Research",
+      "description_en": "Elicit is an AI research assistant that analyzes millions of academic papers: smart literature search, automatic key-claim extraction and structured summaries for theses and papers. Plus and Pro monthly plans activated on your own email.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-elicit-ai-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/07/elicit-ai-chatgpt-original.png",
+      "logo_file": "logos/nang-cap-tai-khoan-elicit-ai-chinh-chu.png",
+      "logo_source": "https://framerusercontent.com/images/GWXKVhGBLC34aTLlmLIMsRVb4.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Elicit Plus 1 month own-account",
+          "plan_source_vn": "Elicit Plus 1 tháng chính chủ",
+          "price_usd": 7.71,
+          "price_vnd": 200000,
+          "regular_price_usd": 7.71,
+          "regular_price_vnd": 200000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Elicit Pro 1 month own-account",
+          "plan_source_vn": "Elicit Pro 1 tháng chính chủ",
+          "price_usd": 28.91,
+          "price_vnd": 750000,
+          "regular_price_usd": 28.91,
+          "regular_price_vnd": 750000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-enhancor-chinh-chu",
+      "page": 2,
+      "name_en": "Enhancor AI Upgrade",
+      "brand": "Enhancor",
+      "category": "AI Image Retouching",
+      "description_en": "Enhancor.ai is a specialized AI tool that fixes 'plastic' AI-generated skin: it restores realistic skin texture, pores and lighting on AI images and digitalized photos, with a beginner-friendly interface. Basic and Creator monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-enhancor-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-tai-khoan-enhancor-chinh-chu.jpg",
+      "logo_file": "logos/nang-cap-tai-khoan-enhancor-chinh-chu.png",
+      "logo_source": "https://enhancor.ai/enhancorfavicon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Basic 1 month",
+          "plan_source_vn": "Gói Basic 1 tháng",
+          "price_usd": 8.48,
+          "price_vnd": 220000,
+          "regular_price_usd": 8.48,
+          "regular_price_vnd": 220000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Creator 1 month",
+          "plan_source_vn": "Gói Creator 1 tháng",
+          "price_usd": 25.06,
+          "price_vnd": 650000,
+          "regular_price_usd": 25.06,
+          "regular_price_vnd": 650000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-heygen-chinh-chu-gia-re",
+      "page": 4,
+      "name_en": "HeyGen — Creator",
+      "brand": "HeyGen",
+      "category": "AI Video & Avatars",
+      "description_en": "HeyGen is an AI video platform: paste a script, pick an avatar or Photo Avatar, and export talking-head videos with natural voice and gestures. The Creator plan includes 600 credits per cycle, videos up to 30 minutes, 1080p export, watermark removal and voice cloning.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-heygen-chinh-chu-gia-re/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/heygen_ai_1_2b88e62a90.png",
+      "logo_file": "logos/nang-cap-tai-khoan-heygen-chinh-chu-gia-re.png",
+      "logo_source": "https://www.heygen.com/favicon.ico (official favicon)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Creator 1 month",
+          "plan_source_vn": "Gói Creator 1 tháng",
+          "price_usd": 23.13,
+          "price_vnd": 600000,
+          "regular_price_usd": 34.69,
+          "regular_price_vnd": 900000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-kits-ai-chinh-chu",
+      "page": 2,
+      "name_en": "Kits.ai Upgrade",
+      "brand": "Kits.ai",
+      "category": "AI Music & Voice",
+      "description_en": "Kits.ai is an AI music platform for musicians and producers: convert vocals with AI voices, train your own custom voice models, and generate royalty-free instruments and stems. Starter, Producer and Professional monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-kits-ai-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-tai-khoan-kits-ai-chinh-chu.jpg",
+      "logo_file": "logos/nang-cap-tai-khoan-kits-ai-chinh-chu.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=kits.ai&sz=256",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Starter 1 month",
+          "plan_source_vn": "Gói Starter 1 tháng",
+          "price_usd": 5.78,
+          "price_vnd": 150000,
+          "regular_price_usd": 5.78,
+          "regular_price_vnd": 150000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Producer 1 month",
+          "plan_source_vn": "Gói Producer 1 tháng",
+          "price_usd": 17.35,
+          "price_vnd": 450000,
+          "regular_price_usd": 17.35,
+          "regular_price_vnd": 450000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Professional 1 month",
+          "plan_source_vn": "Gói Professional 1 tháng",
+          "price_usd": 30.84,
+          "price_vnd": 800000,
+          "regular_price_usd": 30.84,
+          "regular_price_vnd": 800000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-magiclight-ai-chinh-chu",
+      "page": 2,
+      "name_en": "MagicLight AI Upgrade",
+      "brand": "MagicLight AI",
+      "category": "AI Animation & Video",
+      "description_en": "MagicLight AI is a text-to-video animation platform: feed it a script or story and it auto-generates the storyboard, characters, dialogue and effects into a polished animated video — no animation skills required. Standard, Plus and Pro monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-magiclight-ai-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-tai-khoan-magiclight-ai-chinh-chu.jpg",
+      "logo_file": "logos/nang-cap-tai-khoan-magiclight-ai-chinh-chu.png",
+      "logo_source": "https://cdn2.magiclight.ai/assets/logo-icon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Standard 1 month",
+          "plan_source_vn": "Gói Standard 1 tháng",
+          "price_usd": 8.87,
+          "price_vnd": 230000,
+          "regular_price_usd": 8.87,
+          "regular_price_vnd": 230000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Plus 1 month",
+          "plan_source_vn": "Gói Plus 1 tháng",
+          "price_usd": 19.27,
+          "price_vnd": 500000,
+          "regular_price_usd": 19.27,
+          "regular_price_vnd": 500000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Pro 1 month",
+          "plan_source_vn": "Gói Pro 1 tháng",
+          "price_usd": 30.84,
+          "price_vnd": 800000,
+          "regular_price_usd": 30.84,
+          "regular_price_vnd": 800000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-meshy-ai-chinh-chu",
+      "page": 2,
+      "name_en": "Meshy AI Upgrade",
+      "brand": "Meshy AI",
+      "category": "AI 3D Generation",
+      "description_en": "Meshy AI is a generative 3D platform: turn text prompts or images into detailed 3D models with PBR textures in minutes, ready for games, animation and design pipelines. Text-to-3D and Image-to-3D, with Pro, Premium and Studio monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-meshy-ai-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/ChatGPT-Image-May-23-2026-04_18_55-PM-1200x800.png",
+      "logo_file": "logos/nang-cap-tai-khoan-meshy-ai-chinh-chu.png",
+      "logo_source": "https://meshy.ai/apple-icon.png?apple-icon.1x2jivih2_8ii.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Premium 1 month",
+          "plan_source_vn": "Gói Premium 1 tháng",
+          "price_usd": 11.56,
+          "price_vnd": 300000,
+          "regular_price_usd": 17.35,
+          "regular_price_vnd": 450000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Pro 1 month",
+          "plan_source_vn": "Gói Pro 1 tháng",
+          "price_usd": 6.13,
+          "price_vnd": 159000,
+          "regular_price_usd": 9.64,
+          "regular_price_vnd": 250000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Studio 1 month",
+          "plan_source_vn": "Gói Studio 1 tháng",
+          "price_usd": 38.51,
+          "price_vnd": 999000,
+          "regular_price_usd": 38.51,
+          "regular_price_vnd": 999000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-openart-ai-chinh-chu-gia-re",
+      "page": 2,
+      "name_en": "OpenArt AI Upgrade",
+      "brand": "OpenArt AI",
+      "category": "AI Image & Art",
+      "description_en": "OpenArt AI is an AI art and image creation workspace: generate images from prompts in seconds, choose from many models and styles, and refine with built-in editing tools — built for artists, marketers and creators. Essential, Advanced and Infinite monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-openart-ai-chinh-chu-gia-re/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/391c89cc-d65e-4d1f-a919-a26f0af3742d-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-openart-ai-chinh-chu-gia-re.png",
+      "logo_source": "https://openart.ai/pageforge-assets/favicon/apple-touch-icon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Essential 1 month",
+          "plan_source_vn": "Gói Essential 1 tháng",
+          "price_usd": 9.64,
+          "price_vnd": 250000,
+          "regular_price_usd": 9.64,
+          "regular_price_vnd": 250000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Advanced 1 month",
+          "plan_source_vn": "Gói Advanced 1 tháng",
+          "price_usd": 18.89,
+          "price_vnd": 490000,
+          "regular_price_usd": 18.89,
+          "regular_price_vnd": 490000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Infinite 1 month",
+          "plan_source_vn": "Gói Infinite 1 tháng",
+          "price_usd": 32.38,
+          "price_vnd": 840000,
+          "regular_price_usd": 32.38,
+          "regular_price_vnd": 840000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-opusclip-chinh-chu",
+      "page": 2,
+      "name_en": "OpusClip Upgrade",
+      "brand": "OpusClip",
+      "category": "AI Video Repurposing",
+      "description_en": "OpusClip turns long videos into viral-ready shorts for TikTok, Reels and YouTube Shorts: AI picks the highlights, reframes to vertical, adds captions and scores each clip's virality potential. Starter and Pro monthly plans (promo and standard tiers).",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-opusclip-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/ChatGPT-Image-14_35_12-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-opusclip-chinh-chu.png",
+      "logo_source": "https://cdn.prod.website-files.com/6388604483b03a9ecb34d695/6435197bfb1d6e486e04c37b_webclip.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Pro (promo)",
+          "plan_source_vn": "Gói Pro cheap",
+          "price_usd": 8.87,
+          "price_vnd": 230000,
+          "regular_price_usd": 8.87,
+          "regular_price_vnd": 230000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Starter (promo)",
+          "plan_source_vn": "Gói Starter cheap",
+          "price_usd": 4.63,
+          "price_vnd": 120000,
+          "regular_price_usd": 4.63,
+          "regular_price_vnd": 120000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Starter 1 month",
+          "plan_source_vn": "Gói Starter 1 tháng",
+          "price_usd": 9.64,
+          "price_vnd": 250000,
+          "regular_price_usd": 9.64,
+          "regular_price_vnd": 250000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Pro 1 month",
+          "plan_source_vn": "Gói Pro 1 tháng",
+          "price_usd": 15.42,
+          "price_vnd": 400000,
+          "regular_price_usd": 15.42,
+          "regular_price_vnd": 400000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-originality-ai-chinh-chu",
+      "page": 2,
+      "name_en": "Originality.ai Upgrade",
+      "brand": "Originality.ai",
+      "category": "Content Integrity",
+      "description_en": "Originality.ai is a content-integrity platform for publishers and agencies: industry-leading AI-content detection plus plagiarism checking with detailed per-paragraph reports and team management. Pro, Pay-as-you-go and Enterprise plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-originality-ai-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/0bcddd97-0de5-4cd1-b1d9-d07e58b5b45f-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-originality-ai-chinh-chu.png",
+      "logo_source": "https://cdn.prod.website-files.com/63ee996e404f6475c7b177b3/640832f3532983383c607051_256-A.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Pro 1 month",
+          "plan_source_vn": "Gói Pro 1 tháng",
+          "price_usd": 8.67,
+          "price_vnd": 225000,
+          "regular_price_usd": 8.67,
+          "regular_price_vnd": 225000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Pay as you go",
+          "plan_source_vn": "Gói Pay as you go",
+          "price_usd": 17.35,
+          "price_vnd": 450000,
+          "regular_price_usd": 17.35,
+          "regular_price_vnd": 450000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Enterprise 1 month",
+          "plan_source_vn": "Gói Enterprise 1 tháng",
+          "price_usd": 69.0,
+          "price_vnd": 1790000,
+          "regular_price_usd": 69.0,
+          "regular_price_vnd": 1790000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-pacdora",
+      "page": 2,
+      "name_en": "Pacdora 3D Upgrade",
+      "brand": "Pacdora",
+      "category": "Packaging Design",
+      "description_en": "Pacdora is an online 3D packaging design tool: build dielines and 3D box mockups in the browser, render photorealistic previews and export print-ready files — no deep 3D skills needed. Lite and Pro monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-pacdora/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-14_02_59-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-pacdora.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=pacdora.com&sz=256 (Google favicon mirror of pacdora.com)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Lite (1 month)",
+          "plan_source_vn": "Gói Lite (1 tháng)",
+          "price_usd": 7.71,
+          "price_vnd": 200000,
+          "regular_price_usd": 13.49,
+          "regular_price_vnd": 350000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Pro (1 month)",
+          "plan_source_vn": "Gói Pro (1 tháng)",
+          "price_usd": 17.35,
+          "price_vnd": 450000,
+          "regular_price_usd": 28.91,
+          "regular_price_vnd": 750000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-scribd",
+      "page": 4,
+      "name_en": "Scribd Premium",
+      "brand": "Scribd",
+      "category": "Reading & Documents",
+      "description_en": "Scribd Premium unlocks the Scribd/Everand ecosystem — ebooks, audiobooks, documents and slide decks — via web or app according to your plan's quota. Two options matching the official tiers: Premium ($10/month value) and Premium ($85/year value).",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-scribd/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/06/images-3.jpeg",
+      "logo_file": "logos/nang-cap-tai-khoan-scribd.png",
+      "logo_source": "https://assets.production.scribd.com/mfe-scribd-landing-pages/_next/static/media/scribd_og.0p_8r5h84smix.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Premium (official $10/mo value)",
+          "plan_source_vn": "Gói Premium 10$/tháng",
+          "price_usd": 5.78,
+          "price_vnd": 150000,
+          "regular_price_usd": 5.78,
+          "regular_price_vnd": 150000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Premium (official $85/yr value)",
+          "plan_source_vn": "Gói Premium 85$/năm",
+          "price_usd": 32.77,
+          "price_vnd": 850000,
+          "regular_price_usd": 32.77,
+          "regular_price_vnd": 850000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-topmediai-chinh-chu",
+      "page": 3,
+      "name_en": "TopMediai Upgrade",
+      "brand": "TopMediai",
+      "category": "AI Audio & Video",
+      "description_en": "TopMediai is an all-in-one AI content suite: natural text-to-speech with multilingual voices, AI music generation, voice cloning and AI video tools. SVIP plans for AI Music, Voiceover, or the full All-in-One bundle.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-topmediai-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-tai-khoan-topmediai-chinh-chu.jpg",
+      "logo_file": "logos/nang-cap-tai-khoan-topmediai-chinh-chu.png",
+      "logo_source": "https://www.topmediai.com/topmediai-logo.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "AI Music SVIP 1 month",
+          "plan_source_vn": "Gói AI Music SVIP 1 tháng",
+          "price_usd": 7.71,
+          "price_vnd": 200000,
+          "regular_price_usd": 7.71,
+          "regular_price_vnd": 200000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Voiceover SVIP 1 month",
+          "plan_source_vn": "Gói Voiceover SVIP 1 tháng",
+          "price_usd": 11.56,
+          "price_vnd": 300000,
+          "regular_price_usd": 11.56,
+          "regular_price_vnd": 300000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "All-in-one SVIP 1 month",
+          "plan_source_vn": "Gói All-in-one SVIP 1 tháng",
+          "price_usd": 19.27,
+          "price_vnd": 500000,
+          "regular_price_usd": 19.27,
+          "regular_price_vnd": 500000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-tripo-studio-chinh-chu",
+      "page": 3,
+      "name_en": "Tripo Studio Upgrade",
+      "brand": "Tripo Studio",
+      "category": "AI 3D Generation",
+      "description_en": "Tripo Studio is an AI 3D workspace: generate production-ready 3D models from images or prompts with textures, auto-segment parts for per-piece editing, and retopologize for clean exports. Professional and Max monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-tripo-studio-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/09/ChatGPT-Image-13_31_42-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-tripo-studio-chinh-chu.png",
+      "logo_source": "https://tripo3d.ai/favicon.ico",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Professional 1 month",
+          "plan_source_vn": "Gói Professional 1 tháng",
+          "price_usd": 7.71,
+          "price_vnd": 200000,
+          "regular_price_usd": 7.71,
+          "regular_price_vnd": 200000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Max 1 month",
+          "plan_source_vn": "Gói Max 1 tháng",
+          "price_usd": 26.98,
+          "price_vnd": 700000,
+          "regular_price_usd": 26.98,
+          "regular_price_vnd": 700000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-uxpilot-ai-chinh-chu",
+      "page": 4,
+      "name_en": "UX Pilot AI — Standard & Pro",
+      "brand": "UX Pilot",
+      "category": "AI UX/UI Design",
+      "description_en": "UX Pilot (uxpilot.ai) turns prompts, sketches or PRDs into wireframes and hi-fi UI screens, with two-way Figma sync and HTML/CSS export — a fast wireframe-to-hi-fi loop for product designers. Standard and Pro monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-uxpilot-ai-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/1qH-tgI_400x400.jpg",
+      "logo_file": "logos/nang-cap-tai-khoan-uxpilot-ai-chinh-chu.png",
+      "logo_source": "https://uxpilot.ai/logo192.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Standard 1 month",
+          "plan_source_vn": "Gói Standard 1 tháng",
+          "price_usd": 11.56,
+          "price_vnd": 300000,
+          "regular_price_usd": 11.56,
+          "regular_price_vnd": 300000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Pro 1 month",
+          "plan_source_vn": "Gói Pro 1 tháng",
+          "price_usd": 16.77,
+          "price_vnd": 435000,
+          "regular_price_usd": 16.77,
+          "regular_price_vnd": 435000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-videocreator-chinh-chu",
+      "page": 3,
+      "name_en": "VideoCreator Upgrade",
+      "brand": "VideoCreator",
+      "category": "Video Templates",
+      "description_en": "VideoCreator.io is a template-driven video maker: hundreds of ready-made templates for ads and social media, with logo, text, image and music swapping plus a royalty-free asset library — no editing experience required.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-videocreator-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/09/hq720-1.jpg",
+      "logo_file": "logos/nang-cap-tai-khoan-videocreator-chinh-chu.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=videocreator.io&sz=256 (Google favicon mirror of videocreator.io)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Full access (single plan)",
+          "plan_source_vn": "Full access (single plan)",
+          "price_usd": 18.89,
+          "price_vnd": 490000,
+          "regular_price_usd": 18.89,
+          "regular_price_vnd": 490000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-videoexpress-chinh-chu",
+      "page": 3,
+      "name_en": "VideoExpress Upgrade",
+      "brand": "VideoExpress",
+      "category": "AI Video",
+      "description_en": "VideoExpress is an AI video creation platform: text-to-video, image-to-video animation, talking photos, and built-in sound and captions — everything in one browser editor. Foundation and All-Access plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-videoexpress-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/09/maxresdefault-1-1200x675.jpg",
+      "logo_file": "logos/nang-cap-tai-khoan-videoexpress-chinh-chu.png",
+      "logo_source": "https://cdn-land.videoexpress.ai/fbdeal/assets/images/favicon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Foundation plan",
+          "plan_source_vn": "Gói Nền Tảng",
+          "price_usd": 30.84,
+          "price_vnd": 800000,
+          "regular_price_usd": 30.84,
+          "regular_price_vnd": 800000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "All-Access plan",
+          "plan_source_vn": "Gói Truy Cập Toàn Diện",
+          "price_usd": 96.37,
+          "price_vnd": 2500000,
+          "regular_price_usd": 96.37,
+          "regular_price_vnd": 2500000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-vidiq-chinh-chu",
+      "page": 3,
+      "name_en": "VidIQ Upgrade — Boost & Max",
+      "brand": "VidIQ",
+      "category": "YouTube Growth",
+      "description_en": "vidIQ is a YouTube growth toolkit: topic research, keyword and trend analysis, AI video ideas, thumbnail generation and channel optimization alongside YouTube Studio. Boost (2,000 AI credits/mo) and Max (6,000 AI credits/mo) monthly plans, 1 channel each.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-vidiq-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-13_49_36-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-vidiq-chinh-chu.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=vidiq.com&sz=256 (Google favicon mirror of vidiq.com)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Boost 1 month",
+          "plan_source_vn": "Gói Boost 1 tháng",
+          "price_usd": 4.97,
+          "price_vnd": 129000,
+          "regular_price_usd": 9.64,
+          "regular_price_vnd": 250000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Max 1 month",
+          "plan_source_vn": "Gói Max 1 tháng",
+          "price_usd": 7.71,
+          "price_vnd": 200000,
+          "regular_price_usd": 23.13,
+          "regular_price_vnd": 600000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-vizard-chinh-chu",
+      "page": 3,
+      "name_en": "Vizard Upgrade",
+      "brand": "Vizard",
+      "category": "AI Video Repurposing",
+      "description_en": "Vizard is an AI online video editor that turns long recordings into short clips for TikTok, Reels and Shorts: automatic highlight extraction (AI Clipping), auto-subtitles and brand templates. Creator and Business monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-vizard-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/ChatGPT-Image-15_39_09-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-vizard-chinh-chu.png",
+      "logo_source": "https://vizard.ai/favicon.ico",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Creator 1 month",
+          "plan_source_vn": "Gói Creator 1 tháng",
+          "price_usd": 16.77,
+          "price_vnd": 435000,
+          "regular_price_usd": 16.77,
+          "regular_price_vnd": 435000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Business 1 month",
+          "plan_source_vn": "Gói Business 1 tháng",
+          "price_usd": 22.55,
+          "price_vnd": 585000,
+          "regular_price_usd": 22.55,
+          "regular_price_vnd": 585000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-vmake-ai-chinh-chu-gia-re",
+      "page": 3,
+      "name_en": "Vmake AI Upgrade",
+      "brand": "Vmake AI",
+      "category": "AI Video & Image",
+      "description_en": "Vmake AI is an AI video and image creation suite: text-to-video, style customization, AI voices and marketing/tutorial video generation in minutes. Plus (monthly/annual) and Pro plans for creators and businesses.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-vmake-ai-chinh-chu-gia-re/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/ChatGPT-Image-14_21_53-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-vmake-ai-chinh-chu-gia-re.png",
+      "logo_source": "https://static-assets.vmake.ai/vmake-ai/_next/static/media/logo-square.a4351c93.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Plus 1 month",
+          "plan_source_vn": "Gói Plus 1 tháng",
+          "price_usd": 5.78,
+          "price_vnd": 150000,
+          "regular_price_usd": 5.78,
+          "regular_price_vnd": 150000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "plus 1 year",
+          "plan_source_vn": "Gói plus 1 năm",
+          "price_usd": 38.51,
+          "price_vnd": 999000,
+          "regular_price_usd": 38.51,
+          "regular_price_vnd": 999000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Pro 1 month",
+          "plan_source_vn": "Gói Pro 1 tháng",
+          "price_usd": 19.27,
+          "price_vnd": 500000,
+          "regular_price_usd": 26.98,
+          "regular_price_vnd": 700000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-weshop-ai-chinh-chu-gia-re",
+      "page": 3,
+      "name_en": "WeShop AI Upgrade",
+      "brand": "WeShop AI",
+      "category": "E-commerce AI",
+      "description_en": "WeShop AI is an e-commerce AI studio: AI product photography, model replacement, background generation and image enhancement tuned for online sellers — from small shops to large stores. Monthly plan plus prepaid point packs ($58 / $118 / $488).",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-weshop-ai-chinh-chu-gia-re/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/ChatGPT-Image-14_22_53-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/nang-cap-tai-khoan-weshop-ai-chinh-chu-gia-re.png",
+      "logo_source": "https://weshop.com/small_logo.svg",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Monthly 1 month",
+          "plan_source_vn": "Gói Monthly 1 tháng",
+          "price_usd": 9.64,
+          "price_vnd": 250000,
+          "regular_price_usd": 9.64,
+          "regular_price_vnd": 250000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Point pack $58",
+          "plan_source_vn": "Gói Point $58",
+          "price_usd": 34.69,
+          "price_vnd": 900000,
+          "regular_price_usd": 34.69,
+          "regular_price_vnd": 900000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Point pack $118",
+          "plan_source_vn": "Gói Point $118",
+          "price_usd": 45.49,
+          "price_vnd": 1180000,
+          "regular_price_usd": 45.49,
+          "regular_price_vnd": 1180000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Point pack $488",
+          "plan_source_vn": "Gói Point $488",
+          "price_usd": 188.12,
+          "price_vnd": 4880000,
+          "regular_price_usd": 188.12,
+          "regular_price_vnd": 4880000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "nang-cap-tai-khoan-zapier-automation",
+      "page": 3,
+      "name_en": "Zapier Automation Upgrade",
+      "brand": "Zapier",
+      "category": "Automation & Workflows",
+      "description_en": "Zapier connects 6,000+ web apps (Gmail, Google Sheets, Slack, Notion, Facebook Ads...) into automated 'Zaps' without code: multi-step workflows, filters, paths and AI actions. Professional plan at the official $29/mo tier value — monthly or annual billing.",
+      "supplier_url": "https://tainguyensieure.com/nang-cap-tai-khoan-zapier-automation/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/06/images-1.png",
+      "logo_file": "logos/nang-cap-tai-khoan-zapier-automation.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=zapier.com&sz=256 (Google favicon mirror of zapier.com)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Professional (official $29/mo value)",
+          "plan_source_vn": "Gói Professional 29$/tháng",
+          "price_usd": 17.35,
+          "price_vnd": 450000,
+          "regular_price_usd": 17.35,
+          "regular_price_vnd": 450000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Professional (official $240/yr value)",
+          "plan_source_vn": "Gói Professional 240$/năm",
+          "price_usd": 115.61,
+          "price_vnd": 2999000,
+          "regular_price_usd": 115.61,
+          "regular_price_vnd": 2999000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-base44-chinh-chu",
+      "page": 1,
+      "name_en": "Base44 Upgrade",
+      "brand": "Base44",
+      "category": "AI App Builder",
+      "description_en": "Base44 is an AI vibe-coding platform: describe your app in plain language and get a complete, working web app — no code, with auth, database and hosting included. Starter and Builder monthly plans, activated on your own email in 5–15 minutes.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-base44-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-14_00_05-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-base44-chinh-chu.png",
+      "logo_source": "https://media.base44.com/images/public/marketing-site-assets/branded/favicon-branded-v2.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Starter (1 month)",
+          "plan_source_vn": "Gói Starter (1 tháng)",
+          "price_usd": 11.56,
+          "price_vnd": 300000,
+          "regular_price_usd": 19.27,
+          "regular_price_vnd": 500000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Builder (1 month)",
+          "plan_source_vn": "Gói Builder (1 tháng)",
+          "price_usd": 26.98,
+          "price_vnd": 700000,
+          "regular_price_usd": 42.4,
+          "regular_price_vnd": 1100000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-beeble-ai",
+      "page": 1,
+      "name_en": "Beeble AI Upgrade",
+      "brand": "Beeble AI",
+      "category": "AI VFX & Film",
+      "description_en": "Beeble AI is a cloud VFX platform for filmmakers: relight scenes, transform environments and composite cinematic shots while actors keep their natural motion — with full commercial rights from the official site. Creator and Professional monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-beeble-ai/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-14_01_28-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-beeble-ai.png",
+      "logo_source": "https://beeble.ai/apple-touch-icon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "CREATOR (1 month)",
+          "plan_source_vn": "Gói CREATOR (1 tháng)",
+          "price_usd": 11.56,
+          "price_vnd": 300000,
+          "regular_price_usd": 18.5,
+          "regular_price_vnd": 480000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "PROFESSIONAL (1 month)",
+          "plan_source_vn": "Gói PROFESSIONAL (1 tháng)",
+          "price_usd": 46.26,
+          "price_vnd": 1200000,
+          "regular_price_usd": 73.24,
+          "regular_price_vnd": 1900000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-coursera-plus-business",
+      "page": 3,
+      "name_en": "Coursera Plus & Business Upgrade",
+      "brand": "Coursera",
+      "category": "Education & Certificates",
+      "description_en": "Coursera Plus and Coursera Business upgrades give unlimited access to the curated course catalog — Guided Projects, graded assignments and certificates — on your own email. Own-account Business and Plus options from 3 to 24 months, plus budget shared-account options.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-coursera-plus-business/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-11_05_32-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-coursera-plus-business.png",
+      "logo_source": "https://d3njjcbhbojbot.cloudfront.net/web/images/favicons/apple-touch-icon-v2-180x180.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Coursera Business (own-account)",
+          "plan_source_vn": "Business chính chủ",
+          "price_usd": 23.13,
+          "price_vnd": 600000,
+          "regular_price_usd": 46.26,
+          "regular_price_vnd": 1200000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Business (own-account) — option 2",
+          "plan_source_vn": "Business chính chủ",
+          "price_usd": 38.51,
+          "price_vnd": 999000,
+          "regular_price_usd": 77.1,
+          "regular_price_vnd": 2000000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Shared account",
+          "plan_source_vn": "Dùng chung",
+          "price_usd": 9.64,
+          "price_vnd": 250000,
+          "regular_price_usd": 19.27,
+          "regular_price_vnd": 500000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Shared account — option 2",
+          "plan_source_vn": "Dùng chung",
+          "price_usd": 19.27,
+          "price_vnd": 500000,
+          "regular_price_usd": 38.55,
+          "regular_price_vnd": 1000000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Business (own-account) — option 3",
+          "plan_source_vn": "Business chính chủ",
+          "price_usd": 17.35,
+          "price_vnd": 450000,
+          "regular_price_usd": 30.84,
+          "regular_price_vnd": 800000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Plus (own-account)",
+          "plan_source_vn": "Coursera Plus chính chủ",
+          "price_usd": 7.67,
+          "price_vnd": 199000,
+          "regular_price_usd": 19.27,
+          "regular_price_vnd": 500000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Plus (own-account) — option 2",
+          "plan_source_vn": "Coursera Plus chính chủ",
+          "price_usd": 21.2,
+          "price_vnd": 550000,
+          "regular_price_usd": 38.55,
+          "regular_price_vnd": 1000000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Plus (own-account) — option 3",
+          "plan_source_vn": "Coursera Plus chính chủ",
+          "price_usd": 42.4,
+          "price_vnd": 1100000,
+          "regular_price_usd": 69.39,
+          "regular_price_vnd": 1800000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Plus (own-account) — option 4",
+          "plan_source_vn": "Coursera Plus chính chủ",
+          "price_usd": 84.81,
+          "price_vnd": 2200000,
+          "regular_price_usd": 115.65,
+          "regular_price_vnd": 3000000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-coursera-plus",
+      "page": 1,
+      "name_en": "Coursera Plus & Business Upgrade",
+      "brand": "Coursera",
+      "category": "Education & Certificates",
+      "description_en": "Coursera Plus and Coursera Business upgrades give unlimited access to the curated course catalog — Guided Projects, graded assignments and certificates — on your own email. Own-account Business and Plus options from 3 to 24 months, plus budget shared-account options.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-coursera-plus/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-11_05_32-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-coursera-plus.png",
+      "logo_source": "https://d3njjcbhbojbot.cloudfront.net/web/images/favicons/apple-touch-icon-v2-180x180.png",
+      "duplicate_of": "tai-khoan-coursera-plus-business",
+      "plans": [
+        {
+          "plan_en": "Coursera Business (own-account)",
+          "plan_source_vn": "Business chính chủ",
+          "price_usd": 23.13,
+          "price_vnd": 600000,
+          "regular_price_usd": 46.26,
+          "regular_price_vnd": 1200000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Business (own-account) — option 2",
+          "plan_source_vn": "Business chính chủ",
+          "price_usd": 38.51,
+          "price_vnd": 999000,
+          "regular_price_usd": 77.1,
+          "regular_price_vnd": 2000000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Shared account",
+          "plan_source_vn": "Dùng chung",
+          "price_usd": 9.64,
+          "price_vnd": 250000,
+          "regular_price_usd": 19.27,
+          "regular_price_vnd": 500000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Shared account — option 2",
+          "plan_source_vn": "Dùng chung",
+          "price_usd": 19.27,
+          "price_vnd": 500000,
+          "regular_price_usd": 38.55,
+          "regular_price_vnd": 1000000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Business (own-account) — option 3",
+          "plan_source_vn": "Business chính chủ",
+          "price_usd": 17.35,
+          "price_vnd": 450000,
+          "regular_price_usd": 30.84,
+          "regular_price_vnd": 800000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Plus (own-account)",
+          "plan_source_vn": "Coursera Plus chính chủ",
+          "price_usd": 7.67,
+          "price_vnd": 199000,
+          "regular_price_usd": 19.27,
+          "regular_price_vnd": 500000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Plus (own-account) — option 2",
+          "plan_source_vn": "Coursera Plus chính chủ",
+          "price_usd": 21.2,
+          "price_vnd": 550000,
+          "regular_price_usd": 38.55,
+          "regular_price_vnd": 1000000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Plus (own-account) — option 3",
+          "plan_source_vn": "Coursera Plus chính chủ",
+          "price_usd": 42.4,
+          "price_vnd": 1100000,
+          "regular_price_usd": 69.39,
+          "regular_price_vnd": 1800000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Coursera Plus (own-account) — option 4",
+          "plan_source_vn": "Coursera Plus chính chủ",
+          "price_usd": 84.81,
+          "price_vnd": 2200000,
+          "regular_price_usd": 115.65,
+          "regular_price_vnd": 3000000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-d5-render-pro",
+      "page": 1,
+      "name_en": "D5 Render PRO Upgrade",
+      "brand": "D5 Render",
+      "category": "Architecture & 3D Rendering",
+      "description_en": "D5 Render PRO is a real-time 3D architectural rendering tool: ray-traced lighting simulation, one-click photorealistic perspectives and a smooth, intuitive workflow for architects and interior designers. Owner-account upgrade activated via email, 100% private.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-d5-render-pro/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/05/ChatGPT-Image-01_12_26-30-thg-5-2026-1200x630.png",
+      "logo_file": "logos/tai-khoan-d5-render-pro.png",
+      "logo_source": "https://usa-official.d5cdn.com/wp-content/uploads/2026/01/d5-logo-512-300x300.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "own-account upgrade",
+          "plan_source_vn": "Chính Chủ",
+          "price_usd": 23.13,
+          "price_vnd": 600000,
+          "regular_price_usd": 23.13,
+          "regular_price_vnd": 600000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "account upgrade",
+          "plan_source_vn": "Cấp Tài Khoản",
+          "price_usd": 23.13,
+          "price_vnd": 600000,
+          "regular_price_usd": 23.13,
+          "regular_price_vnd": 600000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-dzine-ai",
+      "page": 2,
+      "name_en": "Dzine AI Upgrade",
+      "brand": "Dzine AI",
+      "category": "AI Graphic Design",
+      "description_en": "Dzine AI (formerly Stylar AI) is an AI graphic design suite with professional-level control: precise layout edits, consistent characters, image-to-image styling and high-resolution exports for brand and ad creative. Creator and Master monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-dzine-ai/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/d68f7316-115e-4a4c-afae-e13838d42ae9-1200x1200.png",
+      "logo_file": "logos/tai-khoan-dzine-ai.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=dzine.ai&sz=256 (Google favicon mirror of dzine.ai)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Creator (1 month)",
+          "plan_source_vn": "Gói Creator (1 tháng)",
+          "price_usd": 7.71,
+          "price_vnd": 200000,
+          "regular_price_usd": 18.89,
+          "regular_price_vnd": 490000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Master (1 month)",
+          "plan_source_vn": "Gói Master (1 tháng)",
+          "price_usd": 38.51,
+          "price_vnd": 999000,
+          "regular_price_usd": 57.44,
+          "regular_price_vnd": 1490000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-elicit",
+      "page": 1,
+      "name_en": "Elicit AI Upgrade",
+      "brand": "Elicit",
+      "category": "Academic Research",
+      "description_en": "Elicit is an AI research assistant that analyzes millions of academic papers: smart literature search, automatic key-claim extraction and structured summaries for theses and papers. Plus and Pro monthly plans activated on your own email in 5–15 minutes.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-elicit/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-13_38_32-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-elicit.png",
+      "logo_source": "https://framerusercontent.com/images/GWXKVhGBLC34aTLlmLIMsRVb4.png",
+      "duplicate_of": "nang-cap-tai-khoan-elicit-ai-chinh-chu",
+      "plans": [
+        {
+          "plan_en": "Elicit Plus 1 month own-account",
+          "plan_source_vn": "Elicit Plus 1 tháng chính chủ",
+          "price_usd": 7.71,
+          "price_vnd": 200000,
+          "regular_price_usd": 13.49,
+          "regular_price_vnd": 350000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Elicit Pro 1 month own-account",
+          "plan_source_vn": "Elicit Pro 1 tháng chính chủ",
+          "price_usd": 28.91,
+          "price_vnd": 750000,
+          "regular_price_usd": 46.26,
+          "regular_price_vnd": 1200000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-envato-chinh-chu",
+      "page": 2,
+      "name_en": "Envato Elements Upgrade",
+      "brand": "Envato Elements",
+      "category": "Design & Creative Assets",
+      "description_en": "Envato Elements is an all-in-one digital subscription for creatives: unlimited downloads of premium templates, fonts, stock video, music, photos and graphics under a single commercial license. Core plan (1 month) activated on your own email in 5–15 minutes.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-envato-chinh-chu/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-13_04_12-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-envato-chinh-chu.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=envato.com&sz=256 (Google favicon mirror of envato.com)",
+      "duplicate_of": "goi-nang-cap-tai-khoan-envato-elements",
+      "plans": [
+        {
+          "plan_en": "Core 1 month",
+          "plan_source_vn": "Gói Core 1 tháng",
+          "price_usd": 20.43,
+          "price_vnd": 530000,
+          "regular_price_usd": 26.98,
+          "regular_price_vnd": 700000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-fangcode-ai",
+      "page": 3,
+      "name_en": "FangCode AI — Go (1 Month)",
+      "brand": "FangCode AI",
+      "category": "AI Coding Agent",
+      "description_en": "FangCode AI is a terminal coding agent: it reads your repository, edits files, runs tests and reports exact token, cache and cost usage for every run — with OpenAI- and Anthropic-compatible endpoints and a transparent per-run pricing model. Go plan, 1 month.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-fangcode-ai/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/09/ChatGPT-Image-15_49_25-5-thg-9-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-fangcode-ai.png",
+      "logo_source": "https://fangcode.ai/apple-touch-icon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Full access (single plan)",
+          "plan_source_vn": "Full access (single plan)",
+          "price_usd": 5.78,
+          "price_vnd": 150000,
+          "regular_price_usd": 5.78,
+          "regular_price_vnd": 150000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-figma-pro",
+      "page": 2,
+      "name_en": "Figma Upgrade — Professional & Education",
+      "brand": "Figma",
+      "category": "UI/UX Design",
+      "description_en": "Figma upgrades on your own account: a Professional Full seat (official ~$16/mo tier) for teams needing unlimited files, shared component libraries and Dev Mode, or a 1-year Education plan for students and teachers.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-figma-pro/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-tai-khoan-figma-chinh-chu.jpg",
+      "logo_file": "logos/tai-khoan-figma-pro.png",
+      "logo_source": "https://static.figma.com/app/icon/2/touch-180.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Professional 1 month",
+          "plan_source_vn": "Professional 1 tháng",
+          "price_usd": 15.42,
+          "price_vnd": 400000,
+          "regular_price_usd": 19.27,
+          "regular_price_vnd": 500000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Education 1 year",
+          "plan_source_vn": "Education 1 năm",
+          "price_usd": 19.27,
+          "price_vnd": 500000,
+          "regular_price_usd": 19.27,
+          "regular_price_vnd": 500000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-krea-ai",
+      "page": 4,
+      "name_en": "Krea AI — Basic, Pro & Max",
+      "brand": "Krea AI",
+      "category": "AI Image & Video Studio",
+      "description_en": "Krea is a browser-based AI creative studio: image generation with style references, text/image-to-video, realtime canvas and upscaling — with models from Google, OpenAI, Runway, Kling and Krea's in-house model in one workspace. Basic, Pro and Max monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-krea-ai/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/krea-ai-thumbnail.jpg",
+      "logo_file": "logos/tai-khoan-krea-ai.png",
+      "logo_source": "https://krea.ai/favicon/favicon-192.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Basic 1 month",
+          "plan_source_vn": "Gói Basic 1 tháng",
+          "price_usd": 5.78,
+          "price_vnd": 150000,
+          "regular_price_usd": 5.78,
+          "regular_price_vnd": 150000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Pro 1 month",
+          "plan_source_vn": "Gói Pro 1 tháng",
+          "price_usd": 17.35,
+          "price_vnd": 450000,
+          "regular_price_usd": 17.35,
+          "regular_price_vnd": 450000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Max 1 month",
+          "plan_source_vn": "Gói Max 1 tháng",
+          "price_usd": 38.55,
+          "price_vnd": 1000000,
+          "regular_price_usd": 38.55,
+          "regular_price_vnd": 1000000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-krisp-ai",
+      "page": 2,
+      "name_en": "Krisp AI Upgrade",
+      "brand": "Krisp AI",
+      "category": "Noise Cancellation",
+      "description_en": "Krisp AI is a real-time two-way noise-cancelling app for calls and meetings: it removes background voices, noise and echo from both mic and speaker in any conferencing app. Core (official $16/mo value) and Advanced (official $30/mo value) monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-krisp-ai/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-14_00_42-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-krisp-ai.png",
+      "logo_source": "https://krisp.ai/wp-content/uploads/2023/12/cropped-favicon-1-180x180.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Core ((official $16/mo value))",
+          "plan_source_vn": "Gói Core (16$/tháng)",
+          "price_usd": 9.25,
+          "price_vnd": 240000,
+          "regular_price_usd": 15.42,
+          "regular_price_vnd": 400000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Advanced ((official $30/mo value))",
+          "plan_source_vn": "Gói Advanced (30$/tháng)",
+          "price_usd": 17.35,
+          "price_vnd": 450000,
+          "regular_price_usd": 28.91,
+          "regular_price_vnd": 750000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-meshy",
+      "page": 1,
+      "name_en": "Meshy AI Upgrade",
+      "brand": "Meshy AI",
+      "category": "AI 3D Generation",
+      "description_en": "Meshy AI is a generative 3D platform: turn text prompts or images into detailed 3D models with textures in minutes, keeping all your existing projects and data intact. Pro, Premium and Studio monthly plans activated on your own email.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-meshy/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-13_26_46-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-meshy.png",
+      "logo_source": "https://meshy.ai/apple-icon.png?apple-icon.1x2jivih2_8ii.png",
+      "duplicate_of": "nang-cap-tai-khoan-meshy-ai-chinh-chu",
+      "plans": [
+        {
+          "plan_en": "Pro 1 month",
+          "plan_source_vn": "Gói Pro 1 tháng",
+          "price_usd": 6.13,
+          "price_vnd": 159000,
+          "regular_price_usd": 9.64,
+          "regular_price_vnd": 250000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Premium 1 month",
+          "plan_source_vn": "Gói Premium 1 tháng",
+          "price_usd": 11.56,
+          "price_vnd": 300000,
+          "regular_price_usd": 17.35,
+          "regular_price_vnd": 450000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Studio 1 month",
+          "plan_source_vn": "Gói Studio 1 tháng",
+          "price_usd": 26.95,
+          "price_vnd": 699000,
+          "regular_price_usd": 57.82,
+          "regular_price_vnd": 1500000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-obsidian-sync",
+      "page": 2,
+      "name_en": "Obsidian Sync Upgrade",
+      "brand": "Obsidian",
+      "category": "Notes & Knowledge Management",
+      "description_en": "Obsidian Sync keeps your markdown vault consistent across Windows, Mac, iOS and Android with near-instant sync and end-to-end encryption — no manual Google Drive/iCloud juggling. Owner-account upgrade on your own Obsidian account.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-obsidian-sync/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/07/obsidian-sync-cropped.png",
+      "logo_file": "logos/tai-khoan-obsidian-sync.png",
+      "logo_source": "https://obsidian.md/apple-touch-icon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Full access (single plan)",
+          "plan_source_vn": "Full access (single plan)",
+          "price_usd": 4.63,
+          "price_vnd": 120000,
+          "regular_price_usd": 4.63,
+          "regular_price_vnd": 120000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-pika-ai",
+      "page": 2,
+      "name_en": "Pika AI Upgrade",
+      "brand": "Pika AI",
+      "category": "AI Video",
+      "description_en": "Pika is a generative video platform: create clips from text, images or existing video (Text-to-Video, Image-to-Video, Video-to-Video) with style presets, effects and lip-sync. Standard, Pro and Fancy monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-pika-ai/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2025/08/c331b83f-9d45-459a-a537-623273c3d20c-1200x1200.png",
+      "logo_file": "logos/tai-khoan-pika-ai.png",
+      "logo_source": "https://pika.art/apple-icon.png?apple-icon.1pc-f1mhs57mu.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Standard 1 month",
+          "plan_source_vn": "Gói Standard 1 tháng",
+          "price_usd": 5.78,
+          "price_vnd": 150000,
+          "regular_price_usd": 5.78,
+          "regular_price_vnd": 150000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Pro 1 month",
+          "plan_source_vn": "Gói Pro 1 tháng",
+          "price_usd": 16.19,
+          "price_vnd": 420000,
+          "regular_price_usd": 16.19,
+          "regular_price_vnd": 420000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Fancy 1 month",
+          "plan_source_vn": "Gói Fancy 1 tháng",
+          "price_usd": 29.3,
+          "price_vnd": 760000,
+          "regular_price_usd": 29.3,
+          "regular_price_vnd": 760000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-rork-ai",
+      "page": 2,
+      "name_en": "Rork AI Upgrade",
+      "brand": "Rork AI",
+      "category": "AI Mobile App Builder",
+      "description_en": "Rork AI builds and publishes mobile apps from chat: describe your idea and Rork designs and generates runnable SwiftUI (iOS), Kotlin/Compose (Android) or web code, with build/preview modes and on-device testing. Free tier is design-only; paid plans unlock builds.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-rork-ai/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/09/ChatGPT-Image-16_56_01-2-thg-9-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-rork-ai.png",
+      "logo_source": "https://rork.com/favicon.ico?favicon.3wwbwwqrp_8tq.ico",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Full access (single plan)",
+          "plan_source_vn": "Full access (single plan)",
+          "price_usd": 13.49,
+          "price_vnd": 350000,
+          "regular_price_usd": 13.49,
+          "regular_price_vnd": 350000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-sloyd-ai",
+      "page": 3,
+      "name_en": "Sloyd AI Upgrade",
+      "brand": "Sloyd AI",
+      "category": "AI 3D Generation",
+      "description_en": "Sloyd AI is an AI 3D model generator for game development: create game-ready objects from parametric templates and prompts, with fast iteration and OBJ/GLB/STL export. Plus and Pro monthly plans.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-sloyd-ai/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-tai-khoan-sloyd-ai-chinh-chu.jpg",
+      "logo_file": "logos/tai-khoan-sloyd-ai.png",
+      "logo_source": "https://sloyd.ai/apple-icon.png?6d165b2a1d5024c7",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Plus (1 month)",
+          "plan_source_vn": "Gói Plus (1 tháng)",
+          "price_usd": 4.63,
+          "price_vnd": 120000,
+          "regular_price_usd": 9.64,
+          "regular_price_vnd": 250000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Pro (1 month)",
+          "plan_source_vn": "Gói Pro (1 tháng)",
+          "price_usd": 14.65,
+          "price_vnd": 380000,
+          "regular_price_usd": 28.91,
+          "regular_price_vnd": 750000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-storyblocks",
+      "page": 4,
+      "name_en": "Storyblocks — Essentials & All Access",
+      "brand": "Storyblocks",
+      "category": "Stock Media",
+      "description_en": "Storyblocks is a subscription stock media library: unlimited downloads of stock video, music, sound effects and images — no per-clip fees and no Content ID headaches. Essentials or Unlimited All Access, 1-month options.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-storyblocks/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/nang-cap-tai-khoan-storyblocks-chinh-chu.jpg",
+      "logo_file": "logos/tai-khoan-storyblocks.png",
+      "logo_source": "https://www.storyblocks.com/apple-touch-icon.png",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Essentials 1 month",
+          "plan_source_vn": "Essentials 1 tháng",
+          "price_usd": 25.06,
+          "price_vnd": 650000,
+          "regular_price_usd": 25.06,
+          "regular_price_vnd": 650000,
+          "on_sale": false
+        },
+        {
+          "plan_en": "Unlimited All Access 1 month",
+          "plan_source_vn": "Unlimited All Access 1 tháng",
+          "price_usd": 38.51,
+          "price_vnd": 999000,
+          "regular_price_usd": 38.51,
+          "regular_price_vnd": 999000,
+          "on_sale": false
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-udemy-business",
+      "page": 4,
+      "name_en": "Udemy Business",
+      "brand": "Udemy",
+      "category": "Education & Business Skills",
+      "description_en": "Udemy Business opens the curated Business catalog — 30,000+ top-rated courses in tech, design, business and more, with certificates — as a Team Plan seat on your own email. 3, 6 and 12 month access options.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-udemy-business/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2024/11/ChatGPT-Image-14_23_33-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-udemy-business.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=udemy.com&sz=256 (Google favicon mirror of udemy.com)",
+      "duplicate_of": null,
+      "plans": [
+        {
+          "plan_en": "Udemy Business 3 months",
+          "plan_source_vn": "Udemy Business 3 tháng",
+          "price_usd": 9.6,
+          "price_vnd": 249000,
+          "regular_price_usd": 17.35,
+          "regular_price_vnd": 450000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Udemy Business 6 months",
+          "plan_source_vn": "Udemy Business 6 Tháng",
+          "price_usd": 18.46,
+          "price_vnd": 479000,
+          "regular_price_usd": 32.77,
+          "regular_price_vnd": 850000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Udemy Business 12 months",
+          "plan_source_vn": "Udemy Business 12 Tháng",
+          "price_usd": 26.95,
+          "price_vnd": 699000,
+          "regular_price_usd": 46.26,
+          "regular_price_vnd": 1200000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-vidiq-boost-max",
+      "page": 3,
+      "name_en": "VidIQ Upgrade — Boost & Max",
+      "brand": "VidIQ",
+      "category": "YouTube Growth",
+      "description_en": "vidIQ is a YouTube growth toolkit: topic research, keyword and trend analysis, AI video ideas, thumbnail generation and channel optimization alongside YouTube Studio. Boost (2,000 AI credits/mo) and Max (6,000 AI credits/mo) monthly plans, 1 channel each.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-vidiq-boost-max/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-13_49_36-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-vidiq-boost-max.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=vidiq.com&sz=256 (Google favicon mirror of vidiq.com)",
+      "duplicate_of": "nang-cap-tai-khoan-vidiq-chinh-chu",
+      "plans": [
+        {
+          "plan_en": "Boost 1 month",
+          "plan_source_vn": "Gói Boost 1 tháng",
+          "price_usd": 4.97,
+          "price_vnd": 129000,
+          "regular_price_usd": 9.64,
+          "regular_price_vnd": 250000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Max 1 month",
+          "plan_source_vn": "Gói Max 1 tháng",
+          "price_usd": 7.71,
+          "price_vnd": 200000,
+          "regular_price_usd": 23.13,
+          "regular_price_vnd": 600000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-vidiq",
+      "page": 1,
+      "name_en": "VidIQ Upgrade — Boost & Max",
+      "brand": "VidIQ",
+      "category": "YouTube Growth",
+      "description_en": "vidIQ is a YouTube growth toolkit: topic research, keyword and trend analysis, AI video ideas, thumbnail generation and channel optimization alongside YouTube Studio. Boost (2,000 AI credits/mo) and Max (6,000 AI credits/mo) monthly plans, 1 channel each.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-vidiq/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-13_49_36-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-vidiq.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=vidiq.com&sz=256 (Google favicon mirror of vidiq.com)",
+      "duplicate_of": "nang-cap-tai-khoan-vidiq-chinh-chu",
+      "plans": [
+        {
+          "plan_en": "Boost 1 month",
+          "plan_source_vn": "Gói Boost 1 tháng",
+          "price_usd": 4.97,
+          "price_vnd": 129000,
+          "regular_price_usd": 9.64,
+          "regular_price_vnd": 250000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Max 1 month",
+          "plan_source_vn": "Gói Max 1 tháng",
+          "price_usd": 7.71,
+          "price_vnd": 200000,
+          "regular_price_usd": 23.13,
+          "regular_price_vnd": 600000,
+          "on_sale": true
+        }
+      ]
+    },
+    {
+      "id": "tai-khoan-zapier",
+      "page": 3,
+      "name_en": "Zapier Automation Upgrade",
+      "brand": "Zapier",
+      "category": "Automation & Workflows",
+      "description_en": "Zapier connects thousands of web apps (Gmail, Google Sheets, Slack, Notion, Facebook Ads...) into automated 'Zaps' without code: multi-step workflows, filters, paths and AI actions — activated on your own email in 5–15 minutes. Professional plan, monthly or annual billing.",
+      "supplier_url": "https://tainguyensieure.com/tai-khoan-zapier/",
+      "supplier_image": "https://tainguyensieure.com/wp-content/uploads/2026/08/ChatGPT-Image-14_21_00-15-thg-8-2026-1200x1200.png",
+      "logo_file": "logos/tai-khoan-zapier.png",
+      "logo_source": "https://www.google.com/s2/favicons?domain=zapier.com&sz=256 (Google favicon mirror of zapier.com)",
+      "duplicate_of": "nang-cap-tai-khoan-zapier-automation",
+      "plans": [
+        {
+          "plan_en": "Professional 1 month",
+          "plan_source_vn": "Gói Professional 1 tháng",
+          "price_usd": 17.35,
+          "price_vnd": 450000,
+          "regular_price_usd": 28.91,
+          "regular_price_vnd": 750000,
+          "on_sale": true
+        },
+        {
+          "plan_en": "Professional 1 year",
+          "plan_source_vn": "Gói Professional 1 năm",
+          "price_usd": 115.61,
+          "price_vnd": 2999000,
+          "regular_price_usd": 212.02,
+          "regular_price_vnd": 5500000,
+          "on_sale": true
+        }
+      ]
+    }
+  ]
+}

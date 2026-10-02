@@ -1,0 +1,756 @@
+[
+ {
+  "id": "prod_kho_api-claude",
+  "slug": "api-claude",
+  "name": "Claude API Key (Opus, Sonnet, Haiku)",
+  "brand": "Anthropic",
+  "brandLogo": "/assets/logos/logo_brand_anthropic_claude.svg",
+  "category": "llm",
+  "originalPriceVND": 80000,
+  "currentPriceVND": 80000,
+  "originalPriceUSD": 3.05,
+  "currentPriceUSD": 3.05,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 15,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 79,000₫ — $3.05 (supplier listed price)",
+   "4 plan options: 100M Token, 10M Token, 50M Token",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_api-codex",
+  "slug": "api-codex",
+  "name": "Codex API Key (OpenAI GPT-5.x)",
+  "brand": "OpenAI",
+  "brandLogo": "/assets/logos/logo_brand_openai_chatgpt.svg",
+  "category": "llm",
+  "originalPriceVND": 70000,
+  "currentPriceVND": 70000,
+  "originalPriceUSD": 2.66,
+  "currentPriceUSD": 2.66,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 20,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 69,000₫ — $2.66 (supplier listed price)",
+   "6 plan options: 100M Token, 10M Token, 200M Token, 300M Token",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_api-grok-xai",
+  "slug": "api-grok-xai",
+  "name": "Grok API Key (xAI Grok-4.x)",
+  "brand": "xAI",
+  "brandLogo": "/assets/logos/logo_brand_kho_api-grok-xai.png",
+  "category": "llm",
+  "originalPriceVND": 50000,
+  "currentPriceVND": 50000,
+  "originalPriceUSD": 1.89,
+  "currentPriceUSD": 1.89,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 25,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 49,000₫ — $1.89 (supplier listed price)",
+   "1 plan options across tiers",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-minimax-io",
+  "slug": "nang-cap-minimax-io",
+  "name": "MiniMax.io Upgrade (Video & Audio AI)",
+  "brand": "MiniMax",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-minimax-io.png",
+  "category": "llm",
+  "originalPriceVND": 100000,
+  "currentPriceVND": 100000,
+  "originalPriceUSD": 3.82,
+  "currentPriceUSD": 3.82,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 30,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 99,000₫ — $3.82 (supplier listed price)",
+   "8 plan options: Mm Audio Pro, Mm Audio Scale, Mm Audio Standard, Mm Audio Starter",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-ollama-cloud-ai",
+  "slug": "nang-cap-ollama-cloud-ai",
+  "name": "Ollama Cloud Upgrade",
+  "brand": "Ollama",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-ollama-cloud-ai.png",
+  "category": "llm",
+  "originalPriceVND": 374000,
+  "currentPriceVND": 374000,
+  "originalPriceUSD": 14.22,
+  "currentPriceUSD": 14.22,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 35,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 369,000₫ — $14.22 (supplier listed price)",
+   "1 plan options across tiers",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-tai-khoan-copy-ai",
+  "slug": "nang-cap-tai-khoan-copy-ai",
+  "name": "Copy.ai Starter (GTM AI Platform)",
+  "brand": "Copy.ai",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-tai-khoan-copy-ai.png",
+  "category": "enterprise",
+  "originalPriceVND": 871000,
+  "currentPriceVND": 871000,
+  "originalPriceUSD": 33.11,
+  "currentPriceUSD": 33.11,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 40,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 859,000₫ — $33.11 (supplier listed price)",
+   "1 plan options: Starter",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-tai-khoan-d-id-ai",
+  "slug": "nang-cap-tai-khoan-d-id-ai",
+  "name": "D-ID AI (Creative Reality Studio)",
+  "brand": "D-ID",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-tai-khoan-d-id-ai.png",
+  "category": "creative",
+  "originalPriceVND": 181000,
+  "currentPriceVND": 181000,
+  "originalPriceUSD": 6.9,
+  "currentPriceUSD": 6.9,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 45,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 179,000₫ — $6.90 (supplier listed price)",
+   "2 plan options: Lite, Pro",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-tai-khoan-hedra-ai",
+  "slug": "nang-cap-tai-khoan-hedra-ai",
+  "name": "Hedra AI (Character Video)",
+  "brand": "Hedra",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-tai-khoan-hedra-ai.png",
+  "category": "creative",
+  "originalPriceVND": 364000,
+  "currentPriceVND": 364000,
+  "originalPriceUSD": 13.84,
+  "currentPriceUSD": 13.84,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 50,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 359,000₫ — $13.84 (supplier listed price)",
+   "6 plan options: Basic, Hedra Pro, Professional",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-tai-khoan-humbot-ai",
+  "slug": "nang-cap-tai-khoan-humbot-ai",
+  "name": "Humbot AI (AI Text Humanizer)",
+  "brand": "Humbot",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-tai-khoan-humbot-ai.png",
+  "category": "llm",
+  "originalPriceVND": 242000,
+  "currentPriceVND": 242000,
+  "originalPriceUSD": 9.21,
+  "currentPriceUSD": 9.21,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 17,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 239,000₫ — $9.21 (supplier listed price)",
+   "6 plan options: Basic, Pro, Unlimited",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-tai-khoan-kittl",
+  "slug": "nang-cap-tai-khoan-kittl",
+  "name": "Kittl (AI Design Platform)",
+  "brand": "Kittl",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-tai-khoan-kittl.png",
+  "category": "design",
+  "originalPriceVND": 303000,
+  "currentPriceVND": 303000,
+  "originalPriceUSD": 11.53,
+  "currentPriceUSD": 11.53,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 22,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 299,000₫ — $11.53 (supplier listed price)",
+   "5 plan options: Expert, Max, Pro",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-tai-khoan-n8n",
+  "slug": "nang-cap-tai-khoan-n8n",
+  "name": "n8n Cloud Starter (Workflow Automation)",
+  "brand": "n8n",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-tai-khoan-n8n.png",
+  "category": "enterprise",
+  "originalPriceVND": 2736000,
+  "currentPriceVND": 2736000,
+  "originalPriceUSD": 104.04,
+  "currentPriceUSD": 104.04,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 27,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 2,699,000₫ — $104.04 (supplier listed price)",
+   "1 plan options: Starter",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-tai-khoan-outfit-changer-ai",
+  "slug": "nang-cap-tai-khoan-outfit-changer-ai",
+  "name": "Outfit Changer AI (Virtual Try-On)",
+  "brand": "Outfit Changer",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-tai-khoan-outfit-changer-ai.png",
+  "category": "creative",
+  "originalPriceVND": 344000,
+  "currentPriceVND": 344000,
+  "originalPriceUSD": 13.07,
+  "currentPriceUSD": 13.07,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 32,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 339,000₫ — $13.07 (supplier listed price)",
+   "2 plan options: Basic, Pro",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-tai-khoan-play-ht-ai",
+  "slug": "nang-cap-tai-khoan-play-ht-ai",
+  "name": "Play.ht Creator (AI Voice)",
+  "brand": "Play.ht",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-tai-khoan-play-ht-ai.png",
+  "category": "creative",
+  "originalPriceVND": 354000,
+  "currentPriceVND": 354000,
+  "originalPriceUSD": 13.45,
+  "currentPriceUSD": 13.45,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 37,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 349,000₫ — $13.45 (supplier listed price)",
+   "1 plan options: Creator",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_nang-cap-tai-khoan-tempo-labs-ai",
+  "slug": "nang-cap-tai-khoan-tempo-labs-ai",
+  "name": "Tempo Labs (AI App Builder)",
+  "brand": "Tempo Labs",
+  "brandLogo": "/assets/logos/logo_brand_kho_nang-cap-tai-khoan-tempo-labs-ai.png",
+  "category": "coding",
+  "originalPriceVND": 526000,
+  "currentPriceVND": 526000,
+  "originalPriceUSD": 20.01,
+  "currentPriceUSD": 20.01,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 42,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 519,000₫ — $20.01 (supplier listed price)",
+   "3 plan options: Pro, Scale, Ultimate",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_tai-khoan-bypassai",
+  "slug": "tai-khoan-bypassai",
+  "name": "BypassAI (AI Text Humanizer)",
+  "brand": "BypassAI",
+  "brandLogo": "/assets/logos/logo_brand_kho_tai-khoan-bypassai.png",
+  "category": "llm",
+  "originalPriceVND": 283000,
+  "currentPriceVND": 283000,
+  "originalPriceUSD": 10.76,
+  "currentPriceUSD": 10.76,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 47,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 279,000₫ — $10.76 (supplier listed price)",
+   "3 plan options: Essential, Pro, Team",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_tai-khoan-higgsfield-ai",
+  "slug": "tai-khoan-higgsfield-ai",
+  "name": "Higgsfield AI (Cinematic Video & Image)",
+  "brand": "Higgsfield",
+  "brandLogo": "/assets/logos/logo_brand_kho_tai-khoan-higgsfield-ai.png",
+  "category": "creative",
+  "originalPriceVND": 192000,
+  "currentPriceVND": 192000,
+  "originalPriceUSD": 7.29,
+  "currentPriceUSD": 7.29,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 52,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 189,000₫ — $7.29 (supplier listed price)",
+   "1 plan options across tiers",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_tai-khoan-invideo",
+  "slug": "tai-khoan-invideo",
+  "name": "Invideo AI (Text-to-Video Studio)",
+  "brand": "Invideo",
+  "brandLogo": "/assets/logos/logo_brand_kho_tai-khoan-invideo.png",
+  "category": "creative",
+  "originalPriceVND": 319000,
+  "currentPriceVND": 319000,
+  "originalPriceUSD": 12.14,
+  "currentPriceUSD": 12.14,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 19,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 314,972.5₫ — $12.14 (supplier listed price)",
+   "4 plan options: Ai Pro, Ai Ultra, Studio Unlimited",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_tai-khoan-mapify-ai",
+  "slug": "tai-khoan-mapify-ai",
+  "name": "Mapify AI (Mind Mapping)",
+  "brand": "Mapify",
+  "brandLogo": "/assets/logos/logo_brand_kho_tai-khoan-mapify-ai.png",
+  "category": "enterprise",
+  "originalPriceVND": 192000,
+  "currentPriceVND": 192000,
+  "originalPriceUSD": 7.29,
+  "currentPriceUSD": 7.29,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 24,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 189,000₫ — $7.29 (supplier listed price)",
+   "6 plan options: Basic, Pro, Unlimited",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_tai-khoan-opencode-ai",
+  "slug": "tai-khoan-opencode-ai",
+  "name": "OpenCode AI (Terminal Coding Agent)",
+  "brand": "OpenCode",
+  "brandLogo": "/assets/logos/logo_brand_kho_tai-khoan-opencode-ai.png",
+  "category": "coding",
+  "originalPriceVND": 131000,
+  "currentPriceVND": 131000,
+  "originalPriceUSD": 4.97,
+  "currentPriceUSD": 4.97,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 29,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 129,000₫ — $4.97 (supplier listed price)",
+   "1 plan options across tiers",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_tai-khoan-otter-ai",
+  "slug": "tai-khoan-otter-ai",
+  "name": "Otter AI (Meeting Assistant)",
+  "brand": "Otter.ai",
+  "brandLogo": "/assets/logos/logo_brand_kho_tai-khoan-otter-ai.png",
+  "category": "enterprise",
+  "originalPriceVND": 323000,
+  "currentPriceVND": 323000,
+  "originalPriceUSD": 12.3,
+  "currentPriceUSD": 12.3,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 34,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 319,000₫ — $12.30 (supplier listed price)",
+   "4 plan options: Business, Pro",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_tai-khoan-runninghub-ai",
+  "slug": "tai-khoan-runninghub-ai",
+  "name": "RunningHUB (ComfyUI Cloud GPU)",
+  "brand": "RunningHUB",
+  "brandLogo": "/assets/logos/logo_brand_kho_tai-khoan-runninghub-ai.png",
+  "category": "creative",
+  "originalPriceVND": 171000,
+  "currentPriceVND": 171000,
+  "originalPriceUSD": 6.51,
+  "currentPriceUSD": 6.51,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 39,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 169,000₫ — $6.51 (supplier listed price)",
+   "22 plan options: Lite Plus, Max, Personal, Personal Plus",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_tai-khoan-scispace",
+  "slug": "tai-khoan-scispace",
+  "name": "SciSpace Premium (Research Assistant)",
+  "brand": "SciSpace",
+  "brandLogo": "/assets/logos/logo_brand_kho_tai-khoan-scispace.png",
+  "category": "search",
+  "originalPriceVND": 374000,
+  "currentPriceVND": 374000,
+  "originalPriceUSD": 14.22,
+  "currentPriceUSD": 14.22,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 44,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 369,000₫ — $14.22 (supplier listed price)",
+   "1 plan options: Scispace Premium",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_tai-khoan-sider-ai",
+  "slug": "tai-khoan-sider-ai",
+  "name": "Sider AI (Browser AI Copilot)",
+  "brand": "Sider",
+  "brandLogo": "/assets/logos/logo_brand_kho_tai-khoan-sider-ai.png",
+  "category": "llm",
+  "originalPriceVND": 465000,
+  "currentPriceVND": 465000,
+  "originalPriceUSD": 17.69,
+  "currentPriceUSD": 17.69,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 49,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 459,000₫ — $17.69 (supplier listed price)",
+   "3 plan options: Lite, Max, Pro",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_tai-khoan-veed-io",
+  "slug": "tai-khoan-veed-io",
+  "name": "Veed.io (Online Video Editor)",
+  "brand": "Veed",
+  "brandLogo": "/assets/logos/logo_brand_kho_tai-khoan-veed-io.png",
+  "category": "creative",
+  "originalPriceVND": 374000,
+  "currentPriceVND": 374000,
+  "originalPriceUSD": 14.22,
+  "currentPriceUSD": 14.22,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 16,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 369,000₫ — $14.22 (supplier listed price)",
+   "3 plan options: 1 Thang",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_topaz-labs",
+  "slug": "topaz-labs",
+  "name": "Topaz Labs AI (Photo & Video Enhancement)",
+  "brand": "Topaz Labs",
+  "brandLogo": "/assets/logos/logo_brand_kho_topaz-labs.png",
+  "category": "creative",
+  "originalPriceVND": 344000,
+  "currentPriceVND": 344000,
+  "originalPriceUSD": 13.07,
+  "currentPriceUSD": 13.07,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 21,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 339,000₫ — $13.07 (supplier listed price)",
+   "22 plan options: Astra Plus, Astra Pro, Astra Standard, Bloom Personal",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ },
+ {
+  "id": "prod_kho_transkriptor",
+  "slug": "transkriptor",
+  "name": "Transkriptor (AI Transcription)",
+  "brand": "Transkriptor",
+  "brandLogo": "/assets/logos/logo_brand_kho_transkriptor.png",
+  "category": "enterprise",
+  "originalPriceVND": 181000,
+  "currentPriceVND": 181000,
+  "originalPriceUSD": 6.9,
+  "currentPriceUSD": 6.9,
+  "discountPercent": 0,
+  "instantDelivery": true,
+  "stockCount": 26,
+  "badge": null,
+  "platformSubtext": "Official-plan activation on your own email",
+  "quotaFeatures": [
+   "Entry price from 179,000₫ — $6.90 (supplier listed price)",
+   "2 plan options: Lite, Pro",
+   "Activated on your own account in 5–15 minutes",
+   "1-for-1 warranty for the full subscription period"
+  ],
+  "specs": {
+   "fastQuota": "Plan-based limits",
+   "contextWindow": "—",
+   "models": "Official plan lineup",
+   "multiDevice": "Web & mobile"
+  }
+ }
+]

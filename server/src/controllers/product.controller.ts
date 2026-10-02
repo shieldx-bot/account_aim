@@ -3,6 +3,7 @@ import { pool } from '../config/db.js';
 import { EXPANDED_PRODUCTS } from '../data/catalog-expansion.js';
 import { SUPPLIER_PRODUCTS } from '../data/supplier-catalog.js';
 import { KHO_PRODUCTS } from '../data/khotai-khoan-catalog.js';
+import { KHO2_PRODUCTS } from '../data/education-work-catalog.js';
 
 // Initial 8 seed products matching the frontend portfolio
 const INITIAL_PRODUCTS = [
@@ -502,7 +503,7 @@ export const formatProductRow = (row: any) => ({
  */
 export const ensureSeedProducts = async (): Promise<void> => {
   try {
-    for (const prod of [...INITIAL_PRODUCTS, ...EXPANDED_PRODUCTS, ...SUPPLIER_PRODUCTS, ...KHO_PRODUCTS]) {
+    for (const prod of [...INITIAL_PRODUCTS, ...EXPANDED_PRODUCTS, ...SUPPLIER_PRODUCTS, ...KHO_PRODUCTS, ...KHO2_PRODUCTS]) {
       await pool.query(
         `INSERT INTO products (
           id, slug, name, brand, brand_logo, category,
@@ -547,19 +548,65 @@ export const ensureSeedProducts = async (): Promise<void> => {
 export const getAllProducts = async (req: Request, res: Response): Promise<void> => {
   try {
     const showAll = req.query.all === 'true';
-    const query = showAll
-      ? 'SELECT * FROM products ORDER BY created_at ASC'
-      : 'SELECT * FROM products WHERE is_active = true ORDER BY created_at ASC';
+    const page = req.query.page ? parseInt(String(req.query.page), 10) : NaN;
+    const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : NaN;
+    const category = req.query.category ? String(req.query.category) : undefined;
+    const search = req.query.search ? String(req.query.search).trim() : undefined;
+    const sort = req.query.sort ? String(req.query.sort) : 'popular';
+    const hasPaging = !isNaN(page) || !isNaN(limit) || !!category || !!search;
 
-    const result = await pool.query(query);
-    const products = result.rows.map(formatProductRow);
+    if (!hasPaging) {
+      // Legacy mode: return the full catalog (used by AppContext, admin, banners)
+      const query = showAll
+        ? 'SELECT * FROM products ORDER BY created_at ASC'
+        : 'SELECT * FROM products WHERE is_active = true ORDER BY created_at ASC';
+      const result = await pool.query(query);
+      const products = result.rows.map(formatProductRow);
+      res.status(200).json({ success: true, data: products, count: products.length });
+      return;
+    }
 
+    // Paginated mode: page/limit/category/search/sort — keeps payloads small
+    const pageNum = isNaN(page) ? 1 : Math.max(1, page);
+    const limitNum = isNaN(limit) ? 24 : Math.min(100, Math.max(1, limit));
+    const where: string[] = showAll ? [] : ['is_active = true'];
+    const params: unknown[] = [];
+    if (category && category !== 'all') {
+      params.push(category);
+      where.push(`category = $${params.length}`);
+    }
+    if (search) {
+      params.push(`%${search}%`);
+      const p = `$${params.length}`;
+      where.push(`(name ILIKE ${p} OR brand ILIKE ${p} OR slug ILIKE ${p} OR quota_features::text ILIKE ${p})`);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const orderMap: Record<string, string> = {
+      popular: 'created_at ASC',
+      price_asc: 'current_price_usd ASC',
+      price_desc: 'current_price_usd DESC',
+      discount: 'discount_percent DESC',
+      stock: 'stock_count DESC',
+    };
+    const orderSql = orderMap[sort] || orderMap.popular;
+
+    const countRes = await pool.query(`SELECT COUNT(*) AS total FROM products ${whereSql}`, params);
+    const total = parseInt(countRes.rows[0].total, 10);
+    const totalPages = Math.max(1, Math.ceil(total / limitNum));
+    params.push(limitNum, (pageNum - 1) * limitNum);
+    const dataRes = await pool.query(
+      `SELECT * FROM products ${whereSql} ORDER BY ${orderSql} LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
     res.status(200).json({
       success: true,
-      data: products,
-      count: products.length,
+      data: dataRes.rows.map(formatProductRow),
+      count: total,
+      page: pageNum,
+      totalPages,
+      limit: limitNum,
     });
-  } catch (err) {
+} catch (err) {
     console.error('[ProductController] Error fetching products:', err);
     res.status(500).json({
       success: false,

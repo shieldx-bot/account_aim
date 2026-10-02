@@ -79,8 +79,18 @@ export const productsApi = {
   /**
    * Fetch all products from PostgreSQL (all=true for admin to view inactive as well)
    */
-  async getAll(all: boolean = false): Promise<ProductPlan[]> {
-    const res = await fetch(`${API_BASE_URL}/products${all ? '?all=true' : ''}`);
+  async getAll(params?: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    search?: string;
+    sort?: string;
+    all?: boolean;
+  }): Promise<ProductPlan[]> {
+    const qs = new URLSearchParams();
+    if (params?.all) qs.set('all', 'true');
+    if (params) Object.entries(params).forEach(([k, v]) => k !== 'all' && v !== undefined && qs.set(k, String(v)));
+    const res = await fetch(`${API_BASE_URL}/products${qs.toString() ? `?${qs}` : ''}`);
     const body = await res.json();
     if (!res.ok) {
       throw new Error(body.message || 'Unable to load the product list.');

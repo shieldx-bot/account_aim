@@ -75,7 +75,7 @@ export const AdminProductsPage: React.FC = () => {
   const loadAdminProducts = async () => {
     try {
       setIsLoading(true);
-      const data = await productsApi.getAll(true);
+      const data = await productsApi.getAll({ all: true });
       setProducts(data);
     } catch (err: any) {
       setActionError(err.message || 'Unable to load the product list.');

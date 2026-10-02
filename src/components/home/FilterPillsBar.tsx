@@ -22,8 +22,10 @@ const CATEGORIES: { id: ProductCategory; label: string }[] = [
   { id: 'coding', label: 'AI Coding' },
   { id: 'llm', label: 'LLMs & Chat' },
   { id: 'search', label: 'AI Search & Research' },
-  { id: 'design', label: 'Design & Audio' },
-  { id: 'enterprise', label: 'Enterprise' },
+  { id: 'design', label: 'Design & Assets' },
+  { id: 'creative', label: 'Creative AI' },
+  { id: 'enterprise', label: 'Enterprise & Work' },
+  { id: 'education', label: 'Education' },
 ];
 
 export const FilterPillsBar: React.FC<FilterPillsBarProps> = ({
