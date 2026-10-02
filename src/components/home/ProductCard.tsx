@@ -135,9 +135,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
               {formatPrice(product.currentPriceVND, product.currentPriceUSD)}
               <span className="text-[10px] text-text-muted font-normal ml-1">/month</span>
             </div>
-            <div className="text-[11px] text-status-success font-mono font-semibold">
-              Save -{product.discountPercent}%
-            </div>
+            {product.discountPercent > 0 && (
+              <div className="text-[11px] text-status-success font-mono font-semibold">
+                Save -{product.discountPercent}%
+              </div>
+            )}
           </div>
 
           {/* Actions */}
@@ -225,13 +227,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, compact = fal
                 {formatPrice(product.currentPriceVND, product.currentPriceUSD)}
                 <span className="text-xs font-normal text-text-muted ml-1">/month</span>
               </div>
-              <div className="text-xs text-text-muted line-through font-mono mt-0.5">
-                {formatPrice(product.originalPriceVND, product.originalPriceUSD)}
-              </div>
+              {product.discountPercent > 0 && (
+                <div className="text-xs text-text-muted line-through font-mono mt-0.5">
+                  {formatPrice(product.originalPriceVND, product.originalPriceUSD)}
+                </div>
+              )}
             </div>
-            <span className="px-2 py-0.5 rounded text-xs font-bold font-mono bg-status-success/15 text-status-success border border-status-success/30">
-              -{product.discountPercent}%
-            </span>
+            {product.discountPercent > 0 && (
+              <span className="px-2 py-0.5 rounded text-xs font-bold font-mono bg-status-success/15 text-status-success border border-status-success/30">
+                -{product.discountPercent}%
+              </span>
+            )}
           </div>
 
           {/* Key Specs Pills */}

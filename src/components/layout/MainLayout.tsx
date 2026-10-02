@@ -4,10 +4,13 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { useApp } from '@/context/AppContext';
 import { SupportChatWidget } from '@/components/common/SupportChatWidget';
+import { LuckyWheelGate, LuckyBadge } from '@/components/common/LuckyWheel';
+import { useAuth } from '@/context/AuthContext';
 import { WifiOff, AlertCircle } from 'lucide-react';
 
 export const MainLayout: React.FC = () => {
   const { isOnline, featureFlags } = useApp();
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col bg-canvas text-text-primary">
@@ -40,6 +43,10 @@ export const MainLayout: React.FC = () => {
 
       {/* Floating customer-support chat (Grok AI) */}
       <SupportChatWidget />
+
+      {/* Lucky wheel: one spin per browser for new visitors + coupon badge */}
+      <LuckyWheelGate isAuthenticated={isAuthenticated} />
+      <LuckyBadge />
     </div>
   );
 };

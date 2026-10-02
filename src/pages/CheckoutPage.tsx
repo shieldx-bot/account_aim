@@ -7,7 +7,9 @@ import { trackEvent } from '@/utils/telemetry';
 import { openTelegramSupport } from '@/utils/diagnostics';
 import { ordersApi, paymentsApi, API_BASE_URL } from '@/services/api';
 import { peekPendingReferral, consumePendingReferral, captureRefFromUrl } from '@/utils/referral';
+import { getStoredPrize, LUCKY_STORAGE_KEY } from '@/components/common/LuckyWheel';
 import {
+  TicketPercent,
   Check,
   Clock,
   ShieldCheck,
@@ -27,7 +29,7 @@ export const CheckoutPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { activeConfig, formatPrice, currency, isLoadingProducts } = useApp();
   const { user, token } = useAuth();
-  const { items, finalTotalVND, finalTotalUSD, discountVND, discountUSD, couponCode, clearCart } = useCart();
+  const { items, subtotalVND, subtotalUSD, finalTotalVND, finalTotalUSD, discountVND, discountUSD, couponCode, couponDiscountPercent, applyCoupon, removeCoupon, clearCart } = useCart();
 
   const [timeLeft, setTimeLeft] = useState(ORDER_DURATION_SECONDS);
   const [isExpired, setIsExpired] = useState(false);
@@ -35,6 +37,38 @@ export const CheckoutPage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processStage, setProcessStage] = useState<'idle' | 'authorizing' | 'capturing' | 'completed'>('idle');
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [couponInput, setCouponInput] = useState('');
+  const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code || isApplyingCoupon) return;
+    setIsApplyingCoupon(true);
+    setCouponMsg(null);
+    const r = await applyCoupon(code);
+    setCouponMsg({ ok: r.success, text: r.message });
+    if (r.success) setCouponInput('');
+    setIsApplyingCoupon(false);
+  };
+
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    localStorage.removeItem(LUCKY_STORAGE_KEY); // removing the wheel prize retires it too
+    setCouponMsg({ ok: true, text: 'Đã gỡ mã giảm giá khỏi đơn hàng.' });
+  };
+
+  // Auto-apply the Lucky Wheel coupon (first-order prize, one order only).
+  // Re-runs when the auth token arrives (guests can log in mid-checkout).
+  useEffect(() => {
+    if (!token) return;
+    const lucky = getStoredPrize();
+    if (lucky?.code && !couponCode) {
+      applyCoupon(lucky.code).then((r) => {
+        if (r.success) window.dispatchEvent(new CustomEvent('agentlab:lucky-used'));
+      });
+    }
+  }, [token]);
 
   // ── PayPal pre-payment health check (#test-before-pay) ──
   const [paypalStatus, setPaypalStatus] = useState<{ connected: boolean; env: string; clientId: string | null } | null>(
@@ -68,13 +102,21 @@ export const CheckoutPage: React.FC = () => {
   // Determine if we're using cart mode or single-product mode
   const isCartMode = items.length > 0;
 
-  // Calculate pricing: prefer cart totals, then activeConfig (DB-driven)
-  const totalAmountVND = isCartMode
-    ? finalTotalVND
+  // Calculate pricing: prefer cart totals, then activeConfig (DB-driven).
+  // Single-product mode applies the coupon discount client-side for display;
+  // the authoritative reprice still happens on the server at order creation.
+  const baseAmountVND = isCartMode
+    ? subtotalVND
     : (activeConfig?.duration.monthlyEquivalentVND ?? 0) * (activeConfig?.duration.months ?? 0);
-  const totalAmountUSD = isCartMode
-    ? finalTotalUSD
+  const baseAmountUSD = isCartMode
+    ? subtotalUSD
     : (activeConfig?.duration.monthlyEquivalentUSD ?? 0) * (activeConfig?.duration.months ?? 0);
+  const orderDiscountVND = isCartMode ? discountVND : Math.round(baseAmountVND * (couponDiscountPercent / 100));
+  const orderDiscountUSD = isCartMode
+    ? discountUSD
+    : Number((baseAmountUSD * (couponDiscountPercent / 100)).toFixed(2));
+  const totalAmountVND = isCartMode ? finalTotalVND : Math.max(0, baseAmountVND - orderDiscountVND);
+  const totalAmountUSD = isCartMode ? finalTotalUSD : Math.max(0, Number((baseAmountUSD - orderDiscountUSD).toFixed(2)));
 
   useEffect(() => {
     trackEvent('checkout_viewed', {
@@ -238,6 +280,7 @@ export const CheckoutPage: React.FC = () => {
           setProcessStage('completed');
           setPaymentSuccess(true);
           clearCart();
+          localStorage.removeItem(LUCKY_STORAGE_KEY);
           trackEvent('paypal_payment_captured', { order_id: lastPendingOrderIdRef.current });
           setTimeout(() => navigate(`/order/success/${lastPendingOrderIdRef.current}`), 1200);
         },
@@ -280,6 +323,7 @@ export const CheckoutPage: React.FC = () => {
         setProcessStage('completed');
         setPaymentSuccess(true);
         clearCart();
+        localStorage.removeItem(LUCKY_STORAGE_KEY);
         trackEvent('paypal_payment_captured', { order_id: searchParams.get('orderId') });
         setTimeout(() => navigate(`/order/success/${searchParams.get('orderId')}`), 1200);
       })
@@ -353,6 +397,63 @@ export const CheckoutPage: React.FC = () => {
             </button>
           </div>
 
+          {/* Discount coupon box */}
+          {couponCode ? (
+            <div className="p-4 rounded-xl bg-status-success/5 border border-status-success/30">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <TicketPercent className="w-4 h-4 text-status-success shrink-0" />
+                  <div className="text-xs">
+                    <span className="font-mono font-extrabold text-status-success">{couponCode}</span>
+                    <span className="text-text-secondary"> — giảm {couponDiscountPercent}% đã áp dụng</span>
+                    {couponCode.startsWith('LUCKY-') && (
+                      <span className="block text-[10px] text-text-muted mt-0.5">
+                        🎡 Mã vòng quay may mắn — áp dụng cho 1 đơn hàng, tự xóa sau khi thanh toán.
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveCoupon}
+                  className="text-[11px] font-bold text-status-error hover:underline cursor-pointer shrink-0"
+                >
+                  Gỡ mã
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-surface border border-border-subtle">
+              <div className="flex items-center gap-2 text-xs font-semibold text-text-primary mb-2">
+                <TicketPercent className="w-4 h-4 text-primary-blue" />
+                <span>Mã giảm giá</span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                  placeholder="VD: LUCKY-1A2B3C (quay vòng quay ở trang chủ)"
+                  className="flex-1 px-3 py-2 rounded-lg bg-canvas border border-border-subtle text-xs text-text-primary font-mono placeholder:normal-case placeholder:font-sans focus:outline-none focus:border-primary-blue"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={isApplyingCoupon || !couponInput.trim()}
+                  className="px-4 py-2 rounded-lg bg-primary-blue hover:bg-primary-hover text-white text-xs font-bold disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                >
+                  {isApplyingCoupon ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <TicketPercent className="w-3.5 h-3.5" />}
+                  Áp dụng
+                </button>
+              </div>
+              {couponMsg && (
+                <p className={`text-[11px] mt-2 font-semibold ${couponMsg.ok ? 'text-status-success' : 'text-status-error'}`}>
+                  {couponMsg.text}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* MAIN DEDICATED PAYPAL CHECKOUT CARD */}
           <div className="p-6 rounded-2xl bg-surface border border-border-subtle shadow-card-hover space-y-6">
             {/* Header: PayPal Branding */}
@@ -399,7 +500,17 @@ export const CheckoutPage: React.FC = () => {
                   <span className="text-2xl font-extrabold font-mono text-[#003087]">
                     ${totalAmountUSD.toFixed(2)} USD
                   </span>
+                  {orderDiscountUSD > 0 && (
+                    <span className="text-sm font-mono text-text-muted line-through">
+                      ${baseAmountUSD.toFixed(2)}
+                    </span>
+                  )}
                 </div>
+                {orderDiscountUSD > 0 && (
+                  <span className="text-[11px] font-bold text-status-success">
+                    🎟️ Đã giảm {orderDiscountUSD.toFixed(2)} USD ({couponDiscountPercent}%){couponCode ? ` — ${couponCode}` : ''}
+                  </span>
+                )}
               </div>
               <div className="text-[11px] text-text-muted space-y-0.5 text-left sm:text-right">
                 <div className="flex items-center gap-1 sm:justify-end text-status-success font-medium">
@@ -583,6 +694,13 @@ export const CheckoutPage: React.FC = () => {
                 <span className="text-status-success font-semibold">&lt; 30 seconds</span>
               </div>
             </div>
+
+            {orderDiscountUSD > 0 && (
+              <div className="pb-2 flex items-center justify-between text-xs">
+                <span className="text-text-secondary">Giảm giá ({couponDiscountPercent}%){couponCode ? ` · ${couponCode}` : ''}:</span>
+                <span className="font-mono font-bold text-status-success">-${orderDiscountUSD.toFixed(2)}</span>
+              </div>
+            )}
 
             {/* Total */}
             <div className="py-4 flex items-baseline justify-between">

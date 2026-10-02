@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { LuckyWheelAdminCard } from './LuckyWheelAdminCard';
 import {
   DollarSign,
   ShoppingBag,
@@ -27,6 +28,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto font-mono text-xs">
+      <LuckyWheelAdminCard />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-sans">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-text-primary uppercase tracking-tight">

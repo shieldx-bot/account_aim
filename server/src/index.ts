@@ -14,6 +14,7 @@ import { inventoryAdminRouter, warrantyAdminRouter, warrantyPublicRouter } from 
 import { referralRouter } from './routes/referral.routes.js';
 import { paymentRouter } from './controllers/payment.controller.js';
 import { supportChatRouter } from './controllers/support-chat.controller.js';
+import { luckyWheelRouter } from './controllers/lucky-wheel.controller.js';
 import { couponRouter } from './controllers/coupon.controller.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { ensureSeedProducts } from './controllers/product.controller.js';
@@ -99,6 +100,7 @@ app.use('/api/admin/warranty', warrantyAdminRouter);
 app.use('/api/payments', paymentRouter);
 app.use('/api/coupons', couponRouter);
 app.use('/api/support', supportChatRouter);
+app.use('/api/wheel', luckyWheelRouter);
 
 // Error handling middleware (must be last)
 app.use(errorMiddleware);

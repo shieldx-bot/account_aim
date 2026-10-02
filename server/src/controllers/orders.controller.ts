@@ -245,6 +245,19 @@ export const markOrderPaid = async (
      RETURNING *`,
     [orderId, provider, providerRef]
   );
+  // Lucky Wheel: the prize coupon applies to a single order — the moment that
+  // order is paid, the code is deleted from the database entirely.
+  if (orderId) {
+    await pool
+      .query(
+        `DELETE FROM coupons WHERE code = (
+           SELECT coupon_code FROM orders WHERE id = $1
+         ) AND source = 'wheel'`,
+        [orderId]
+      )
+      .catch(() => {}); // never block fulfilment on coupon cleanup
+  }
+
 
   const order = paidRes.rows[0];
   if (!order) {
