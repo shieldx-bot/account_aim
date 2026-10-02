@@ -13,3 +13,6 @@ node_modules/
 
 # Agent worktrees / local tooling
 .kilo/
+
+# DB backups contain customer PII — never commit
+backups/
