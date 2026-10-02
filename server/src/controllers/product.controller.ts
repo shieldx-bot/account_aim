@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { pool } from '../config/db.js';
 import { EXPANDED_PRODUCTS } from '../data/catalog-expansion.js';
 import { SUPPLIER_PRODUCTS } from '../data/supplier-catalog.js';
+import { KHO_PRODUCTS } from '../data/khotai-khoan-catalog.js';
 
 // Initial 8 seed products matching the frontend portfolio
 const INITIAL_PRODUCTS = [
@@ -501,7 +502,7 @@ export const formatProductRow = (row: any) => ({
  */
 export const ensureSeedProducts = async (): Promise<void> => {
   try {
-    for (const prod of [...INITIAL_PRODUCTS, ...EXPANDED_PRODUCTS, ...SUPPLIER_PRODUCTS]) {
+    for (const prod of [...INITIAL_PRODUCTS, ...EXPANDED_PRODUCTS, ...SUPPLIER_PRODUCTS, ...KHO_PRODUCTS]) {
       await pool.query(
         `INSERT INTO products (
           id, slug, name, brand, brand_logo, category,

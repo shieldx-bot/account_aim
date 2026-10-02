@@ -1,16 +1,15 @@
-/** One-off: seed the 48 supplier-catalog products into any Postgres DB.
- * Usage: node --env-file=.env scripts/seed-supplier-catalog.mjs
- * Reads supplier-catalog.json (same data as src/data/supplier-catalog.ts).
- * Idempotent: ON CONFLICT (id) DO NOTHING — safe to re-run. */
+/** One-off: seed supplier-catalog products into any Postgres DB.
+ * Usage: node --env-file=.env scripts/seed-supplier-catalog.mjs [catalog.json]
+ * Defaults to src/data/supplier-catalog.json; pass src/data/khotai-khoan-catalog.json
+ * for the khotaikhoan.net batch. Idempotent: ON CONFLICT (id) DO NOTHING. */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import pg from 'pg';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const products = JSON.parse(
-  readFileSync(join(__dirname, '..', 'src', 'data', 'supplier-catalog.json'), 'utf8')
-);
+const jsonPath = process.argv[2] || join(__dirname, '..', 'src', 'data', 'supplier-catalog.json');
+const products = JSON.parse(readFileSync(jsonPath, 'utf8'));
 
 const pool = new pg.Pool({
   host: process.env.DB_HOST,
