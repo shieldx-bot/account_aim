@@ -510,6 +510,15 @@ export const paymentsApi = {
   },
 };
 
+export interface AdminCoupon {
+  code: string;
+  discountPercent: number;
+  active: boolean;
+  expiresAt: string | null;
+  source: string;
+  usedByOrder: string | null;
+}
+
 export const couponsApi = {
   /**
    * Server-side coupon validation — returns the discount percent the backend
@@ -534,6 +543,34 @@ export const couponsApi = {
     };
     if (!res.ok) fail('Unable to verify the coupon code.');
     if (!body.success) fail('Invalid coupon code.');
+    return body.data;
+  },
+
+  /**
+   * Admin: latest 200 coupons (incl. per-visitor wheel prizes) for the
+   * management card on the admin dashboard.
+   */
+  async adminList(token: string): Promise<AdminCoupon[]> {
+    const res = await fetch(`${API_BASE_URL}/coupons/admin/list`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok || !body.success) throw new Error(body.message || 'Unable to load coupons.');
+    return body.data;
+  },
+
+  /**
+   * Admin: adjust a coupon's lifetime (`expiresAt` ISO string, or null = never
+   * expires) and/or flip its `active` switch.
+   */
+  async adminUpdate(token: string, code: string, patch: { expiresAt?: string | null; active?: boolean }): Promise<AdminCoupon> {
+    const res = await fetch(`${API_BASE_URL}/coupons/admin/${encodeURIComponent(code)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(patch),
+    });
+    const body = await res.json();
+    if (!res.ok || !body.success) throw new Error(body.message || 'Unable to update the coupon.');
     return body.data;
   },
 };
