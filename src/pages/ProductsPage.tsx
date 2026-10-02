@@ -145,7 +145,7 @@ export const ProductsPage: React.FC = () => {
             </span>
           </h1>
           <p className="mt-4 text-xs sm:text-sm text-text-secondary leading-relaxed">
-            Direct activation on official email, save up to 65% vs retail. 100% clean license, auto 1-exchange warranty 24/7.
+            Direct activation on official email at transparent official vendor pricing. 100% clean license, auto 1-exchange warranty 24/7.
           </p>
 
           {/* Value Props Row */}
@@ -303,9 +303,9 @@ export const ProductsPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-primary-blue/15 border border-primary-blue/30 flex items-center justify-center text-primary-blue mb-4">
                 <Layers className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-bold text-text-primary mb-1.5">Save Up to 65%</h3>
+              <h3 className="text-sm font-bold text-text-primary mb-1.5">Official Vendor Pricing</h3>
               <p className="text-xs text-text-secondary leading-relaxed">
-                Wholesale distribution partnerships and developer sponsorship programs provide the most affordable AI tool access.
+                Every plan is listed at the vendor's official monthly price — no inflated anchors, and discounts apply only via coupon codes at checkout.
               </p>
             </div>
           </div>

@@ -219,9 +219,11 @@ export const ReferralEventSection: React.FC = () => {
                       <span className="text-2xl font-black text-accent-cyan">
                         {formatPrice(prizeProduct.currentPriceVND, prizeProduct.currentPriceUSD)}
                       </span>
-                      <span className="text-xs text-text-secondary line-through">
-                        {formatPrice(prizeProduct.originalPriceVND, prizeProduct.originalPriceUSD)}
-                      </span>
+                      {prizeProduct.originalPriceUSD > prizeProduct.currentPriceUSD && (
+                        <span className="text-xs text-text-secondary line-through">
+                          {formatPrice(prizeProduct.originalPriceVND, prizeProduct.originalPriceUSD)}
+                        </span>
+                      )}
                     </div>
                     <ul className="mt-4 space-y-2">
                       {prizeProduct.quotaFeatures.slice(0, 3).map((f) => (

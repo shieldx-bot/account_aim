@@ -377,9 +377,11 @@ const QuickViewModal: React.FC<{ product: ProductPlan; onClose: () => void }> = 
             </span>
             <span className="text-xs text-text-muted ml-1">/month</span>
           </div>
-          <span className="px-2 py-0.5 rounded text-xs font-bold font-mono bg-status-success/15 text-status-success">
-            Save -{product.discountPercent}%
-          </span>
+          {product.discountPercent > 0 && (
+            <span className="px-2 py-0.5 rounded text-xs font-bold font-mono bg-status-success/15 text-status-success">
+              Save -{product.discountPercent}%
+            </span>
+          )}
         </div>
 
         {/* Specs Table */}

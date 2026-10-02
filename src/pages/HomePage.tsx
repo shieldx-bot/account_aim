@@ -162,7 +162,7 @@ export const HomePage: React.FC = () => {
 
         {/* Subtitle */}
         <p data-hero="subtitle" className="mt-5 text-sm sm:text-base text-text-secondary max-w-2xl mx-auto leading-relaxed">
-          Official AgentLab account distribution platform (Cursor Pro, Claude 3.7 Sonnet, ChatGPT Plus, GitHub Copilot). Save up to <span className="text-status-success font-semibold">65% cost</span>, assign 100% secure official email, auto 1-exchange warranty via 24/7 Bot.
+          Official AgentLab account distribution platform (Cursor Pro, Claude Sonnet, ChatGPT Plus, GitHub Copilot). Transparent official vendor pricing, assign 100% secure official email, auto 1-exchange warranty via 24/7 Bot.
         </p>
 
         {/* Hero Action CTA Buttons */}

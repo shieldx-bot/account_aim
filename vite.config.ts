@@ -5,9 +5,9 @@ import path from 'path';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // GitHub Pages project site serves the app under /account_aim/ — all asset
-  // URLs must be prefixed with that base. Overridable via VITE_BASE.
-  base: process.env.VITE_BASE || '/account_aim/',
+  // Root by default (custom domain labagent.tech). Set VITE_BASE=/account_aim/
+  // when deploying to the GitHub Pages project-site subpath instead.
+  base: process.env.VITE_BASE || '/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
