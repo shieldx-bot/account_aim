@@ -513,9 +513,11 @@ export const paymentsApi = {
 export const couponsApi = {
   /**
    * Server-side coupon validation — returns the discount percent the backend
-   * will actually honor at order creation time.
+   * will actually honor at order creation time, plus `expiresAt` when the code
+   * has a lifetime (drives the checkout countdown). Failures carry a `reason`
+   * ('expired' | 'inactive' | 'unknown') so the UI can react precisely.
    */
-  async validate(token: string, code: string): Promise<{ code: string; discountPercent: number }> {
+  async validate(token: string, code: string): Promise<{ code: string; discountPercent: number; expiresAt?: string | null }> {
     const res = await fetch(`${API_BASE_URL}/coupons/validate`, {
       method: 'POST',
       headers: {
@@ -525,8 +527,13 @@ export const couponsApi = {
       body: JSON.stringify({ code }),
     });
     const body = await res.json();
-    if (!res.ok) throw new Error(body.message || 'Unable to verify the coupon code.');
-    if (!body.success) throw new Error(body.message || 'Invalid coupon code.');
+    const fail = (fallback: string) => {
+      const err = new Error(body.message || fallback) as Error & { reason?: string };
+      err.reason = body.reason;
+      throw err;
+    };
+    if (!res.ok) fail('Unable to verify the coupon code.');
+    if (!body.success) fail('Invalid coupon code.');
     return body.data;
   },
 };

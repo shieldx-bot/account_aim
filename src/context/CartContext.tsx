@@ -16,6 +16,7 @@ interface CartContextType {
   toggleCart: () => void;
   couponCode: string | null;
   couponDiscountPercent: number;
+  couponExpiresAt: string | null;
   applyCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
   removeCoupon: () => void;
   totalCount: number;
@@ -37,6 +38,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isOpen, setIsOpen] = useState(false);
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [couponDiscountPercent, setCouponDiscountPercent] = useState(0);
+  const [couponExpiresAt, setCouponExpiresAt] = useState<string | null>(null);
 
   const [items, setItems] = useState<CartItem[]>(() => {
     if (typeof window !== 'undefined') {
@@ -108,6 +110,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setItems([]);
     setCouponCode(null);
     setCouponDiscountPercent(0);
+    setCouponExpiresAt(null);
   };
 
   const openCart = () => setIsOpen(true);
@@ -123,10 +126,16 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const result = await couponsApi.validate(authToken, code);
       setCouponCode(result.code);
       setCouponDiscountPercent(result.discountPercent);
+      setCouponExpiresAt(result.expiresAt ?? null);
       return { success: true, message: `Code ${result.code} applied successfully: ${result.discountPercent}% off!` };
     } catch (err: any) {
       setCouponCode(null);
       setCouponDiscountPercent(0);
+      setCouponExpiresAt(null);
+      if (err?.reason === 'expired') {
+        // Loss-aversion re-engagement: a lapsed code should end at the wheel, not a dead end.
+        return { success: false, message: '⏰ Mã đã hết hạn 😥 — về trang chủ quay Vòng quay may mắn để nhận mã mới (vẫn miễn phí)!' };
+      }
       return { success: false, message: err.message || 'This discount code is invalid or has expired.' };
     }
   };
@@ -134,6 +143,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const removeCoupon = () => {
     setCouponCode(null);
     setCouponDiscountPercent(0);
+    setCouponExpiresAt(null);
   };
 
   // Calculations
@@ -170,6 +180,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toggleCart,
         couponCode,
         couponDiscountPercent,
+        couponExpiresAt,
         applyCoupon,
         removeCoupon,
         totalCount,

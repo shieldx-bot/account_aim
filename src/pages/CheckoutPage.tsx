@@ -7,7 +7,8 @@ import { trackEvent } from '@/utils/telemetry';
 import { openTelegramSupport } from '@/utils/diagnostics';
 import { ordersApi, paymentsApi, API_BASE_URL } from '@/services/api';
 import { peekPendingReferral, consumePendingReferral, captureRefFromUrl } from '@/utils/referral';
-import { getStoredPrize, LUCKY_STORAGE_KEY } from '@/components/common/LuckyWheel';
+import { getStoredPrize, clearStoredPrize, LUCKY_STORAGE_KEY } from '@/components/common/LuckyWheel';
+import { useCountdown } from '@/hooks/useCountdown';
 import {
   TicketPercent,
   Check,
@@ -29,7 +30,7 @@ export const CheckoutPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { activeConfig, formatPrice, currency, isLoadingProducts } = useApp();
   const { user, token } = useAuth();
-  const { items, subtotalVND, subtotalUSD, finalTotalVND, finalTotalUSD, discountVND, discountUSD, couponCode, couponDiscountPercent, applyCoupon, removeCoupon, clearCart } = useCart();
+  const { items, subtotalVND, subtotalUSD, finalTotalVND, finalTotalUSD, discountVND, discountUSD, couponCode, couponDiscountPercent, couponExpiresAt, applyCoupon, removeCoupon, clearCart } = useCart();
 
   const [timeLeft, setTimeLeft] = useState(ORDER_DURATION_SECONDS);
   const [isExpired, setIsExpired] = useState(false);
@@ -41,13 +42,21 @@ export const CheckoutPage: React.FC = () => {
   const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
+  // Live countdown for the applied coupon's lifetime (wheel prizes expire fast).
+  const { label: couponTimeLeft, expired: couponExpired, urgent: couponUrgent } = useCountdown(couponExpiresAt);
+
   const handleApplyCoupon = async () => {
     const code = couponInput.trim();
     if (!code || isApplyingCoupon) return;
     setIsApplyingCoupon(true);
     setCouponMsg(null);
     const r = await applyCoupon(code);
-    setCouponMsg({ ok: r.success, text: r.message });
+    setCouponMsg({
+      ok: r.success,
+      text: r.success
+        ? `✅ Đã áp dụng ${code.toUpperCase()} — hoàn tất thanh toán ngay trước khi mã hết hạn!`
+        : r.message,
+    });
     if (r.success) setCouponInput('');
     setIsApplyingCoupon(false);
   };
@@ -65,7 +74,17 @@ export const CheckoutPage: React.FC = () => {
     const lucky = getStoredPrize();
     if (lucky?.code && !couponCode) {
       applyCoupon(lucky.code).then((r) => {
-        if (r.success) window.dispatchEvent(new CustomEvent('agentlab:lucky-used'));
+        if (r.success) {
+          window.dispatchEvent(new CustomEvent('agentlab:lucky-used'));
+        } else {
+          // The prize lapsed while the customer was deciding — say so plainly
+          // and point them at a fresh spin instead of a silent failure.
+          clearStoredPrize();
+          setCouponMsg({
+            ok: false,
+            text: '⏰ Mã vòng quay đã hết hạn 😥 — về trang chủ quay vòng quay để nhận mã mới (vẫn miễn phí)!',
+          });
+        }
       });
     }
   }, [token]);
@@ -413,13 +432,13 @@ export const CheckoutPage: React.FC = () => {
 
           {/* Discount coupon box */}
           {couponCode ? (
-            <div className="p-4 rounded-xl bg-status-success/5 border border-status-success/30">
+            <div className={`p-4 rounded-xl border ${couponExpired ? 'bg-status-error/5 border-status-error/40' : couponUrgent ? 'bg-status-error/5 border-status-error/40 animate-pulse' : 'bg-status-success/5 border-status-success/30'}`}>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <TicketPercent className="w-4 h-4 text-status-success shrink-0" />
+                  <TicketPercent className={`w-4 h-4 shrink-0 ${couponExpired ? 'text-status-error' : 'text-status-success'}`} />
                   <div className="text-xs">
-                    <span className="font-mono font-extrabold text-status-success">{couponCode}</span>
-                    <span className="text-text-secondary"> — giảm {couponDiscountPercent}% đã áp dụng</span>
+                    <span className={`font-mono font-extrabold ${couponExpired ? 'text-status-error line-through' : 'text-status-success'}`}>{couponCode}</span>
+                    {!couponExpired && <span className="text-text-secondary"> — giảm {couponDiscountPercent}% đã áp dụng</span>}
                     {couponCode.startsWith('LUCKY-') && (
                       <span className="block text-[10px] text-text-muted mt-0.5">
                         🎡 Mã vòng quay may mắn — áp dụng cho 1 đơn hàng, tự xóa sau khi thanh toán.
@@ -435,6 +454,31 @@ export const CheckoutPage: React.FC = () => {
                   Gỡ mã
                 </button>
               </div>
+
+              {/* Lifetime countdown — the code really dies when this hits zero */}
+              {couponExpiresAt && !couponExpired && (
+                <div className="mt-3 pt-3 border-t border-border-subtle flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className={`w-3.5 h-3.5 ${couponUrgent ? 'text-status-error' : 'text-status-warning'}`} />
+                    <span className="text-[11px] font-semibold text-text-secondary">Mã hết hạn sau</span>
+                  </div>
+                  <span className={`font-mono font-black tabular-nums text-lg ${couponUrgent ? 'text-status-error' : 'text-status-warning'}`}>
+                    {couponTimeLeft}
+                  </span>
+                </div>
+              )}
+
+              {couponExpired ? (
+                <p className="text-[11px] font-bold text-status-error mt-2">
+                  ⏰ Mã này đã hết hạn — gỡ mã và về trang chủ quay Vòng quay may mắn để nhận mã mới (vẫn miễn phí)!
+                </p>
+              ) : (
+                orderDiscountUSD > 0 && (
+                  <p className="text-[11px] font-semibold text-status-error mt-2.5">
+                    ❗ Gỡ mã = bạn tự bỏ lỡ {orderDiscountUSD.toFixed(2)} USD ưu đãi cho đơn này.
+                  </p>
+                )
+              )}
             </div>
           ) : (
             <div className="p-4 rounded-xl bg-surface border border-border-subtle">

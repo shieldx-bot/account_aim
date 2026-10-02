@@ -26,19 +26,36 @@ interface WheelSegment {
 }
 
 async function loadWheelConfig() {
-  const res = await pool.query(`SELECT active, segments FROM wheel_config WHERE id = 1`);
+  const res = await pool.query(`SELECT active, segments, coupon_ttl_minutes FROM wheel_config WHERE id = 1`);
   if (res.rows.length === 0) {
-    return { active: false, segments: [] as WheelSegment[] };
+    return { active: false, segments: [] as WheelSegment[], couponTtlMinutes: 15 };
   }
-  return { active: Boolean(res.rows[0].active), segments: res.rows[0].segments as WheelSegment[] };
+  return {
+    active: Boolean(res.rows[0].active),
+    segments: res.rows[0].segments as WheelSegment[],
+    couponTtlMinutes: Math.min(Math.max(Number(res.rows[0].coupon_ttl_minutes) || 15, 1), 10080),
+  };
 }
 
-/** GET /api/wheel/config — public: segments + weights so the SPA can render the wheel. */
+/** GET /api/wheel/config — public: segments + weights + prize TTL so the SPA
+ * can render the wheel AND tell the customer upfront how long the code lives. */
 luckyWheelRouter.get(
   '/config',
   catchAsync(async (_req: Request, res: Response) => {
     const cfg = await loadWheelConfig();
     res.status(200).json({ success: true, data: cfg });
+  })
+);
+
+/**
+ * GET /api/wheel/stats — public, real social proof: how many prize codes have
+ * been issued all-time. Rendered on the wheel modal as a live counter.
+ */
+luckyWheelRouter.get(
+  '/stats',
+  catchAsync(async (_req: Request, res: Response) => {
+    const stats = await pool.query(`SELECT COUNT(*)::int AS total FROM coupons WHERE source = 'wheel'`);
+    res.status(200).json({ success: true, data: { totalIssued: Number(stats.rows[0]?.total || 0) } });
   })
 );
 
@@ -71,10 +88,19 @@ luckyWheelRouter.post(
       return;
     }
 
-    // Idempotency: one prize per browser. An unused wheel coupon is returned
-    // as-is so a refresh never grants a second spin.
+    // Lapsed prizes are worthless — sweep them so they can never block anything
+    // and the visitor becomes eligible for a fresh spin (re-engagement loop).
+    await pool.query(
+      `DELETE FROM coupons
+       WHERE source = 'wheel' AND visitor_id = $1 AND used_by_order IS NULL
+         AND expires_at IS NOT NULL AND expires_at <= NOW()`,
+      [visitorId]
+    );
+
+    // Idempotency: one live prize per browser. An unused, unexpired wheel coupon
+    // is returned as-is so a refresh never grants a second spin.
     const existing = await pool.query(
-      `SELECT code, discount_percent FROM coupons
+      `SELECT code, discount_percent, expires_at FROM coupons
        WHERE source = 'wheel' AND visitor_id = $1 AND active = true AND used_by_order IS NULL
        ORDER BY created_at DESC LIMIT 1`,
       [visitorId]
@@ -87,6 +113,7 @@ luckyWheelRouter.post(
           alreadySpun: true,
           code: existing.rows[0].code,
           discountPercent: Number(existing.rows[0].discount_percent),
+          expiresAt: existing.rows[0].expires_at ? new Date(existing.rows[0].expires_at).toISOString() : null,
         },
       });
       return;
@@ -115,7 +142,9 @@ luckyWheelRouter.post(
       if (dup.rows.length === 0) break;
     }
 
-    const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    // The prize code is a burning ticket: short, admin-tuned lifetime drives
+    // the countdown urgency (and the code really does die at 0).
+    const expires = new Date(Date.now() + cfg.couponTtlMinutes * 60 * 1000);
     await pool.query(
       `INSERT INTO coupons (code, discount_percent, active, expires_at, source, visitor_id, max_uses)
        VALUES ($1, $2, true, $3, 'wheel', $4, 1)
@@ -168,10 +197,14 @@ luckyWheelRouter.put(
       throw new BadRequestError('At least one segment with a positive weight is required.');
     }
 
+    // Prize lifetime in minutes: 5 minutes .. 7 days, default 15.
+    const rawTtl = Number(req.body?.couponTtlMinutes);
+    const couponTtlMinutes = Number.isFinite(rawTtl) && rawTtl > 0 ? Math.min(Math.max(Math.round(rawTtl), 5), 10080) : 15;
+
     const result = await pool.query(
-      `UPDATE wheel_config SET active = $1, segments = $2::jsonb, updated_at = CURRENT_TIMESTAMP
-       WHERE id = 1 RETURNING active, segments`,
-      [active, JSON.stringify(segments)]
+      `UPDATE wheel_config SET active = $1, segments = $2::jsonb, coupon_ttl_minutes = $3, updated_at = CURRENT_TIMESTAMP
+       WHERE id = 1 RETURNING active, segments, coupon_ttl_minutes`,
+      [active, JSON.stringify(segments), couponTtlMinutes]
     );
     if (result.rows.length === 0) {
       throw new NotFoundError('Wheel config row missing.');

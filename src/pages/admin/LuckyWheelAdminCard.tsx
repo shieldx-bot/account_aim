@@ -8,11 +8,13 @@ interface Segment {
   weight: number;
 }
 
-/** Admin editor for the Lucky Wheel prize table (weights = relative odds). */
+/** Admin editor for the Lucky Wheel prize table (weights = relative odds)
+ * and the prize-code lifetime that drives the customer-facing countdown. */
 export const LuckyWheelAdminCard: React.FC = () => {
   const { token } = useAuth();
   const [active, setActive] = useState(true);
   const [segments, setSegments] = useState<Segment[]>([]);
+  const [ttlMinutes, setTtlMinutes] = useState(15);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -25,6 +27,7 @@ export const LuckyWheelAdminCard: React.FC = () => {
         if (b?.data) {
           setActive(b.data.active);
           setSegments(b.data.segments);
+          setTtlMinutes(Number(b.data.couponTtlMinutes) || 15);
         }
       })
       .finally(() => setLoading(false));
@@ -37,7 +40,7 @@ export const LuckyWheelAdminCard: React.FC = () => {
       const res = await fetch(`${API_BASE_URL}/wheel/admin/config`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ active, segments }),
+        body: JSON.stringify({ active, segments, couponTtlMinutes: ttlMinutes }),
       });
       const body = await res.json();
       setMessage(res.ok ? '✅ Đã lưu cấu hình vòng quay' : `❌ ${body?.message || 'Lưu thất bại'}`);
@@ -95,6 +98,23 @@ export const LuckyWheelAdminCard: React.FC = () => {
                 </span>
               </div>
             ))}
+          </div>
+
+          <div className="flex items-center gap-3 mb-4">
+            <label className="flex items-center gap-2 flex-1">
+              <span className="text-[11px] font-semibold text-text-primary whitespace-nowrap">⏳ Hạn mã sau khi quay (phút):</span>
+              <input
+                type="number"
+                min={5}
+                max={10080}
+                value={ttlMinutes}
+                onChange={(e) => setTtlMinutes(Number(e.target.value))}
+                className="w-20 px-2 py-1.5 rounded-lg bg-canvas border border-border-subtle text-xs font-mono font-bold text-text-primary focus:outline-none focus:border-primary-blue"
+              />
+            </label>
+            <span className="text-[10px] text-text-muted">
+              {ttlMinutes < 60 ? `${ttlMinutes} phút` : `${(ttlMinutes / 60).toFixed(1)} giờ`} — ngắn hơn = khẩn cấp hơn (khuyến nghị 10–30)
+            </span>
           </div>
 
           <div className="flex items-center justify-between gap-3">
