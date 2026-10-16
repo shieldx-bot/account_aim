@@ -34,8 +34,16 @@ const envSchema = z.object({
   PAYPAL_CLIENT_SECRET: z.string().optional(),
   PAYPAL_ENV: z.enum(['sandbox', 'live']).optional().default('sandbox'),
   APP_URL: z.string().optional(),
+  // Internal URL of the frontend/web container, used ONLY to fetch the SPA shell
+  // for crawler meta rendering (GET /render). Not required in production.
+  WEB_ORIGIN: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   MAIL_FROM: z.string().optional(),
+  // Watch & Earn — offerwall S2S postback verification secrets.
+  // BitLabs: HMAC-SHA1 app secret from the dashboard. Others: shared `secret`
+  // query param expected on the postback URL. Unset = reject in production.
+  ADS_BITLABS_APP_SECRET: z.string().optional(),
+  ADS_POSTBACK_SECRET: z.string().optional(),
   ENCRYPTION_KEY: z
     .string()
     .regex(/^[0-9a-fA-F]{64}$/, 'ENCRYPTION_KEY must be 64 hex chars (32 bytes)')

@@ -64,6 +64,35 @@ ENCRYPTION_KEY=<key-mới> node scripts/encrypt-existing-passwords.mjs
 1. Tài khoản Resend → verify domain → DKIM/SPF.
 2. `RESEND_API_KEY` + `MAIL_FROM=AgentLab <no-reply@<domain-đã-verify>>`.
 
+## 5. Frontend — Cloudflare Pages (labagent.tech) — production hiện tại
+
+Domain `labagent.tech` (và `apii.labagent.tech` cho API) nằm trong zone Cloudflare
+của tài khoản. Frontend là static bundle, host trên **Cloudflare Pages** project
+`agentlab`; backend chạy Railway tại `apii.labagent.tech`.
+
+Deploy thủ công (không dùng git-connected build — direct upload):
+
+```bash
+# 1. Build với API base trỏ về backend Railway (bắt buộc — bỏ trống sẽ gọi /api
+#    trên chính domain Pages và nhận 404)
+VITE_API_BASE=https://apii.labagent.tech/api npm run build
+
+# 2. Push dist/ lên Pages project 'agentlab', nhánh main = production
+CLOUDFLARE_API_TOKEN=<token-có-quyền-Pages:Edit> \
+  npx wrangler pages deploy dist --project-name=agentlab --branch=main --commit-dirty=true
+```
+
+Lưu ý vận hành:
+
+- Token cần quyền **Cloudflare Pages: Edit**; quyền *Cache Purge* của zone là
+  riêng (thiếu nó thì HTML cũ ở edge cache tự hết hạn sau vài phút, không cần purge).
+- Pages **tự làm SPA fallback**: deep-link kiểu `/blog/javascript/1` trả 200
+  `text/html` kèm `index.html`, không cần `_redirects`.
+- `robots.txt` tĩnh nằm trong `dist/` (`public/robots.txt`); bản động do backend
+  sinh chỉ dùng được khi self-host nginx.
+- Backend phải set `CORS_ORIGIN=https://labagent.tech` (Pages origin khác domain
+  API nên mọi request đều cross-origin).
+
 ## 5a. Frontend — GitHub Pages (labagent24.github.io)
 
 Repo: `labagent24.github.io` (user site). Pipeline `.github/workflows/deploy-pages.yml`
@@ -143,3 +172,67 @@ vẫn nên dùng PostgreSQL ngoài (mode 2).
 | Deploy | Chỉ compose Postgres | `server/Dockerfile` + compose backend + `vercel.json` |
 | Health | Báo `connected` cứng | `SELECT 1` thật |
 | Khác | Swagger + seed user bật mọi nơi; `require('crypto')` crash ESM; SQL interpolate `INTERVAL` | Swagger/seed chỉ khi dev; bug đã sửa; query parameterized |
+
+## 8. SEO cho blog
+
+Blog được phục vụ **hoàn toàn từ MongoDB** (collection `fcc_news.posts` — lưu trữ
+bài viết freeCodeCamp). Mỗi entry chỉ có metadata (tiêu đề, tác giả, ngày đăng,
+ảnh bìa, tag) và link về bài gốc trên freeCodeCamp.org; bài viết không được
+copy nội dung. Cấu trúc blog:
+
+| URL | Nội dung |
+|---|---|
+| `/blog` | **Chủ đề bài viết** (topic index) — chỉ liệt kê 1.246 chủ đề, phân trang 60/trang (`?page=N`), KHÔNG load bài viết |
+| `/blog/<chủ-đề>/1` | 20 bài viết của chủ đề đó, trang 1 |
+| `/blog/<chủ-đề>/2` | Trang 2 (mỗi trang 20 bài; `/blog/javascript` có 55 trang) |
+| `/blog/tat-ca/1` | Feed tất cả bài viết (mọi chủ đề) |
+| `/blog/<chủ-đề>` | Redirect 301 nội bộ về `/blog/<chủ-đề>/1` |
+| `/blog/archive` | Redirect 301 nội bộ về `/blog` (alias cũ) |
+
+### Endpoint SEO (backend, đi qua nginx)
+
+| Endpoint | Nội dung |
+|---|---|
+| `GET /robots.txt` | Crawl policy (`Disallow: /admin`, `/api/`) + dòng `Sitemap:` trỏ tới `APP_URL` |
+| `GET /sitemap.xml` | Trang tĩnh storefront + `/blog` + trang 1 của mọi chủ đề có ≥5 bài viết (~370 URL) |
+| `GET /blog/rss.xml` | RSS 2.0 (`vi-vn`, `atom:link`, tối đa 20 bài mới nhất, link về bài gốc kèm attribution) |
+| `GET /api/blog/posts`, `/api/blog/tags`, `/api/blog/stats` | API công khai đọc archive từ MongoDB (phân trang chủ đề, phân trang bài viết theo chủ đề, tìm theo tiêu đề) |
+| `GET /render` | **Chỉ dùng nội bộ**: nginx chỉ route crawler tới đây (xem bên dưới) |
+
+Blog **không tải hàng loạt**: trang chủ blog chỉ gọi 1 API lấy danh sách chủ đề
+(60 chủ đề/trang); bài viết chỉ được tải khi người dùng vào trang của một chủ
+đề cụ thể, 20 bài mỗi trang qua URL crawlable `/blog/<chủ-đề>/<trang>`.
+
+### Dynamic rendering cho crawler
+
+SPA là React nên meta tag chỉ tồn tại phía client. Với các user-agent là bot
+(Googlebot, Bingbot, facebookexternalhit, twitterbot, linkedinbot, discordbot, slackbot,
+whatsapp, telegrambot, GPTBot, ...), nginx map `$blog_render_bot` phát hiện
+crawler **và** đường dẫn `/blog`, rồi chuyển request nội bộ sang
+backend `GET /render` (header `X-Original-URI` giữ đường dẫn gốc). Backend:
+
+1. Fetch shell `index.html` của SPA rồi chèn `<title>`, `description`, `canonical`,
+   `og:*`, `twitter:*` và JSON-LD (`Blog` cho trang chủ đề, `CollectionPage` cho
+   trang bài viết của chủ đề) ngay trước `</head>`.
+   Shell được cache 5 phút; bundle JS của React **giữ nguyên** để Googlebot
+   vẫn render được SPA.
+2. Chèn nội dung crawlable vào `<main>`:
+   - `/blog`: danh sách 60 chủ đề (link tới `/blog/<chủ-đề>/1`)
+   - `/blog/<chủ-đề>/<trang>`: 30 bài mới nhất của chủ đề, link về bài
+     gốc trên freeCodeCamp.org (`rel="noopener noreferrer nofollow"`) + ghi chú
+     nguồn/publisher. Canonical trỏ đúng `/blog/<chủ-đề>/<trang>`.
+   - `/blog/archive` (alias cũ) trả canonical về `/blog`.
+
+URL frontend để fetch shell lấy theo thứ tự: `WEB_ORIGIN` → `APP_URL` → host của request.
+Trong docker-compose đã set sẵn `WEB_ORIGIN=http://web:80` cho backend.
+
+**Lưu ý vận hành:** mọi thay đổi `nginx.conf` cần build lại image web
+(`docker compose up -d --build web`) vì file được `COPY` trong `Dockerfile.web`.
+
+### Phạm vi áp dụng
+
+- **Self-hosted / nginx (docker-compose):** đầy đủ các cơ chế trên.
+- **Vercel / GitHub Pages:** không proxy được `/render`, robot và trang tĩnh
+  (404.html fallback) vẫn hoạt động; meta tag cho bot mạng xã hội trên các nền
+  tảng này bị hạn chế so với bản nginx. File `public/robots.txt` là bản tĩnh
+  dự phòng cho GitHub Pages (không thể rewrite động).

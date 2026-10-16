@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { AppProvider } from '@/context/AppContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -20,6 +20,8 @@ import { LegalPage } from '@/pages/LegalPage';
 import { AboutPage } from '@/pages/AboutPage';
 import { StatusPage } from '@/pages/StatusPage';
 import { DocsPage } from '@/pages/DocsPage';
+import { BlogPage } from '@/pages/BlogPage';
+import { BlogTopicPage } from '@/pages/BlogTopicPage';
 import { CartPage } from '@/pages/CartPage';
 import { ReferralLandingPage } from '@/pages/ReferralLandingPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -35,6 +37,7 @@ import { MemberSubscriptionsPage } from '@/pages/member/MemberSubscriptionsPage'
 import { MemberOrdersPage } from '@/pages/member/MemberOrdersPage';
 import { MemberWarrantyPage } from '@/pages/member/MemberWarrantyPage';
 import { MemberProfilePage } from '@/pages/member/MemberProfilePage';
+import { MemberEarnPage } from '@/pages/member/MemberEarnPage';
 
 // Admin Operator Pages
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
@@ -55,6 +58,14 @@ const ScrollToTop: React.FC = () => {
   }, [pathname]);
 
   return null;
+};
+
+/**
+ * /blog/<topic> → /blog/<topic>/1 (topic feeds always start at page 1).
+ */
+const BlogTopicRedirect: React.FC = () => {
+  const { tagSlug } = useParams<{ tagSlug: string }>();
+  return <Navigate to={`/blog/${tagSlug || ''}/1`} replace />;
 };
 
 /**
@@ -111,6 +122,14 @@ export const App: React.FC = () => {
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/status" element={<StatusPage />} />
                   <Route path="/docs" element={<DocsPage />} />
+                  <Route path="/blog" element={<BlogPage />} />
+                  {/* Legacy archive alias from the PostgreSQL era — the blog is
+                      now the MongoDB freeCodeCamp archive at /blog. */}
+                  <Route path="/blog/archive" element={<Navigate to="/blog" replace />} />
+                  {/* /blog/<topic> redirects to its first page; pages are
+                      crawlable URLs: /blog/<topic>/<page> (20 posts each). */}
+                  <Route path="/blog/:tagSlug" element={<BlogTopicRedirect />} />
+                  <Route path="/blog/:tagSlug/:page" element={<BlogTopicPage />} />
                 </Route>
 
               {/* Authentication Routes */}
@@ -138,6 +157,7 @@ export const App: React.FC = () => {
                 <Route path="subscriptions" element={<MemberSubscriptionsPage />} />
                 <Route path="orders" element={<MemberOrdersPage />} />
                 <Route path="warranty" element={<MemberWarrantyPage />} />
+                <Route path="earn" element={<MemberEarnPage />} />
                 <Route path="profile" element={<MemberProfilePage />} />
               </Route>
 
@@ -156,8 +176,8 @@ export const App: React.FC = () => {
                 <Route path="orders" element={<AdminOrdersPage />} />
                 <Route path="inventory" element={<AdminInventoryPage />} />
                 <Route path="warranty" element={<AdminWarrantyPage />} />
-                <Route path="users" element={<AdminUsersPage />} />
-              </Route>
+                  <Route path="users" element={<AdminUsersPage />} />
+                </Route>
 
               {/* Fallback 404 Developer CLI */}
               <Route path="*" element={<NotFoundPage />} />

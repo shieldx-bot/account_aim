@@ -76,7 +76,7 @@ export const Footer: React.FC = () => {
             <h5 className="font-semibold text-text-primary text-sm mb-3">Technical Support</h5>
             <p className="text-text-muted mb-3 leading-relaxed">Technical engineering team online 24/7 via Telegram, specialized for developers.</p>
             <a
-              href="https://t.me/aipro_support"
+              href="https://t.me/LabAgent_tech"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#229ED9]/10 text-[#229ED9] hover:bg-[#229ED9]/20 border border-[#229ED9]/30 font-medium transition-all"

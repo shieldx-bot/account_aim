@@ -16,3 +16,7 @@ node_modules/
 
 # DB backups contain customer PII — never commit
 backups/
+
+# Blog image uploads (runtime artifacts served at /uploads/)
+server/src/uploads/
+server/dist/uploads/

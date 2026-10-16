@@ -1,4 +1,14 @@
-import { User, UserRole, ProductPlan, ServiceHealthComponent } from '@/types';
+import {
+  User,
+  UserRole,
+  ProductPlan,
+  ServiceHealthComponent,
+  FccArchiveListResult,
+  FccArchiveTag,
+  FccArchiveTagPage,
+  AdsStatus,
+  AdSession,
+} from '@/types';
 
 /**
  * Single source of truth for the backend URL.
@@ -834,5 +844,136 @@ export const adminApi = {
     const body = await res.json();
     if (!res.ok) throw new Error(body.message || 'Unable to add balance.');
     return body;
+  },
+};
+
+// ── Watch & Earn (xem ADS tích tiền) ──────────────────────────────────────────
+
+/**
+ * Ads rewards credit the internal wallet only (store credit, no cash-out).
+ * The browser never grants a reward: the minimum watch time and the daily cap
+ * are enforced server-side on /ads/watch/claim, and offerwall rewards arrive
+ * exclusively through signed S2S postbacks handled by the backend.
+ */
+export const adsApi = {
+  /**
+   * Live earn-page state: admin config, today's usage, remaining quota and
+   * the wallet balance straight from the database (source of truth).
+   */
+  async getStatus(token: string): Promise<AdsStatus> {
+    const res = await fetch(`${API_BASE_URL}/ads/status`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Unable to load the Watch & Earn status.');
+    return body.data;
+  },
+
+  /**
+   * Open a watch session — starts the server-side minimum-watch timer.
+   * Returns the sessionId that the later claim call must reference.
+   */
+  async startWatch(token: string): Promise<{ sessionId: string; startedAt: string; minWatchSeconds: number }> {
+    const res = await fetch(`${API_BASE_URL}/ads/watch/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok || !body.success) {
+      throw new Error(body.message || 'Unable to start the watch session.');
+    }
+    return body.data;
+  },
+
+  /**
+   * Claim the reward. The server rejects claims that arrive before
+   * min_watch_seconds or after the daily cap — the countdown in the UI is a
+   * convenience, never the enforcement point.
+   */
+  async claimWatch(
+    token: string,
+    sessionId: string
+  ): Promise<{ rewardUSD: number; balanceUSD: number; remainingToday: number }> {
+    const res = await fetch(`${API_BASE_URL}/ads/watch/claim`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ sessionId }),
+    });
+    const body = await res.json();
+    if (!res.ok || !body.success) {
+      throw new Error(body.message || 'Unable to claim the reward.');
+    }
+    return body.data;
+  },
+
+  /** Latest 50 ledger rows: internal watches + offerwall credits/reversals. */
+  async getHistory(token: string): Promise<AdSession[]> {
+    const res = await fetch(`${API_BASE_URL}/ads/history`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Unable to load the rewards history.');
+    return body.data || [];
+  },
+};
+
+// ── Blog — freeCodeCamp Archive (MongoDB) ─────────────────────────────────────
+
+/**
+ * The blog is served exclusively from the MongoDB freeCodeCamp archive
+ * (written by the crawler, never by the browser). Public reads only; entries
+ * carry the original freeCodeCamp permalink and must stay attributed in the UI.
+ */
+export const fccArchiveApi = {
+  /**
+   * Paginated feed of archived posts (newest first), filterable by title
+   * keyword and tag.
+   */
+  async list(params?: {
+    page?: number;
+    limit?: number;
+    q?: string;
+    tag?: string;
+  }): Promise<FccArchiveListResult> {
+    const qs = new URLSearchParams();
+    Object.entries(params || {}).forEach(([k, v]) => v !== undefined && v !== '' && qs.set(k, String(v)));
+    const res = await fetch(`${API_BASE_URL}/blog/posts${qs.toString() ? `?${qs}` : ''}`);
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Unable to load the article archive.');
+    return {
+      posts: body.data || [],
+      total: body.count ?? 0,
+      page: body.page ?? 1,
+      totalPages: body.totalPages ?? 1,
+      limit: body.limit ?? 20,
+    };
+  },
+
+  /**
+   * Paginated topics (tags) by post count — powers the blog topic index.
+   */
+  async getTags(params?: { page?: number; limit?: number }): Promise<FccArchiveTagPage> {
+    const qs = new URLSearchParams();
+    Object.entries(params || {}).forEach(([k, v]) => v !== undefined && qs.set(k, String(v)));
+    const res = await fetch(`${API_BASE_URL}/blog/tags${qs.toString() ? `?${qs}` : ''}`);
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Unable to load archive tags.');
+    return {
+      tags: body.data || [],
+      total: body.count ?? 0,
+      page: body.page ?? 1,
+      totalPages: body.totalPages ?? 1,
+      limit: body.limit ?? 60,
+    };
+  },
+
+  /**
+   * Archive totals: post count and distinct topic count (hero stats).
+   */
+  async getStats(): Promise<{ total: number; topics: number; source: string; sourceUrl: string }> {
+    const res = await fetch(`${API_BASE_URL}/blog/stats`);
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.message || 'Unable to read archive stats.');
+    return body.data;
   },
 };

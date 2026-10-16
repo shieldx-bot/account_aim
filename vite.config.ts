@@ -34,6 +34,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Blog media uploaded through the backend
+      '/uploads': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

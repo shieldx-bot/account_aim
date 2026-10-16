@@ -610,7 +610,7 @@ Task: Fortify Page 4 (`DeliveryPage.tsx`) with client-side credential security, 
 3. 1-Click CSKH Diagnostic Escalation:
    - When user clicks "Cần kỹ thuật viên hỗ trợ qua Telegram":
      - Automatically execute `exportSupportBundle({ orderId, status: healthStatus })`.
-     - Construct a Telegram direct URI `https://t.me/aipro_support?text=...` with pre-filled Order ID, delivery timestamp, and error status so the operator receives all diagnostic info without asking repetitive questions.
+     - Construct a Telegram direct URI `https://t.me/LabAgent_tech?text=...` with pre-filled Order ID, delivery timestamp, and error status so the operator receives all diagnostic info without asking repetitive questions.
 ```
 
 ---
@@ -726,7 +726,7 @@ Task: Harden Page 5 (`LookupPage.tsx`) with OTP rate-limiting, abuse prevention 
 4. 1-Click CSKH Diagnostic Escalation:
    - If user chooses "Lỗi khác" or reaches replacement limit:
      - Generate support bundle via `exportSupportBundle({ orderId, reason: selectedReason, attempts: count })`.
-     - Button "Kết nối Kỹ thuật viên Telegram" opens `https://t.me/aipro_support?text=...` with pre-filled Diagnostic JSON payload.
+     - Button "Kết nối Kỹ thuật viên Telegram" opens `https://t.me/LabAgent_tech?text=...` with pre-filled Diagnostic JSON payload.
 ```
 
 ---

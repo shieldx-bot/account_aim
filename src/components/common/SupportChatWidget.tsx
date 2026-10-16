@@ -10,7 +10,7 @@ interface ChatMessage {
 const GREETING: ChatMessage = {
   role: 'assistant',
   content:
-    "Hi! I'm the AgentLab consultation assistant. Ask me anything about our AI accounts, pricing, PayPal payment, delivery SLA or the 1-for-1 warranty — I answer instantly, 24/7.",
+    "Hi! I'm the AgentLab consultation assistant. Ask me anything about our AI accounts, pricing, PayPal payment, delivery SLA or the 1-for-1 warranty — I answer instantly, 24/7. Live telegram support is also available: https://t.me/LabAgent_tech",
 };
 
 export const SupportChatWidget: React.FC = () => {
@@ -51,7 +51,7 @@ export const SupportChatWidget: React.FC = () => {
           content:
             body?.data?.reply ||
             body?.message ||
-            'Sorry, I could not answer right now. Please try again or contact us on Telegram: https://t.me/aipro_support',
+            'Sorry, I could not answer right now. Please try again or contact us on Telegram: https://t.me/LabAgent_tech',
         },
       ]);
     } catch {
@@ -59,7 +59,7 @@ export const SupportChatWidget: React.FC = () => {
         ...prev,
         {
           role: 'assistant',
-          content: 'Connection error. Please try again or reach us on Telegram: https://t.me/aipro_support',
+          content: 'Connection error. Please try again or reach us on Telegram: https://t.me/LabAgent_tech',
         },
       ]);
     } finally {

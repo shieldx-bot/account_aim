@@ -32,6 +32,9 @@ const envSchema = z.object({
     PAYPAL_CLIENT_SECRET: z.string().optional(),
     PAYPAL_ENV: z.enum(['sandbox', 'live']).optional().default('sandbox'),
     APP_URL: z.string().optional(),
+    // Internal URL of the frontend/web container, used ONLY to fetch the SPA shell
+    // for crawler meta rendering (GET /render). Not required in production.
+    WEB_ORIGIN: z.string().optional(),
     RESEND_API_KEY: z.string().optional(),
     MAIL_FROM: z.string().optional(),
     ENCRYPTION_KEY: z

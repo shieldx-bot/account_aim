@@ -65,6 +65,9 @@ export const Header: React.FC = () => {
               <Link to="/docs" className="hover:text-text-primary transition-colors">
                 Setup Guides
               </Link>
+              <Link to="/blog" className="hover:text-text-primary transition-colors">
+                Blog
+              </Link>
               <Link to="/status" className="hover:text-text-primary transition-colors">
                 System Status
               </Link>

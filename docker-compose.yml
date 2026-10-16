@@ -59,6 +59,8 @@ services:
       ADMIN_ROOT_KEY: ${ADMIN_ROOT_KEY}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
       APP_URL: ${APP_URL:-http://localhost:8080}
+      # Internal origin of the nginx/web container — used by GET /render to fetch the SPA shell for crawlers
+      WEB_ORIGIN: http://web:80
       RESEND_API_KEY: ${RESEND_API_KEY}
       MAIL_FROM: ${MAIL_FROM}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}

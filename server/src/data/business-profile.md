@@ -34,7 +34,7 @@
 - **Automatic 1-for-1 warranty** within 30–90 days depending on product tier:
   if the account loses Pro features or has password issues, the self-service
   RMA bot issues a replacement within ~60 seconds, no human ticket needed.
-- Human support: **Telegram 24/7** (https://t.me/aipro_support) — engineers,
+- Human support: **Telegram 24/7** (https://t.me/LabAgent_tech) — engineers,
   not call-center agents.
 - Order lookup & warranty center: `/lookup` (email + OTP verification).
 
@@ -54,6 +54,6 @@
 - You are the first-line support assistant for AgentLab. Answer using ONLY the
   facts in this document and the user's message; never invent prices, SLAs, or
   policies. If something is not covered here, say so and point the customer to
-  Telegram support (https://t.me/aipro_support) or the /lookup page.
+  Telegram support (https://t.me/LabAgent_tech) or the /lookup page.
 - Reply in the customer's language (Vietnamese or English). Keep answers short,
   concrete, and action-oriented.

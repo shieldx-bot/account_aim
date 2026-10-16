@@ -1,5 +1,8 @@
 import { pool } from '../config/db.js';
 import { EXPANDED_PRODUCTS } from '../data/catalog-expansion.js';
+import { SUPPLIER_PRODUCTS } from '../data/supplier-catalog.js';
+import { KHO_PRODUCTS } from '../data/khotai-khoan-catalog.js';
+import { KHO2_PRODUCTS } from '../data/education-work-catalog.js';
 // Initial 8 seed products matching the frontend portfolio
 const INITIAL_PRODUCTS = [
     {
@@ -9,11 +12,11 @@ const INITIAL_PRODUCTS = [
         brand: 'Cursor AI',
         brandLogo: '/assets/logos/logo_brand_cursor.svg',
         category: 'coding',
-        originalPriceVND: 500000,
-        currentPriceVND: 250000,
-        originalPriceUSD: 20.0,
-        currentPriceUSD: 10.0,
-        discountPercent: 50,
+        originalPriceVND: 526000,
+        currentPriceVND: 526000,
+        originalPriceUSD: 20,
+        currentPriceUSD: 20,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 42,
         badge: '🔥 Recommended for Devs',
@@ -38,11 +41,11 @@ const INITIAL_PRODUCTS = [
         brand: 'Anthropic',
         brandLogo: '/assets/logos/logo_brand_anthropic_claude.svg',
         category: 'llm',
-        originalPriceVND: 500000,
-        currentPriceVND: 250000,
-        originalPriceUSD: 20.0,
-        currentPriceUSD: 10.0,
-        discountPercent: 50,
+        originalPriceVND: 526000,
+        currentPriceVND: 526000,
+        originalPriceUSD: 20,
+        currentPriceUSD: 20,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 18,
         badge: '⚡ Sonnet 5 Ready',
@@ -67,11 +70,11 @@ const INITIAL_PRODUCTS = [
         brand: 'OpenAI',
         brandLogo: '/assets/logos/logo_brand_openai_chatgpt.svg',
         category: 'llm',
-        originalPriceVND: 500000,
-        currentPriceVND: 250000,
-        originalPriceUSD: 20.0,
-        currentPriceUSD: 10.0,
-        discountPercent: 50,
+        originalPriceVND: 526000,
+        currentPriceVND: 526000,
+        originalPriceUSD: 20,
+        currentPriceUSD: 20,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 25,
         badge: 'GPT-5.6 & Canvas',
@@ -96,11 +99,11 @@ const INITIAL_PRODUCTS = [
         brand: 'GitHub',
         brandLogo: '/assets/logos/logo_brand_github_copilot.svg',
         category: 'coding',
-        originalPriceVND: 250000,
-        currentPriceVND: 125000,
-        originalPriceUSD: 10.0,
-        currentPriceUSD: 5.0,
-        discountPercent: 50,
+        originalPriceVND: 263000,
+        currentPriceVND: 263000,
+        originalPriceUSD: 10,
+        currentPriceUSD: 10,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 36,
         badge: 'Native IDE Plugin',
@@ -125,11 +128,11 @@ const INITIAL_PRODUCTS = [
         brand: 'Midjourney',
         brandLogo: '/assets/logos/logo_brand_midjourney.svg',
         category: 'design',
-        originalPriceVND: 750000,
-        currentPriceVND: 375000,
-        originalPriceUSD: 30.0,
-        currentPriceUSD: 15.0,
-        discountPercent: 50,
+        originalPriceVND: 789000,
+        currentPriceVND: 789000,
+        originalPriceUSD: 30,
+        currentPriceUSD: 30,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 14,
         badge: '15h Fast GPU',
@@ -154,11 +157,11 @@ const INITIAL_PRODUCTS = [
         brand: 'JetBrains',
         brandLogo: '/assets/logos/logo_brand_jetbrains.svg',
         category: 'coding',
-        originalPriceVND: 250000,
-        currentPriceVND: 125000,
-        originalPriceUSD: 10.0,
-        currentPriceUSD: 5.0,
-        discountPercent: 50,
+        originalPriceVND: 263000,
+        currentPriceVND: 263000,
+        originalPriceUSD: 10,
+        currentPriceUSD: 10,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 22,
         badge: 'IntelliJ / WebStorm',
@@ -183,11 +186,11 @@ const INITIAL_PRODUCTS = [
         brand: 'Google DeepMind',
         brandLogo: '/assets/logos/logo_brand_google_gemini.svg',
         category: 'llm',
-        originalPriceVND: 500000,
-        currentPriceVND: 250000,
-        originalPriceUSD: 20.0,
-        currentPriceUSD: 10.0,
-        discountPercent: 50,
+        originalPriceVND: 525737,
+        currentPriceVND: 525737,
+        originalPriceUSD: 19.99,
+        currentPriceUSD: 19.99,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 30,
         badge: '1M Context Window',
@@ -212,11 +215,11 @@ const INITIAL_PRODUCTS = [
         brand: 'Anthropic',
         brandLogo: '/assets/logos/logo_brand_anthropic_claude.svg',
         category: 'enterprise',
-        originalPriceVND: 625000,
-        currentPriceVND: 312500,
-        originalPriceUSD: 25.0,
-        currentPriceUSD: 12.5,
-        discountPercent: 50,
+        originalPriceVND: 657500,
+        currentPriceVND: 657500,
+        originalPriceUSD: 25,
+        currentPriceUSD: 25,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 8,
         badge: '🏢 Enterprise',
@@ -241,11 +244,11 @@ const INITIAL_PRODUCTS = [
         brand: 'Perplexity AI',
         brandLogo: '/assets/logos/logo_brand_perplexity.svg',
         category: 'search',
-        originalPriceVND: 500000,
-        currentPriceVND: 250000,
-        originalPriceUSD: 20.0,
-        currentPriceUSD: 10.0,
-        discountPercent: 50,
+        originalPriceVND: 526000,
+        currentPriceVND: 526000,
+        originalPriceUSD: 20,
+        currentPriceUSD: 20,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 35,
         badge: '🔍 Deep Research 2026',
@@ -270,11 +273,11 @@ const INITIAL_PRODUCTS = [
         brand: 'Vercel',
         brandLogo: '/assets/logos/logo_brand_v0.svg',
         category: 'coding',
-        originalPriceVND: 500000,
-        currentPriceVND: 250000,
-        originalPriceUSD: 20.0,
-        currentPriceUSD: 10.0,
-        discountPercent: 50,
+        originalPriceVND: 789000,
+        currentPriceVND: 789000,
+        originalPriceUSD: 30,
+        currentPriceUSD: 30,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 20,
         badge: '⚡ React / Tailwind UI',
@@ -299,11 +302,11 @@ const INITIAL_PRODUCTS = [
         brand: 'DeepSeek AI',
         brandLogo: '/assets/logos/logo_brand_deepseek.svg',
         category: 'llm',
-        originalPriceVND: 375000,
-        currentPriceVND: 187500,
-        originalPriceUSD: 15.0,
-        currentPriceUSD: 7.5,
-        discountPercent: 50,
+        originalPriceVND: 131500,
+        currentPriceVND: 131500,
+        originalPriceUSD: 5,
+        currentPriceUSD: 5,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 45,
         badge: '🧠 Open Reasoning #1',
@@ -328,11 +331,11 @@ const INITIAL_PRODUCTS = [
         brand: 'xAI (Elon Musk)',
         brandLogo: '/assets/logos/logo_brand_grok.svg',
         category: 'llm',
-        originalPriceVND: 750000,
-        currentPriceVND: 375000,
-        originalPriceUSD: 30.0,
-        currentPriceUSD: 15.0,
-        discountPercent: 50,
+        originalPriceVND: 789000,
+        currentPriceVND: 789000,
+        originalPriceUSD: 30,
+        currentPriceUSD: 30,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 16,
         badge: '🚀 Realtime X Data',
@@ -357,11 +360,11 @@ const INITIAL_PRODUCTS = [
         brand: 'ElevenLabs',
         brandLogo: '/assets/logos/logo_brand_elevenlabs.svg',
         category: 'design',
-        originalPriceVND: 550000,
-        currentPriceVND: 275000,
-        originalPriceUSD: 22.0,
-        currentPriceUSD: 11.0,
-        discountPercent: 50,
+        originalPriceVND: 578600,
+        currentPriceVND: 578600,
+        originalPriceUSD: 22,
+        currentPriceUSD: 22,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 24,
         badge: '🎙️ Voice Clone #1',
@@ -386,11 +389,11 @@ const INITIAL_PRODUCTS = [
         brand: 'Suno AI',
         brandLogo: '/assets/logos/logo_brand_suno.svg',
         category: 'design',
-        originalPriceVND: 250000,
-        currentPriceVND: 125000,
-        originalPriceUSD: 10.0,
-        currentPriceUSD: 5.0,
-        discountPercent: 50,
+        originalPriceVND: 263000,
+        currentPriceVND: 263000,
+        originalPriceUSD: 10,
+        currentPriceUSD: 10,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 30,
         badge: '🎵 Music Generation v4',
@@ -415,11 +418,11 @@ const INITIAL_PRODUCTS = [
         brand: 'Lovable',
         brandLogo: '/assets/logos/logo_brand_lovable.svg',
         category: 'coding',
-        originalPriceVND: 625000,
-        currentPriceVND: 312500,
-        originalPriceUSD: 25.0,
-        currentPriceUSD: 12.5,
-        discountPercent: 50,
+        originalPriceVND: 657500,
+        currentPriceVND: 657500,
+        originalPriceUSD: 25,
+        currentPriceUSD: 25,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 12,
         badge: '⚡ AI Fullstack Builder',
@@ -444,11 +447,11 @@ const INITIAL_PRODUCTS = [
         brand: 'StackBlitz',
         brandLogo: '/assets/logos/logo_brand_bolt.svg',
         category: 'coding',
-        originalPriceVND: 500000,
-        currentPriceVND: 250000,
-        originalPriceUSD: 20.0,
-        currentPriceUSD: 10.0,
-        discountPercent: 50,
+        originalPriceVND: 657500,
+        currentPriceVND: 657500,
+        originalPriceUSD: 25,
+        currentPriceUSD: 25,
+        discountPercent: 0,
         instantDelivery: true,
         stockCount: 22,
         badge: '💻 WebContainers VM',
@@ -495,7 +498,7 @@ export const formatProductRow = (row) => ({
  */
 export const ensureSeedProducts = async () => {
     try {
-        for (const prod of [...INITIAL_PRODUCTS, ...EXPANDED_PRODUCTS]) {
+        for (const prod of [...INITIAL_PRODUCTS, ...EXPANDED_PRODUCTS, ...SUPPLIER_PRODUCTS, ...KHO_PRODUCTS, ...KHO2_PRODUCTS]) {
             await pool.query(`INSERT INTO products (
           id, slug, name, brand, brand_logo, category,
           original_price_vnd, current_price_vnd, original_price_usd, current_price_usd,
@@ -537,15 +540,57 @@ export const ensureSeedProducts = async () => {
 export const getAllProducts = async (req, res) => {
     try {
         const showAll = req.query.all === 'true';
-        const query = showAll
-            ? 'SELECT * FROM products ORDER BY created_at ASC'
-            : 'SELECT * FROM products WHERE is_active = true ORDER BY created_at ASC';
-        const result = await pool.query(query);
-        const products = result.rows.map(formatProductRow);
+        const page = req.query.page ? parseInt(String(req.query.page), 10) : NaN;
+        const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : NaN;
+        const category = req.query.category ? String(req.query.category) : undefined;
+        const search = req.query.search ? String(req.query.search).trim() : undefined;
+        const sort = req.query.sort ? String(req.query.sort) : 'popular';
+        const hasPaging = !isNaN(page) || !isNaN(limit) || !!category || !!search;
+        if (!hasPaging) {
+            // Legacy mode: return the full catalog (used by AppContext, admin, banners)
+            const query = showAll
+                ? 'SELECT * FROM products ORDER BY created_at ASC'
+                : 'SELECT * FROM products WHERE is_active = true ORDER BY created_at ASC';
+            const result = await pool.query(query);
+            const products = result.rows.map(formatProductRow);
+            res.status(200).json({ success: true, data: products, count: products.length });
+            return;
+        }
+        // Paginated mode: page/limit/category/search/sort — keeps payloads small
+        const pageNum = isNaN(page) ? 1 : Math.max(1, page);
+        const limitNum = isNaN(limit) ? 24 : Math.min(100, Math.max(1, limit));
+        const where = showAll ? [] : ['is_active = true'];
+        const params = [];
+        if (category && category !== 'all') {
+            params.push(category);
+            where.push(`category = $${params.length}`);
+        }
+        if (search) {
+            params.push(`%${search}%`);
+            const p = `$${params.length}`;
+            where.push(`(name ILIKE ${p} OR brand ILIKE ${p} OR slug ILIKE ${p} OR quota_features::text ILIKE ${p})`);
+        }
+        const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+        const orderMap = {
+            popular: 'created_at ASC',
+            price_asc: 'current_price_usd ASC',
+            price_desc: 'current_price_usd DESC',
+            discount: 'discount_percent DESC',
+            stock: 'stock_count DESC',
+        };
+        const orderSql = orderMap[sort] || orderMap.popular;
+        const countRes = await pool.query(`SELECT COUNT(*) AS total FROM products ${whereSql}`, params);
+        const total = parseInt(countRes.rows[0].total, 10);
+        const totalPages = Math.max(1, Math.ceil(total / limitNum));
+        params.push(limitNum, (pageNum - 1) * limitNum);
+        const dataRes = await pool.query(`SELECT * FROM products ${whereSql} ORDER BY ${orderSql} LIMIT $${params.length - 1} OFFSET $${params.length}`, params);
         res.status(200).json({
             success: true,
-            data: products,
-            count: products.length,
+            data: dataRes.rows.map(formatProductRow),
+            count: total,
+            page: pageNum,
+            totalPages,
+            limit: limitNum,
         });
     }
     catch (err) {

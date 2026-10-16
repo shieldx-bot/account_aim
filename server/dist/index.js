@@ -14,7 +14,10 @@ import { inventoryAdminRouter, warrantyAdminRouter, warrantyPublicRouter } from 
 import { referralRouter } from './routes/referral.routes.js';
 import { paymentRouter } from './controllers/payment.controller.js';
 import { supportChatRouter } from './controllers/support-chat.controller.js';
+import { luckyWheelRouter } from './controllers/lucky-wheel.controller.js';
 import { couponRouter } from './controllers/coupon.controller.js';
+import { blogPublicRouter, blogAdminRouter } from './routes/blog.routes.js';
+import { getSitemap, getRobotsTxt, getRssFeed, renderBlogMeta, blogUploadsDir, ensureSeedBlogPosts, } from './controllers/blog.controller.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { ensureSeedProducts } from './controllers/product.controller.js';
 import { pool } from './config/db.js';
@@ -35,6 +38,9 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
 }));
+// Blog post bodies are long-form Markdown and routinely exceed the global 10kb
+// cap — parse them (and only them) with a larger limit before the default kicks in.
+app.use('/api/admin/blog', express.json({ limit: '1mb' }));
 app.use(express.json({ limit: '10kb' }));
 // Rate Limiting
 const apiLimiter = rateLimit({
@@ -90,6 +96,18 @@ app.use('/api/admin/warranty', warrantyAdminRouter);
 app.use('/api/payments', paymentRouter);
 app.use('/api/coupons', couponRouter);
 app.use('/api/support', supportChatRouter);
+app.use('/api/wheel', luckyWheelRouter);
+app.use('/api/blog', blogPublicRouter);
+app.use('/api/admin/blog', blogAdminRouter);
+// Blog media uploaded through /api/admin/blog/upload, served as immutable assets
+app.use('/uploads', express.static(blogUploadsDir, { maxAge: '30d', immutable: true }));
+// Dynamic sitemap: static storefront pages + every published blog post
+app.get('/sitemap.xml', getSitemap);
+// SEO endpoints for the blog: crawl policy, RSS feed and the crawler-only
+// dynamic rendering endpoint (nginx routes bot traffic on /blog* here).
+app.get('/robots.txt', getRobotsTxt);
+app.get('/blog/rss.xml', getRssFeed);
+app.get('/render', renderBlogMeta);
 // Error handling middleware (must be last)
 app.use(errorMiddleware);
 /**
@@ -138,4 +156,6 @@ app.listen(PORT, async () => {
     }
     // Seed initial AI products catalog (idempotent upsert)
     await ensureSeedProducts();
+    // Seed the three launch articles (idempotent upsert)
+    await ensureSeedBlogPosts();
 });

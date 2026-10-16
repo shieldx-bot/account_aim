@@ -16,6 +16,9 @@ import { paymentRouter } from './controllers/payment.controller.js';
 import { supportChatRouter } from './controllers/support-chat.controller.js';
 import { luckyWheelRouter } from './controllers/lucky-wheel.controller.js';
 import { couponRouter } from './controllers/coupon.controller.js';
+import { adsRouter, adsPostbackRouter } from './controllers/ads.controller.js';
+import { fccArchiveRouter } from './routes/fcc-archive.routes.js';
+import { getSitemap, getRobotsTxt, getRssFeed, renderBlogMeta } from './controllers/blog.controller.js';
 import { errorMiddleware } from './middleware/error.middleware.js';
 import { ensureSeedProducts } from './controllers/product.controller.js';
 import { pool } from './config/db.js';
@@ -85,6 +88,12 @@ app.get('/api/health', async (_req: Request, res: Response) => {
   }
 });
 
+// Offerwall S2S postbacks (Watch & Earn) — mounted BEFORE the /api rate
+// limiter: providers retry up to 10x with growing delays over ~15 minutes,
+// which would otherwise burn the shared 100-requests budget. These callbacks
+// carry their own signature verification + per-IP throttle.
+app.use('/api/ads/postback', adsPostbackRouter);
+
 // Routes
 app.use('/api', apiLimiter);
 app.use('/api/auth', authLimiter, authRouter);
@@ -101,6 +110,22 @@ app.use('/api/payments', paymentRouter);
 app.use('/api/coupons', couponRouter);
 app.use('/api/support', supportChatRouter);
 app.use('/api/wheel', luckyWheelRouter);
+app.use('/api/ads', adsRouter);
+
+// freeCodeCamp archive (MongoDB) — the blog is served from this store.
+// Mounted BEFORE the /api rate limiter: the archive spans >1000 scroll pages,
+// so browsing it must not burn the same 100-requests budget as authenticated
+// endpoints.
+app.use('/api/blog', fccArchiveRouter);
+
+// Dynamic sitemap: static storefront pages + the blog archive page
+app.get('/sitemap.xml', getSitemap);
+
+// SEO endpoints for the blog: crawl policy, RSS feed and the crawler-only
+// dynamic rendering endpoint (nginx routes bot traffic on /blog here).
+app.get('/robots.txt', getRobotsTxt);
+app.get('/blog/rss.xml', getRssFeed);
+app.get('/render', renderBlogMeta);
 
 // Error handling middleware (must be last)
 app.use(errorMiddleware);

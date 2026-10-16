@@ -20,6 +20,7 @@ import {
   Sparkles,
   ChevronDown,
   Terminal,
+  PlayCircle,
 } from 'lucide-react';
 
 export const MemberLayout: React.FC = () => {
@@ -64,6 +65,11 @@ export const MemberLayout: React.FC = () => {
       to: '/member/orders',
       label: 'Purchase History',
       icon: ShoppingBag,
+    },
+    {
+      to: '/member/earn',
+      label: 'Xem & Kiếm',
+      icon: PlayCircle,
     },
     {
       to: '/member/warranty',

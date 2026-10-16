@@ -94,7 +94,7 @@ supportChatRouter.post(
 
     if (!env.OPENROUTER_API_KEY) {
       throw new ServiceUnavailableError(
-        'The consultation assistant is not configured. Please contact us on Telegram: https://t.me/aipro_support'
+        'The consultation assistant is not configured. Please contact us on Telegram: https://t.me/LabAgent_tech'
       );
     }
 
@@ -102,7 +102,7 @@ supportChatRouter.post(
     if (isRateLimited(ip)) {
       res.status(429).json({
         success: false,
-        message: 'Too many messages. Please wait a few minutes or contact us on Telegram: https://t.me/aipro_support',
+        message: 'Too many messages. Please wait a few minutes or contact us on Telegram: https://t.me/LabAgent_tech',
       });
       return;
     }
@@ -160,7 +160,7 @@ supportChatRouter.post(
     if (!data) {
       console.error('[SupportChat] OpenRouter failed on all models:', lastError);
       throw new ServiceUnavailableError(
-        'The consultation assistant is temporarily unavailable. Please try again or contact us on Telegram: https://t.me/aipro_support'
+        'The consultation assistant is temporarily unavailable. Please try again or contact us on Telegram: https://t.me/LabAgent_tech'
       );
     }
     const reply: string | undefined = data?.choices?.[0]?.message?.content;

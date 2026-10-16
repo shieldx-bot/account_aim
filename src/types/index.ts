@@ -170,4 +170,73 @@ export interface CartItem {
   unitPriceUSD: number;
 }
 
+// ── Watch & Earn (xem ADS tích tiền vào ví nội bộ) ───────────────────────────
+
+/**
+ * One rewards-ledger row. 'started' = watch session open (timer running,
+ * nothing paid yet); 'credited' = wallet topped up; 'reversed' = provider
+ * chargeback, balance already clamped back.
+ */
+export interface AdSession {
+  id: string;
+  provider: string;
+  txId: string | null;
+  rewardUSD: number;
+  status: 'started' | 'credited' | 'reversed';
+  createdAt: string;
+}
+
+/** Live earn-page state: config, today's cap usage and the DB wallet balance. */
+export interface AdsStatus {
+  active: boolean;
+  dailyCap: number;
+  perWatchUSD: number;
+  minWatchSeconds: number;
+  usedToday: number;
+  remainingToday: number;
+  balanceUSD: number;
+  offerwallUrl: string;
+}
+
+// ── freeCodeCamp Archive (MongoDB) ────────────────────────────────────────────
+
+/**
+ * Archived freeCodeCamp post — crawler metadata only, no article body.
+ * Entries link to the original permalink; attribution (publisher, author,
+ * original URL) must stay visible wherever these are rendered.
+ */
+export interface FccArchivePost {
+  id: string;
+  title: string;
+  url: string;
+  authorName: string | null;
+  publishedAt: string | null;
+  coverImage: string | null;
+  tags: string[];
+}
+
+export interface FccArchiveTag {
+  /** Tag label as stored, e.g. "#JavaScript". */
+  label: string;
+  /** URL/filter friendly form, e.g. "javascript". */
+  slug: string;
+  count: number;
+}
+
+export interface FccArchiveTagPage {
+  tags: FccArchiveTag[];
+  total: number;
+  page: number;
+  totalPages: number;
+  limit: number;
+}
+
+export interface FccArchiveListResult {
+  posts: FccArchivePost[];
+  total: number;
+  page: number;
+  totalPages: number;
+  limit: number;
+}
+
 

@@ -1,0 +1,25 @@
+{
+  "name": "AgentLab - AI Account Platform",
+  "short_name": "AgentLab",
+  "description": "Official AgentLab license account distribution platform. Instant delivery & auto 1-for-1 warranty.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "/assets/logos/logo_aipro_favicon.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/logos/logo_aipro_main_dark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

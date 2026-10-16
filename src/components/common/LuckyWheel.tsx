@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Gift, X, Copy, Check, Sparkles, Volume2, VolumeX, TimerReset } from 'lucide-react';
 import { useCountdown } from '@/hooks/useCountdown';
 import { API_BASE_URL } from '@/services/api';
@@ -15,7 +16,15 @@ export const WHEEL_DECLINED_KEY = 'agentlab_wheel_declined_at';
 const WHEEL_SOUND_KEY = 'agentlab_wheel_sound';
 const RESHOW_AFTER_MS = 24 * 60 * 60 * 1000; // 'Maybe later' cools down for a day
 
-interface StoredPrize {
+/** Dispatched by in-page teasers (blog feed, banners) to open the shared wheel. */
+export const OPEN_WHEEL_EVENT = 'agentlab:open-wheel';
+
+/** Opens the one-spin modal from anywhere without duplicating its logic. */
+export function openLuckyWheel(): void {
+  window.dispatchEvent(new CustomEvent(OPEN_WHEEL_EVENT));
+}
+
+export interface StoredPrize {
   code: string;
   discountPercent: number;
   wonAt: string;
@@ -606,10 +615,13 @@ export const LuckyBadge: React.FC = () => {
 };
 
 /** Mounts the modal for eligible guests: first visit, or 24h after a decline,
- * or the moment an old prize lapses (fresh spin offer). */
+ * or the moment an old prize lapses (fresh spin offer). Blog routes are a
+ * reading surface and never get the auto-popup. */
 export const LuckyWheelGate: React.FC<{ isAuthenticated: boolean }> = ({ isAuthenticated }) => {
   const [show, setShow] = useState(false);
   const [nudge, setNudge] = useState(0);
+  const { pathname } = useLocation();
+  const isBlogRoute = pathname.startsWith('/blog');
 
   useEffect(() => {
     if (isAuthenticated) return;
@@ -628,9 +640,11 @@ export const LuckyWheelGate: React.FC<{ isAuthenticated: boolean }> = ({ isAuthe
       localStorage.setItem(WHEEL_SHOWN_KEY, '1');
       return;
     }
+    // Blog = content first. No surprise modals while reading.
+    if (isBlogRoute) return;
     const t = setTimeout(() => setShow(true), 1800);
     return () => clearTimeout(t);
-  }, [isAuthenticated, nudge]);
+  }, [isAuthenticated, nudge, isBlogRoute]);
 
   useEffect(() => {
     // Fired by the expired badge / checkout — reopen with a fresh-spin offer.
@@ -639,8 +653,21 @@ export const LuckyWheelGate: React.FC<{ isAuthenticated: boolean }> = ({ isAuthe
       setShow(true);
     };
     window.addEventListener('agentlab:lucky-expired', onExpired);
-    return () => window.removeEventListener('agentlab:lucky-expired', onExpired);
+    return () => {
+      window.removeEventListener('agentlab:lucky-expired', onExpired);
+    };
   }, []);
+
+  useEffect(() => {
+    // Fired by blog teasers / CTAs — open the same one-spin modal on intent.
+    const onOpenRequest = () => {
+      if (!isAuthenticated) setShow(true);
+    };
+    window.addEventListener(OPEN_WHEEL_EVENT, onOpenRequest);
+    return () => {
+      window.removeEventListener(OPEN_WHEEL_EVENT, onOpenRequest);
+    };
+  }, [isAuthenticated]);
 
   return show ? <LuckyWheelModal onClose={() => setShow(false)} /> : null;
 };

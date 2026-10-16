@@ -7,7 +7,10 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc && rm -rf dist/db && cp -r src/db dist/db",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "crawl:fcc": "tsx scripts/fcc-news/crawler.ts",
+    "share:fcc": "tsx scripts/fcc-news/share.ts",
+    "coverage:fcc": "tsx scripts/fcc-news/coverage.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -18,7 +21,11 @@
     "express-rate-limit": "^8.7.0",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
+    "marked": "^18.1.0",
+    "mongodb": "^7.7.0",
+    "multer": "^2.4.0",
     "pg": "^8.13.1",
+    "sanitize-html": "^2.18.0",
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1",
     "zod": "^4.6.5"
@@ -30,8 +37,10 @@
     "@types/express-rate-limit": "^5.1.3",
     "@types/helmet": "^0.0.48",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^2.3.0",
     "@types/node": "^22.10.2",
     "@types/pg": "^8.11.10",
+    "@types/sanitize-html": "^2.16.2",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "tsx": "^4.19.2",

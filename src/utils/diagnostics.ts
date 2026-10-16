@@ -37,7 +37,7 @@ export function openTelegramSupport(orderId?: string, extraInfo: Record<string, 
   ].filter(Boolean).join('\n');
 
   const encodedText = encodeURIComponent(message);
-  const telegramUrl = `https://t.me/aipro_support?text=${encodedText}`;
+  const telegramUrl = `https://t.me/LabAgent_tech?text=${encodedText}`;
   if (typeof window !== 'undefined') {
     window.open(telegramUrl, '_blank');
   }

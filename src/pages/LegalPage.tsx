@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { ShieldCheck, FileText, CheckCircle2, RefreshCw, Lock, Printer } from 'lucide-react';
 
-type Tab = 'terms' | 'sla' | 'refund' | 'privacy';
+type Tab = 'terms' | 'sla' | 'refund' | 'privacy' | 'ads';
 
 export const LegalPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -72,6 +72,14 @@ export const LegalPage: React.FC = () => {
         >
           4. Data Security
         </button>
+        <button
+          onClick={() => setTab('ads')}
+          className={`flex-1 py-2.5 px-4 text-xs font-bold rounded-lg whitespace-nowrap transition-all ${
+            activeTab === 'ads' ? 'bg-primary-blue text-white shadow-sm' : 'text-text-secondary hover:text-text-primary'
+          }`}
+        >
+          5. Watch &amp; Earn
+        </button>
       </div>
 
       {/* Content Area */}
@@ -119,6 +127,45 @@ export const LegalPage: React.FC = () => {
             <ul className="list-disc list-inside space-y-2 pl-2">
               <li><strong className="text-text-primary">Automatic 1-to-1 exchange warranty:</strong> Applies for the entire duration of the active plan if the account loses Pro access, has session errors, or is dropped from the workspace.</li>
               <li><strong className="text-text-primary">100% no-questions-asked money-back:</strong> Within the first 48 hours of purchase, if you are not satisfied or the system cannot provide a stable working account, we will refund 100% of the payment to the original account within 2 business hours.</li>
+            </ul>
+          </div>
+        )}
+
+        {activeTab === 'ads' && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-text-primary">5. Watch &amp; Earn — Rewarded Ads Terms</h2>
+            <p>
+              The <strong className="text-text-primary">Watch &amp; Earn</strong> program lets members earn
+              AgentLab wallet credit by watching sponsored videos and completing tasks from reputable
+              offerwall partners (e.g. Torox, BitLabs, AdGate Media).
+            </p>
+            <ul className="list-disc list-inside space-y-2 pl-2">
+              <li>
+                <strong className="text-text-primary">Store credit only:</strong> Rewards are credited to
+                your internal AgentLab wallet and can be spent on account purchases and renewals. They are
+                <strong> not cash</strong> and cannot be withdrawn, transferred, or exchanged for money.
+              </li>
+              <li>
+                <strong className="text-text-primary">Server-enforced limits:</strong> A daily watch quota
+                and a minimum watch duration per session apply. Both are verified on our servers; bypassing
+                them (scripts, refreshing, browser tampering) forfeits the reward.
+              </li>
+              <li>
+                <strong className="text-text-primary">Reversals:</strong> If an offerwall partner reverses or
+                chargebacks a completed task, the corresponding credit is deducted from your wallet. The
+                deduction never exceeds the amount originally credited.
+              </li>
+              <li>
+                <strong className="text-text-primary">Anti-abuse:</strong> Farming, VPN/proxy spoofing,
+                emulators, or multiple accounts on one device may result in forfeiture of all earned credit
+                and account suspension.
+              </li>
+              <li>
+                <strong className="text-text-primary">Third-party content:</strong> Sponsored videos and
+                offerwall tasks are provided by third parties. AgentLab does not endorse, and is not
+                responsible for, their content or privacy practices. Never share credentials or payment
+                details with any sponsor.
+              </li>
             </ul>
           </div>
         )}

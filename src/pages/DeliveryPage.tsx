@@ -165,7 +165,7 @@ export const DeliveryPage: React.FC = () => {
 - **Password**: \`${credentials.password}\`
 - **2FA Secret**: \`${credentials.token2FA}\`
 - **Warranty Until**: ${credentials.expiresAt}
-- **Support**: https://t.me/aipro_support`;
+- **Support**: https://t.me/LabAgent_tech`;
 
     handleCopy(md, 'markdown');
   };
